@@ -1,0 +1,121 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Zap, Share2, Link2, Code2, Mail } from "lucide-react";
+
+const footerLinks = {
+  Product: ["Features", "Pricing", "Changelog", "Roadmap", "Status"],
+  Solutions: ["E-Commerce", "Healthcare", "SaaS", "Finance", "Enterprise"],
+  Developers: ["Documentation", "API Reference", "SDKs", "Webhooks", "Status Page"],
+  Company: ["About", "Blog", "Careers", "Press", "Contact"],
+  Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR", "Security"],
+};
+
+const socialIcons = [Share2, Link2, Code2, Mail];
+
+export default function Footer() {
+  return (
+    <footer style={{ position: "relative", borderTop: "1px solid var(--card-border)", background: "rgba(79,124,255,0.02)" }}>
+      <div className="mt-6" style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+        {/* Main grid */}
+        <div className="pt-20 pb-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8">
+          {/* Brand column */}
+          <div className="col-span-2 lg:col-span-2" style={{ minWidth: "180px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+              <div style={{
+                width: "32px", height: "32px", borderRadius: "10px",
+                background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Zap style={{ width: "16px", height: "16px", color: "#fff" }} fill="#fff" />
+              </div>
+              <span style={{ fontSize: "16px", fontWeight: 900, color: "var(--fg)" }}>
+                Support<span className="gradient-text">AI</span>
+              </span>
+            </div>
+            <p style={{ fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: 1.6, marginBottom: "12px", maxWidth: "220px" }}>
+              AI-powered customer support platform that reduces costs, captures leads, and delights customers 24/7.
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              {socialIcons.map((Icon, i) => (
+                <motion.a
+                  key={i}
+                  href="#"
+                  whileHover={{ scale: 1.12, y: -2 }}
+                  whileTap={{ scale: 0.92 }}
+                  style={{
+                    width: "30px", height: "30px", borderRadius: "8px",
+                    background: "var(--muted-bg)", border: "1px solid var(--card-border)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "var(--muted-fg)", textDecoration: "none",
+                    transition: "color 0.2s, background 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)";
+                    (e.currentTarget as HTMLAnchorElement).style.background = "rgba(79,124,255,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLAnchorElement).style.color = "var(--muted-fg)";
+                    (e.currentTarget as HTMLAnchorElement).style.background = "var(--muted-bg)";
+                  }}
+                >
+                  <Icon style={{ width: "13px", height: "13px" }} />
+                </motion.a>
+              ))}
+            </div>
+          </div>
+
+          {/* Link columns */}
+          {Object.entries(footerLinks).map(([section, links]) => (
+            <div key={section}>
+              <h4 style={{ fontSize: "11px", fontWeight: 800, color: "var(--fg)", textTransform: "uppercase", letterSpacing: "0.09em", marginBottom: "12px" }}>
+                {section}
+              </h4>
+              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "7px" }}>
+                {links.map((link) => (
+                  <li key={link}>
+                    <a
+                      href="#"
+                      style={{ fontSize: "12.5px", color: "var(--muted-fg)", textDecoration: "none", transition: "color 0.2s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--fg)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted-fg)")}
+                    >
+                      {link}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom bar */}
+        <div style={{
+          padding: "28px 0",
+          borderTop: "1px solid var(--card-border)",
+          display: "flex", flexWrap: "wrap",
+          alignItems: "center", justifyContent: "space-between",
+          gap: "14px",
+        }}>
+          <p style={{ fontSize: "12px", color: "var(--muted-fg)" }}>
+            © {new Date().getFullYear()} SupportAI Inc. All rights reserved.
+          </p>
+          <div style={{ display: "flex", gap: "18px" }}>
+            {["Privacy", "Terms", "Cookies"].map((label) => (
+              <a key={label} href="#" style={{ fontSize: "12px", color: "var(--muted-fg)", textDecoration: "none", transition: "color 0.2s" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--fg)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted-fg)")}
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+            <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#22c55e", animation: "pulseGlow 2s ease-in-out infinite" }} />
+            <span style={{ fontSize: "12px", color: "var(--muted-fg)" }}>All systems operational</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
