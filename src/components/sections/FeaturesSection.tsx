@@ -53,7 +53,6 @@ export default function FeaturesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.45, delay: (i % 4) * 0.07 }}
-              whileHover={{ y: -6, boxShadow: `0 20px 50px var(--shadow)` }}
               className="card-gradient-border"
               style={{ padding: "22px", position: "relative", overflow: "hidden", cursor: "default" }}
             >

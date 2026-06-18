@@ -6,28 +6,28 @@ import { Check, ArrowRight, Zap, CreditCard } from "lucide-react";
 
 const plans = [
   {
-    name: "Starter", icon: "🚀",
+    name: "Starter", icon: "bi bi-rocket-takeoff",
     price: { monthly: 3999, annual: 3199 },
     desc: "Perfect for small businesses getting started with AI support.",
     features: ["Up to 1,000 conversations/mo", "1 AI Agent", "Website widget", "PDF & URL training", "Basic analytics", "Email support", "API access"],
     color: "#4f7cff", featured: false, cta: "Start Free Trial",
   },
   {
-    name: "Growth", icon: "📈",
+    name: "Growth", icon: "bi bi-graph-up-arrow",
     price: { monthly: 11999, annual: 9599 },
     desc: "For growing teams that need more power and integrations.",
     features: ["Up to 10,000 conversations/mo", "5 AI Agents", "All channels (Web, WhatsApp, FB)", "Database integration", "Human takeover", "Lead capture & sentiment", "Advanced analytics", "Priority support", "Custom branding"],
     color: "#00d4ff", featured: true, cta: "Start Free Trial",
   },
   {
-    name: "Agency", icon: "🏢",
+    name: "Agency", icon: "bi bi-building",
     price: { monthly: 31999, annual: 25599 },
     desc: "For agencies managing multiple client accounts.",
     features: ["Unlimited conversations", "20 AI Agents", "White label platform", "Custom domains", "Multi-tenant management", "AI business insights", "Voice agent (beta)", "Dedicated account manager", "SLA guarantee"],
     color: "#8b5cf6", featured: false, cta: "Start Free Trial",
   },
   {
-    name: "Enterprise", icon: "⚡",
+    name: "Enterprise", icon: "bi bi-lightning-charge",
     price: { monthly: null, annual: null },
     desc: "Custom plans for large organizations with complex requirements.",
     features: ["Unlimited everything", "Custom AI models", "SSO / SAML", "Audit logs", "Role-based access", "On-premise option", "Custom SLA", "24/7 dedicated support", "Security review"],
@@ -86,23 +86,25 @@ export default function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
-              whileHover={{ y: plan.featured ? -2 : -6 }}
-              className={plan.featured ? "pricing-featured" : "card-gradient-border"}
+              whileHover={{ y: -2 }}
+              className={plan.featured ? "pricing-featured card" : "card-gradient-border"}
               style={{
                 padding: "28px 22px",
                 display: "flex", flexDirection: "column",
                 borderRadius: "16px",
-                border: `1px solid ${plan.featured ? plan.color : "var(--card-border)"}`,
+                border: plan.featured ? "1px solid var(--accent)" : "1px solid var(--card-border)",
                 background: plan.featured
-                  ? `linear-gradient(160deg, ${plan.color}12 0%, var(--card-bg) 100%)`
+                  ? "linear-gradient(160deg, rgba(79, 124, 255, 0.08) 0%, var(--card-bg) 100%)"
                   : "var(--card-bg)",
-                boxShadow: plan.featured ? `0 8px 40px ${plan.color}25` : undefined,
+                boxShadow: plan.featured ? "0 8px 30px var(--shadow)" : undefined,
                 marginTop: plan.featured ? "-8px" : 0,
               }}
             >
               {/* Icon + name */}
               <div style={{ marginBottom: "16px" }}>
-                <div style={{ fontSize: "28px", marginBottom: "6px" }}>{plan.icon}</div>
+                <div style={{ fontSize: "28px", marginBottom: "6px", display: "inline-flex", alignItems: "center" }}>
+                  <i className={plan.icon} style={{ color: plan.color }} />
+                </div>
                 <h3 style={{ fontSize: "20px", fontWeight: 900, color: "var(--fg)" }}>{plan.name}</h3>
                 <p style={{ fontSize: "12.5px", color: "var(--muted-fg)", marginTop: "4px", lineHeight: 1.6 }}>{plan.desc}</p>
               </div>

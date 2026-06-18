@@ -9,6 +9,7 @@
   --fg: #0b1020;
   --card-bg: #f8fafc;
   --card-border: #e2e8f0;
+  --card-border-hover: #cbd5e1;
   --accent: #2563eb;
   --accent2: #7c3aed;
   --accent-glow: rgba(37, 99, 235, 0.15);
@@ -17,7 +18,7 @@
   --nav-bg: rgba(255, 255, 255, 0.88);
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(255, 255, 255, 0.85);
-  --shadow: rgba(0, 0, 0, 0.08);
+  --shadow: rgba(0, 0, 0, 0.05);
   --hero-from: #f0f7ff;
   --hero-to: #f5f0ff;
   --grid-line: rgba(37, 99, 235, 0.05);
@@ -32,6 +33,7 @@
   --fg: #e8eeff;
   --card-bg: #131a2a;
   --card-border: #1e2d4a;
+  --card-border-hover: #2e3c5a;
   --accent: #4f7cff;
   --accent2: #00d4ff;
   --accent-glow: rgba(79, 124, 255, 0.2);
@@ -40,7 +42,7 @@
   --nav-bg: rgba(11, 16, 32, 0.88);
   --glass-bg: rgba(19, 26, 42, 0.72);
   --glass-border: rgba(79, 124, 255, 0.18);
-  --shadow: rgba(0, 0, 0, 0.45);
+  --shadow: rgba(0, 0, 0, 0.3);
   --hero-from: #0b1020;
   --hero-to: #0d1530;
   --grid-line: rgba(79, 124, 255, 0.05);
@@ -60,7 +62,12 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 86px;
   height: auto;
+}
+
+section {
+  scroll-margin-top: 86px;
 }
 
 body {
@@ -135,9 +142,9 @@ body {
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px var(--shadow);
-  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px var(--shadow);
+  border-color: var(--card-border-hover);
 }
 
 /* Section spacing */
@@ -257,24 +264,10 @@ body {
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-.card-gradient-border::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: 17px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
 .card-gradient-border:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent);
-}
-
-.card-gradient-border:hover::before {
-  opacity: 0.5;
+  transform: translateY(-2px);
+  border-color: var(--card-border-hover);
+  box-shadow: 0 10px 24px var(--shadow);
 }
 
 /* Orb background blob */

@@ -6,11 +6,41 @@ import { useTheme } from "next-themes";
 import { Zap, Share2, Link2, Code2, Mail } from "lucide-react";
 
 const footerLinks = {
-  Product: ["Features", "Pricing", "Changelog", "Roadmap", "Status"],
-  Solutions: ["E-Commerce", "Healthcare", "SaaS", "Finance", "Enterprise"],
-  Developers: ["Documentation", "API Reference", "SDKs", "Webhooks", "Status Page"],
-  Company: ["About", "Blog", "Careers", "Press", "Contact"],
-  Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR", "Security"],
+  Product: [
+    { label: "Features", href: "#features" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "Changelog", href: "/changelog" },
+    { label: "Roadmap", href: "/roadmap" },
+    { label: "Status", href: "/status" },
+  ],
+  Solutions: [
+    { label: "E-Commerce", href: "/e-commerce" },
+    { label: "Healthcare", href: "/healthcare" },
+    { label: "SaaS", href: "/saas" },
+    { label: "Finance", href: "/finance" },
+    { label: "Enterprise", href: "/enterprise" },
+  ],
+  Developers: [
+    { label: "Documentation", href: "/docs" },
+    { label: "API Reference", href: "/api-reference" },
+    { label: "SDKs", href: "/sdks" },
+    { label: "Webhooks", href: "/webhooks" },
+    { label: "Status Page", href: "/status-page" },
+  ],
+  Company: [
+    { label: "About", href: "https://v2.throughouttechnologies.com/about-us" },
+    { label: "Blog", href: "https://v2.throughouttechnologies.com/blogs" },
+    { label: "Careers", href: "https://v2.throughouttechnologies.com/careers" },
+    { label: "Press", href: "https://v2.throughouttechnologies.com/awards" },
+    { label: "Contact", href: "https://v2.throughouttechnologies.com/contact-us" },
+  ],
+  Legal: [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+    { label: "Cookie Policy", href: "/cookies" },
+    { label: "GDPR", href: "/gdpr" },
+    { label: "Security", href: "/security" },
+  ],
 };
 
 const socialIcons = [Share2, Link2, Code2, Mail];
@@ -52,6 +82,7 @@ export default function Footer() {
                 <motion.a
                   key={i}
                   href="#"
+                  onClick={(e) => e.preventDefault()}
                   whileHover={{ scale: 1.12, y: -2 }}
                   whileTap={{ scale: 0.92 }}
                   style={{
@@ -84,14 +115,30 @@ export default function Footer() {
               </h4>
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "7px" }}>
                 {links.map((link) => (
-                  <li key={link}>
+                  <li key={link.label}>
                     <a
-                      href="#"
+                      href={link.href}
+                      target={link.href.startsWith("http") ? "_blank" : undefined}
+                      rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                      onClick={(e) => {
+                        if (link.href.startsWith("/#") || link.href.startsWith("#")) {
+                          const hashIndex = link.href.indexOf("#");
+                          const hash = hashIndex !== -1 ? link.href.substring(hashIndex) : "";
+                          if (hash && hash !== "#") {
+                            if (typeof window !== "undefined") {
+                              if (window.location.pathname === "/") {
+                                e.preventDefault();
+                                document.querySelector(hash)?.scrollIntoView({ behavior: "smooth" });
+                              }
+                            }
+                          }
+                        }
+                      }}
                       style={{ fontSize: "12.5px", color: "var(--muted-fg)", textDecoration: "none", transition: "color 0.2s" }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = "var(--fg)")}
                       onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted-fg)")}
                     >
-                      {link}
+                      {link.label}
                     </a>
                   </li>
                 ))}
@@ -105,7 +152,8 @@ export default function Footer() {
           padding: "28px 0",
           borderTop: "1px solid var(--card-border)",
           display: "flex", flexWrap: "wrap",
-          alignItems: "center", justifyContent: "space-between",
+          alignItems: "center",
+          justifyContent: "space-between",
           gap: "14px",
         }}>
           <p style={{ fontSize: "12px", color: "var(--muted-fg)" }}>
@@ -113,7 +161,9 @@ export default function Footer() {
           </p>
           <div style={{ display: "flex", gap: "18px" }}>
             {["Privacy", "Terms", "Cookies"].map((label) => (
-              <a key={label} href="#" style={{ fontSize: "12px", color: "var(--muted-fg)", textDecoration: "none", transition: "color 0.2s" }}
+              <a key={label} href="#"
+                onClick={(e) => e.preventDefault()}
+                style={{ fontSize: "12px", color: "var(--muted-fg)", textDecoration: "none", transition: "color 0.2s" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "var(--fg)")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted-fg)")}
               >

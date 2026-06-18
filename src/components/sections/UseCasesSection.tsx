@@ -1,16 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { ShoppingCart, Heart, Shield, BookOpen, TrendingUp, Layers, Plane, Briefcase } from "lucide-react";
 
 const industries = [
-  { icon: ShoppingCart, name: "E-Commerce", desc: "Order tracking, returns, product queries, and upselling — automated.", stat: "45% fewer support tickets", color: "#4f7cff" },
-  { icon: Heart, name: "Healthcare", desc: "Appointment scheduling, insurance queries, and patient support at scale.", stat: "60% faster response", color: "#ec4899" },
-  { icon: Shield, name: "Insurance", desc: "Claims status, policy information, and premium support for every client.", stat: "3.2× more claims resolved", color: "#f59e0b" },
-  { icon: BookOpen, name: "Education", desc: "Student queries, course information, and enrollment support 24/7.", stat: "40% enrollment increase", color: "#10b981" },
-  { icon: TrendingUp, name: "Finance", desc: "Account queries, transaction history, and regulatory-compliant support.", stat: "99.9% compliance rate", color: "#00d4ff" },
-  { icon: Layers, name: "SaaS", desc: "Onboarding, technical support, and customer success at enterprise scale.", stat: "70% support cost reduction", color: "#8b5cf6" },
-  { icon: Plane, name: "Travel", desc: "Booking management, itinerary support, and real-time travel assistance.", stat: "4.8★ customer rating", color: "#f97316" },
+  { icon: ShoppingCart, name: "E-Commerce", slug: "e-commerce", desc: "Order tracking, returns, product queries, and upselling — automated.", stat: "45% fewer support tickets", color: "#4f7cff" },
+  { icon: Heart, name: "Healthcare", slug: "healthcare", desc: "Appointment scheduling, insurance queries, and patient support at scale.", stat: "60% faster response", color: "#ec4899" },
+  { icon: Shield, name: "Insurance", slug: "insurance", desc: "Claims status, policy information, and premium support for every client.", stat: "3.2× more claims resolved", color: "#f59e0b" },
+  { icon: BookOpen, name: "Education", slug: "education", desc: "Student queries, course information, and enrollment support 24/7.", stat: "40% enrollment increase", color: "#10b981" },
+  { icon: TrendingUp, name: "Finance", slug: "finance", desc: "Account queries, transaction history, and regulatory-compliant support.", stat: "99.9% compliance rate", color: "#00d4ff" },
+  { icon: Layers, name: "SaaS", slug: "saas", desc: "Onboarding, technical support, and customer success at enterprise scale.", stat: "70% support cost reduction", color: "#8b5cf6" },
+  { icon: Plane, name: "Travel", slug: "travel", desc: "Booking management, itinerary support, and real-time travel assistance.", stat: "4.8★ customer rating", color: "#f97316" },
 ];
 
 export default function UseCasesSection() {
@@ -34,34 +35,34 @@ export default function UseCasesSection() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {industries.map((ind, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.92 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, margin: "-30px" }}
-              transition={{ duration: 0.4, delay: i * 0.06 }}
-              whileHover={{ y: -8, scale: 1.03, boxShadow: `0 24px 60px var(--shadow)` }}
-              className="card-gradient-border"
-              style={{ padding: "22px", cursor: "pointer", position: "relative", overflow: "hidden" }}
-            >
-              <div style={{
-                position: "absolute", inset: 0, borderRadius: "16px", pointerEvents: "none",
-                background: `linear-gradient(135deg, ${ind.color}10, transparent)`,
-              }} />
-              <div style={{ position: "relative", zIndex: 1 }}>
+            <Link key={i} href={`/${ind.slug}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+                className="card-gradient-border"
+                style={{ padding: "22px", cursor: "pointer", position: "relative", overflow: "hidden", height: "100%" }}
+              >
                 <div style={{
-                  width: "48px", height: "48px", borderRadius: "16px",
-                  background: `${ind.color}16`, border: `1px solid ${ind.color}30`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: "14px", boxShadow: `0 6px 18px ${ind.color}14`,
-                }}>
-                  <ind.icon style={{ width: "22px", height: "22px", color: ind.color }} />
+                  position: "absolute", inset: 0, borderRadius: "16px", pointerEvents: "none",
+                  background: `linear-gradient(135deg, ${ind.color}10, transparent)`,
+                }} />
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <div style={{
+                    width: "48px", height: "48px", borderRadius: "16px",
+                    background: `${ind.color}16`, border: `1px solid ${ind.color}30`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    marginBottom: "14px", boxShadow: `0 6px 18px ${ind.color}14`,
+                  }}>
+                    <ind.icon style={{ width: "22px", height: "22px", color: ind.color }} />
+                  </div>
+                  <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--fg)", marginBottom: "8px" }}>{ind.name}</h3>
+                  <p style={{ fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: 1.65, marginBottom: "12px" }}>{ind.desc}</p>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: ind.color }}>{ind.stat} →</div>
                 </div>
-                <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--fg)", marginBottom: "8px" }}>{ind.name}</h3>
-                <p style={{ fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: 1.65, marginBottom: "12px" }}>{ind.desc}</p>
-                <div style={{ fontSize: "12px", fontWeight: 700, color: ind.color }}>{ind.stat} →</div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </div>

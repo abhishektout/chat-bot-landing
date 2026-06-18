@@ -5,36 +5,36 @@ import { Settings } from "lucide-react";
 
 const techBadges = {
   "AI Models": [
-    { name: "OpenAI GPT-4", icon: "🤖", color: "#10a37f" },
-    { name: "Claude 3.5", icon: "🔬", color: "#b08cff" },
-    { name: "Gemini Pro", icon: "♊", color: "#4285f4" },
-    { name: "Llama 3", icon: "🦙", color: "#f97316" },
+    { name: "OpenAI GPT-4", icon: "bi bi-robot", color: "#10a37f" },
+    { name: "Claude 3.5", icon: "bi bi-braces", color: "#b08cff" },
+    { name: "Gemini Pro", icon: "bi bi-stars", color: "#4285f4" },
+    { name: "Llama 3", icon: "bi bi-cpu", color: "#f97316" },
   ],
   "Knowledge Sources": [
-    { name: "PDF Training", icon: "📄", color: "#ef4444" },
-    { name: "FAQ Training", icon: "❓", color: "#f59e0b" },
-    { name: "Website Crawl", icon: "🌐", color: "#4f7cff" },
-    { name: "Database Sync", icon: "🗄️", color: "#8b5cf6" },
+    { name: "PDF Training", icon: "bi bi-file-earmark-pdf", color: "#ef4444" },
+    { name: "FAQ Training", icon: "bi bi-question-circle", color: "#f59e0b" },
+    { name: "Website Crawl", icon: "bi bi-globe", color: "#4f7cff" },
+    { name: "Database Sync", icon: "bi bi-database", color: "#8b5cf6" },
   ],
   "Channels": [
-    { name: "Website Widget", icon: "💬", color: "#4f7cff" },
-    { name: "WhatsApp", icon: "📱", color: "#25d366" },
-    { name: "Facebook", icon: "👤", color: "#1877f2" },
-    { name: "Instagram", icon: "📸", color: "#e4405f" },
-    { name: "Telegram", icon: "✈️", color: "#2aabee" },
+    { name: "Website Widget", icon: "bi bi-chat-dots", color: "#4f7cff" },
+    { name: "WhatsApp", icon: "bi bi-whatsapp", color: "#25d366" },
+    { name: "Facebook", icon: "bi bi-facebook", color: "#1877f2" },
+    { name: "Instagram", icon: "bi bi-instagram", color: "#e4405f" },
+    { name: "Telegram", icon: "bi bi-telegram", color: "#2aabee" },
   ],
   "Enterprise": [
-    { name: "SSO / SAML", icon: "🔐", color: "#f59e0b" },
-    { name: "API Access", icon: "⚡", color: "#00d4ff" },
-    { name: "White Label", icon: "🏷️", color: "#ec4899" },
-    { name: "Custom Domains", icon: "🌍", color: "#22c55e" },
+    { name: "SSO / SAML", icon: "bi bi-shield-lock", color: "#f59e0b" },
+    { name: "API Access", icon: "bi bi-lightning-charge", color: "#00d4ff" },
+    { name: "White Label", icon: "bi bi-tags", color: "#ec4899" },
+    { name: "Custom Domains", icon: "bi bi-globe2", color: "#22c55e" },
   ],
   "Infrastructure": [
-    { name: "PostgreSQL", icon: "🐘", color: "#336791" },
-    { name: "Vector DB", icon: "🧮", color: "#8b5cf6" },
-    { name: "RAG Architecture", icon: "🔍", color: "#4f7cff" },
-    { name: "Real-Time Analytics", icon: "📊", color: "#00d4ff" },
-    { name: "WebSocket", icon: "🔌", color: "#22c55e" },
+    { name: "PostgreSQL", icon: "bi bi-database-fill", color: "#336791" },
+    { name: "Vector DB", icon: "bi bi-cpu-fill", color: "#8b5cf6" },
+    { name: "RAG Architecture", icon: "bi bi-search", color: "#4f7cff" },
+    { name: "Real-Time Analytics", icon: "bi bi-bar-chart-line", color: "#00d4ff" },
+    { name: "WebSocket", icon: "bi bi-plug", color: "#22c55e" },
   ],
 };
 
@@ -81,11 +81,13 @@ export default function TechShowcaseSection() {
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: catIdx * 0.04 + i * 0.04 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileHover={{ y: -1 }}
                     className="card-gradient-border"
                     style={{ display: "flex", alignItems: "center", gap: "9px", padding: "9px 14px", cursor: "default" }}
                   >
-                    <span style={{ fontSize: "18px" }}>{item.icon}</span>
+                    <span style={{ fontSize: "16px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                      <i className={item.icon} style={{ color: "var(--fg)" }} />
+                    </span>
                     <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg)", whiteSpace: "nowrap" }}>{item.name}</span>
                     <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: item.color, boxShadow: `0 0 6px ${item.color}`, marginLeft: "4px" }} />
                   </motion.div>

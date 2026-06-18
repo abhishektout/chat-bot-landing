@@ -46,7 +46,18 @@ export default function Navbar() {
   }, []);
 
   const scrollTo = (href: string) => {
-    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      if (window.location.pathname === "/") {
+        const el = document.querySelector(href);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        } else {
+          window.location.href = "/" + href;
+        }
+      } else {
+        window.location.href = "/" + href;
+      }
+    }
     setMobileOpen(false);
     setActiveDropdown(null);
   };
@@ -75,7 +86,15 @@ export default function Navbar() {
 
             {/* Logo */}
             <motion.button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  if (window.location.pathname === "/") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  } else {
+                    window.location.href = "/";
+                  }
+                }
+              }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               style={{ display: "flex", alignItems: "center", gap: "10px", background: "none", border: "none", cursor: "pointer" }}

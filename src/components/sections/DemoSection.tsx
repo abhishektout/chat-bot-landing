@@ -133,11 +133,11 @@ function IntegrationTab() {
       <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg)", marginBottom: "16px" }}>Connected Data Sources</div>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {[
-          { name: "PostgreSQL", type: "Database", icon: "🗄️", status: "connected", queries: "12,847 queries" },
-          { name: "Shopify API", type: "E-Commerce", icon: "🛍️", status: "connected", queries: "8,231 queries" },
-          { name: "HubSpot CRM", type: "CRM", icon: "📊", status: "connected", queries: "3,402 queries" },
-          { name: "Custom REST API", type: "API", icon: "⚡", status: "connected", queries: "5,119 queries" },
-          { name: "MySQL Database", type: "Database", icon: "🗄️", status: "pending", queries: "—" },
+          { name: "PostgreSQL", type: "Database", icon: "bi bi-database-fill", status: "connected", queries: "12,847 queries" },
+          { name: "Shopify API", type: "E-Commerce", icon: "bi bi-shop", status: "connected", queries: "8,231 queries" },
+          { name: "HubSpot CRM", type: "CRM", icon: "bi bi-diagram-3", status: "connected", queries: "3,402 queries" },
+          { name: "Custom REST API", type: "API", icon: "bi bi-lightning-charge", status: "connected", queries: "5,119 queries" },
+          { name: "MySQL Database", type: "Database", icon: "bi bi-database", status: "pending", queries: "—" },
         ].map((item, i) => (
           <motion.div
             key={i}
@@ -150,7 +150,9 @@ function IntegrationTab() {
               background: "var(--muted-bg)", border: "1px solid var(--card-border)",
             }}
           >
-            <span style={{ fontSize: "20px", width: "24px", textAlign: "center" }}>{item.icon}</span>
+            <span style={{ fontSize: "18px", width: "24px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <i className={item.icon} style={{ color: "var(--accent)" }} />
+            </span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg)" }}>{item.name}</div>
               <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>{item.type} · {item.queries}</div>
@@ -166,7 +168,7 @@ function IntegrationTab() {
 function HandoffTab() {
   const [step, setStep] = useState(0);
   const steps = [
-    { icon: Zap, label: "AI detects frustration (Sentiment: 😠 Angry)", color: "#ef4444" },
+    { icon: Zap, label: <>AI detects frustration (Sentiment: <i className="bi bi-emoji-angry" style={{ color: "#ef4444" }} /> Angry)</>, color: "#ef4444" },
     { icon: TrendingUp, label: "Escalation triggered automatically", color: "#f59e0b" },
     { icon: User, label: "Human agent Sarah notified with full context", color: "#22c55e" },
     { icon: BarChart3, label: "Resolution achieved — Customer satisfied ✓", color: "#4f7cff" },
@@ -241,12 +243,14 @@ function AnalyticsTab() {
       </ResponsiveContainer>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3.5">
         {[
-          { label: "Top Question", value: "How does billing work?", icon: "💬" },
-          { label: "Abandonment", value: "18 before checkout", icon: "⚠️" },
-          { label: "Opportunity", value: "Create pricing FAQ", icon: "💡" },
+          { label: "Top Question", value: "How does billing work?", icon: "bi bi-chat-dots" },
+          { label: "Abandonment", value: "18 before checkout", icon: "bi bi-exclamation-triangle" },
+          { label: "Opportunity", value: "Create pricing FAQ", icon: "bi bi-lightbulb" },
         ].map((item, i) => (
           <div key={i} style={{ padding: "10px", borderRadius: "10px", background: "var(--muted-bg)", border: "1px solid var(--card-border)" }}>
-            <div style={{ fontSize: "16px", marginBottom: "4px" }}>{item.icon}</div>
+            <div style={{ fontSize: "16px", marginBottom: "4px", display: "inline-flex", alignItems: "center" }}>
+              <i className={item.icon} style={{ color: "var(--accent)" }} />
+            </div>
             <div style={{ fontSize: "10px", color: "var(--muted-fg)" }}>{item.label}</div>
             <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--fg)" }}>{item.value}</div>
           </div>

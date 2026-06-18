@@ -63,7 +63,6 @@ export default function EnterpriseSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: (i % 4) * 0.08 }}
-              whileHover={{ y: -4, boxShadow: `0 16px 40px var(--shadow)` }}
               className="card-gradient-border"
               style={{ padding: "20px" }}
             >

@@ -55,7 +55,7 @@ function FlowPath({ d, active, color = "#4f7cff", speed = 1.5 }: { d: string; ac
 }
 
 interface TooltipProps {
-  title: string;
+  title: React.ReactNode;
   description: string;
   position?: "top" | "bottom" | "left" | "right" | "top-right" | "top-left" | "bottom-right" | "bottom-left";
   isVisible: boolean;
@@ -475,7 +475,7 @@ function AIDashboard() {
                     <FileText style={{ width: "13px", height: "13px", color: "#f43f5e" }} />
                   </div>
                   <Tooltip
-                    title="📄 PDF Knowledge Base"
+                    title={<><i className="bi bi-file-earmark-pdf" style={{ marginRight: "6px" }} />PDF Knowledge Base</>}
                     description="Train AI using PDFs, manuals, documentation and product guides."
                     position="bottom-right"
                     isVisible={hoveredNode === "pdf"}
@@ -501,7 +501,7 @@ function AIDashboard() {
                     <MessageSquare style={{ width: "13px", height: "13px", color: "#a855f7" }} />
                   </div>
                   <Tooltip
-                    title="❓ FAQ Knowledge"
+                    title={<><i className="bi bi-question-circle" style={{ marginRight: "6px" }} />FAQ Knowledge</>}
                     description="Answer customer questions using predefined FAQs and support content."
                     position="bottom-left"
                     isVisible={hoveredNode === "faq"}
@@ -527,7 +527,7 @@ function AIDashboard() {
                     <Link style={{ width: "13px", height: "13px", color: "#10b981" }} />
                   </div>
                   <Tooltip
-                    title="🔗 External APIs"
+                    title={<><i className="bi bi-link-45deg" style={{ marginRight: "6px" }} />External APIs</>}
                     description="Connect with CRMs, ERPs, payment systems and third-party services."
                     position="bottom"
                     isVisible={hoveredNode === "api"}
@@ -553,7 +553,7 @@ function AIDashboard() {
                     <Globe style={{ width: "13px", height: "13px", color: "#06b6d4" }} />
                   </div>
                   <Tooltip
-                    title="🌐 Website Training"
+                    title={<><i className="bi bi-globe" style={{ marginRight: "6px" }} />Website Training</>}
                     description="Learn automatically from website pages and business content."
                     position="bottom-right"
                     isVisible={hoveredNode === "website"}
@@ -579,7 +579,7 @@ function AIDashboard() {
                     <Database style={{ width: "13px", height: "13px", color: "#6366f1" }} />
                   </div>
                   <Tooltip
-                    title="🗄 Business Database"
+                    title={<><i className="bi bi-database" style={{ marginRight: "6px" }} />Business Database</>}
                     description="Retrieve real-time customer, order and business information."
                     position="bottom-left"
                     isVisible={hoveredNode === "database"}
@@ -617,7 +617,7 @@ function AIDashboard() {
                     AI Agent
                   </div>
                   <Tooltip
-                    title="🤖 AI Agent"
+                    title={<><i className="bi bi-robot" style={{ marginRight: "6px" }} />AI Agent</>}
                     description="Central AI engine that analyzes requests and generates responses."
                     position="top"
                     isVisible={hoveredNode === "agent"}
@@ -651,7 +651,7 @@ function AIDashboard() {
                     )}
                   </div>
                   <Tooltip
-                    title="🧠 Decision Engine"
+                    title={<><i className="fa fa-brain" style={{ marginRight: "6px" }} />Decision Engine</>}
                     description="Evaluates confidence and decides whether AI should respond or hand over to a human."
                     position="top"
                     isVisible={hoveredNode === "decision"}
@@ -675,7 +675,7 @@ function AIDashboard() {
                     <span style={{ fontSize: "8px", fontWeight: 700, color: "var(--fg)" }}>AI Reply</span>
                   </div>
                   <Tooltip
-                    title="✅ AI Reply"
+                    title={<><i className="bi bi-check-circle" style={{ marginRight: "6px" }} />AI Reply</>}
                     description="AI automatically resolves the customer's request."
                     position="top-right"
                     isVisible={hoveredNode === "reply"}
@@ -699,7 +699,7 @@ function AIDashboard() {
                     <span style={{ fontSize: "8px", fontWeight: 700, color: "var(--fg)" }}>Human</span>
                   </div>
                   <Tooltip
-                    title="🎧 Human Takeover"
+                    title={<><i className="bi bi-headset" style={{ marginRight: "6px" }} />Human Takeover</>}
                     description="Transfer the conversation to a live support agent when needed."
                     position="top-left"
                     isVisible={hoveredNode === "human"}
@@ -731,7 +731,7 @@ function AIDashboard() {
                     </span>
                   </motion.div>
                   <Tooltip
-                    title="🛡 Resolution"
+                    title={<><i className="bi bi-shield-check" style={{ marginRight: "6px" }} />Resolution</>}
                     description="Customer issue successfully resolved."
                     position="top"
                     isVisible={hoveredNode === "resolution"}
