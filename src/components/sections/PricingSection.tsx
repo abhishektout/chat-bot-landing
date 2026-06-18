@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, ArrowRight, Zap, CreditCard } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const plans = [
   {
@@ -36,6 +37,7 @@ const plans = [
 ];
 
 export default function PricingSection() {
+  const router = useRouter();
   const [annual, setAnnual] = useState(false);
 
   return (
@@ -61,7 +63,7 @@ export default function PricingSection() {
               onClick={() => setAnnual(!annual)}
               style={{
                 width: "44px", height: "24px", borderRadius: "100px", border: "none", cursor: "pointer",
-                background: annual ? "var(--accent)" : "var(--muted-bg)",
+                background: annual ? "var(--accent)" : "var(--muted-fg-pricing-toggle)",
                 position: "relative", transition: "background 0.3s ease",
               }}
             >
@@ -71,7 +73,7 @@ export default function PricingSection() {
                 style={{ position: "absolute", top: "3px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}
               />
             </button>
-            <span style={{ fontSize: "14px", fontWeight: 600, color: annual ? "var(--fg)" : "var(--muted-fg)" }}>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: annual ? "var(--fg)" : "var(--muted-fg )" }}>
               Annual
               <span style={{ marginLeft: "6px", padding: "2px 7px", background: "rgba(34,197,94,0.18)", color: "#22c55e", fontSize: "10px", borderRadius: "100px", fontWeight: 700 }}>Save 20%</span>
             </span>
@@ -149,6 +151,9 @@ export default function PricingSection() {
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  router.push(plan.price.monthly ? "/get-started" : "/book-demo");
+                }}
                 className={plan.featured ? "btn-primary" : "btn-secondary"}
                 style={{ width: "100%", padding: "12px", fontSize: "14px", justifyContent: "center" }}
               >

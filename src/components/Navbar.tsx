@@ -4,34 +4,43 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Menu, X, Zap, ChevronDown } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+
+const getLenis = () => {
+  if (typeof window !== "undefined") {
+    const win = window as unknown as {
+      customLenis?: {
+        scrollTo: (target: string | number, options?: { immediate?: boolean; offset?: number }) => void;
+      };
+    };
+    return win.customLenis;
+  }
+  return undefined;
+};
 
 const navLinks = [
   {
     label: "Features",
     href: "#features",
-    dropdown: [
-      { label: "AI Agent", href: "#features" },
-      { label: "Human Takeover", href: "#features" },
-      { label: "Lead Capture", href: "#features" },
-      { label: "Analytics", href: "#features" },
-    ],
   },
   {
     label: "Solutions",
     href: "#use-cases",
     dropdown: [
-      { label: "E-Commerce", href: "#use-cases" },
-      { label: "Healthcare", href: "#use-cases" },
-      { label: "SaaS", href: "#use-cases" },
-      { label: "Finance", href: "#use-cases" },
+      { label: "E-Commerce", href: "/solutions/e-commerce" },
+      { label: "Healthcare", href: "/solutions/healthcare" },
+      { label: "SaaS", href: "/solutions/saas" },
+      { label: "Finance", href: "/solutions/finance" },
     ],
   },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Pricing", href: "/pricing" },
   { label: "Resources", href: "#faq" },
   { label: "Contact", href: "#contact" },
 ];
 
 export default function Navbar() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -45,17 +54,45 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Effect to handle client-side hash scrolling when pathname changes
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      const hash = window.location.hash;
+      const intervals = [100, 300, 600, 1000, 1500];
+      intervals.forEach((delay) => {
+        setTimeout(() => {
+          const lenis = getLenis();
+          if (lenis && typeof lenis.scrollTo === "function") {
+            lenis.scrollTo(hash, { offset: 86 });
+          } else {
+            const el = document.querySelector(hash);
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth" });
+            }
+          }
+        }, delay);
+      });
+    }
+  }, [pathname]);
+
   const scrollTo = (href: string) => {
     if (typeof window !== "undefined") {
-      if (window.location.pathname === "/") {
-        const el = document.querySelector(href);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
+      if (href.startsWith("/")) {
+        router.push(href);
+      } else if (window.location.pathname === "/") {
+        const lenis = getLenis();
+        if (lenis && typeof lenis.scrollTo === "function") {
+          lenis.scrollTo(href, { offset: 86 });
         } else {
-          window.location.href = "/" + href;
+          const el = document.querySelector(href);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth" });
+          } else {
+            router.push("/" + href);
+          }
         }
       } else {
-        window.location.href = "/" + href;
+        router.push("/" + href);
       }
     }
     setMobileOpen(false);
@@ -89,9 +126,15 @@ export default function Navbar() {
               onClick={() => {
                 if (typeof window !== "undefined") {
                   if (window.location.pathname === "/") {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    const lenis = getLenis();
+                    if (lenis && typeof lenis.scrollTo === "function") {
+                      lenis.scrollTo(0);
+                    } else {
+                      const el = document.getElementById("hero") || document.body;
+                      el.scrollIntoView({ behavior: "smooth" });
+                    }
                   } else {
-                    window.location.href = "/";
+                    router.push("/");
                   }
                 }
               }}
@@ -227,7 +270,7 @@ export default function Navbar() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => scrollTo("#contact")}
+                  onClick={() => { router.push("/book-demo"); }}
                   className="btn-secondary"
                   style={{ padding: "9px 18px", fontSize: "14px" }}
                 >
@@ -236,7 +279,7 @@ export default function Navbar() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => scrollTo("#pricing")}
+                  onClick={() => { router.push("/get-started"); }}
                   className="btn-primary"
                   style={{ padding: "9px 18px", fontSize: "14px" }}
                 >
@@ -292,8 +335,8 @@ export default function Navbar() {
                 </button>
               ))}
               <div style={{ paddingTop: "12px", borderTop: "1px solid var(--card-border)", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                <button onClick={() => scrollTo("#contact")} className="btn-secondary">Book Demo</button>
-                <button onClick={() => scrollTo("#pricing")} className="btn-primary">Start Free Trial</button>
+                <button onClick={() => { router.push("/book-demo"); }} className="btn-secondary">Book Demo</button>
+                <button onClick={() => { router.push("/get-started"); }} className="btn-primary">Start Free Trial</button>
               </div>
             </div>
           </motion.div>

@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function CTASection() {
+  const router = useRouter();
   const scrollTo = (id: string) => {
     document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -57,7 +59,7 @@ export default function CTASection() {
                 whileTap={{ scale: 0.97 }}
                 className="btn-secondary"
                 style={{ fontSize: "17px", padding: "15px 34px" }}
-                onClick={() => scrollTo("#pricing")}
+                onClick={() => { router.push("/book-demo"); }}
               >
                 Book a Demo
               </motion.button>

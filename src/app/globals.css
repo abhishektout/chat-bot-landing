@@ -23,6 +23,7 @@
   --hero-to: #f5f0ff;
   --grid-line: rgba(37, 99, 235, 0.05);
   --dot-col: rgba(37, 99, 235, 0.12);
+  --muted-fg-pricing-toggle: #dff1ff;
 }
 
 /* ============================================
@@ -39,6 +40,7 @@
   --accent-glow: rgba(79, 124, 255, 0.2);
   --muted-bg: #1a2440;
   --muted-fg: #8899bb;
+  --muted-fg-pricing-toggle: #8899bb;
   --nav-bg: rgba(11, 16, 32, 0.88);
   --glass-bg: rgba(19, 26, 42, 0.72);
   --glass-border: rgba(79, 124, 255, 0.18);
