@@ -15,8 +15,8 @@ const entFeatures = [
 ];
 
 const codeLines = [
-  { text: "// SupportAI API — Create conversation", comment: true },
-  { text: "const response = await supportai.conversations.create({", comment: false },
+  { text: "// Assistly API — Create conversation", comment: true },
+  { text: "const response = await assistly.conversations.create({", comment: false },
   { text: "  customer: {", comment: false },
   { text: "    id: \"cust_847201\",", comment: false },
   { text: "    email: \"john@company.com\",", comment: false },
@@ -34,7 +34,7 @@ const codeLines = [
 
 export default function EnterpriseSection() {
   return (
-    <section id="enterprise" style={{ position: "relative", overflow: "hidden", padding: "96px 0", background: "rgba(79,124,255,0.02)" }}>
+    <section id="enterprise" style={{ position: "relative", overflow: "hidden", padding: "50px 0", background: "rgba(79,124,255,0.02)" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.18 }} />
       <div style={{ position: "absolute", top: "50%", left: 0, transform: "translateY(-50%)", width: "450px", height: "450px", background: "rgba(79,124,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", top: "50%", right: 0, transform: "translateY(-50%)", width: "400px", height: "400px", background: "rgba(0,212,255,0.04)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
@@ -42,7 +42,10 @@ export default function EnterpriseSection() {
       <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
         {/* Enterprise header */}
         <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "52px" }}>
-          <span className="badge" style={{ marginBottom: "16px" }}>🏢 Enterprise</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <Shield style={{ width: "12px", height: "12px" }} />
+            Enterprise
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
             Built for <span className="gradient-text">Enterprise Teams</span>
           </h2>
@@ -76,7 +79,10 @@ export default function EnterpriseSection() {
         {/* Developer section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-6">
           <motion.div initial={{ opacity: 0, x: -28 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-            <span className="badge" style={{ marginBottom: "16px" }}>👨‍💻 For Developers</span>
+            <span className="badge" style={{ marginBottom: "16px" }}>
+              <Code2 style={{ width: "12px", height: "12px" }} />
+              For Developers
+            </span>
             <h2 style={{ fontSize: "clamp(26px, 4vw, 42px)", fontWeight: 900, letterSpacing: "-0.02em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
               API-First Architecture for <span className="gradient-text">Any Stack</span>
             </h2>

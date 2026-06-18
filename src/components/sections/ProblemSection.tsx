@@ -1,20 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, RefreshCw, MoonStar, Unplug, TrendingUp, Eye } from "lucide-react";
+import { Clock, RefreshCw, MoonStar, Unplug, TrendingUp, Eye, AlertTriangle } from "lucide-react";
 
 const problems = [
   { icon: Clock, title: "Customers wait too long", description: "Average response times of 12+ hours frustrate customers and drive them to competitors.", stat: "12h avg wait time", color: "#ef4444" },
   { icon: RefreshCw, title: "Repetitive questions drain teams", description: "Support agents spend 70% of their time answering the same questions over and over.", stat: "70% repetitive tasks", color: "#f97316" },
   { icon: MoonStar, title: "Leads lost after hours", description: "Without 24/7 coverage, businesses lose 65% of potential customers who reach out at night.", stat: "65% leads lost", color: "#eab308" },
   { icon: Unplug, title: "Data is siloed and disconnected", description: "Support agents can't access order history, CRM data, or product info in real-time.", stat: "4+ systems to check", color: "#8b5cf6" },
-  { icon: TrendingUp, title: "Support costs keep rising", description: "Hiring more agents to handle volume is expensive and doesn't scale efficiently.", stat: "$125k+ per agent/year", color: "#ec4899" },
+  { icon: TrendingUp, title: "Support costs keep rising", description: "Hiring more agents to handle volume is expensive and doesn't scale efficiently.", stat: "₹10,00,000+ per agent/year", color: "#ec4899" },
   { icon: Eye, title: "Conversations go unanalyzed", description: "Valuable insights hidden in thousands of conversations are never acted on.", stat: "98% conversations lost", color: "#06b6d4" },
 ];
 
 export default function ProblemSection() {
   return (
-    <section id="problem" style={{ position: "relative", overflow: "hidden", padding: "96px 0" }}>
+    <section id="problem" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.4 }} />
       <div style={{
         position: "absolute", top: "50%", left: "50%",
@@ -33,7 +33,10 @@ export default function ProblemSection() {
           transition={{ duration: 0.6 }}
           style={{ textAlign: "center", marginBottom: "56px" }}
         >
-          <span className="badge" style={{ marginBottom: "16px" }}>⚠️ The Problem</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <AlertTriangle style={{ width: "12px", height: "12px" }} />
+            The Problem
+          </span> */}
           <h2 style={{ fontSize: "clamp(32px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
             Customer Support Is{" "}
             <span className="gradient-text">Broken</span>
@@ -52,7 +55,7 @@ export default function ProblemSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              whileHover={{ y: -5, boxShadow: `0 24px 60px var(--shadow)` }}
+              // whileHover={{ y: -5, boxShadow: `0 24px 60px var(--shadow)` }}
               className="card-gradient-border"
               style={{ padding: "24px" }}
             >

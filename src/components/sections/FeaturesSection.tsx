@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Globe, FileText, Database, User, Sparkles, Target, Heart, BookOpen, Wifi, Palette, Mic, BarChart3 } from "lucide-react";
+import { Globe, FileText, Database, User, Sparkles, Target, Heart, BookOpen, Wifi, Palette, Mic, BarChart3, Cpu } from "lucide-react";
 
 const features = [
   { icon: Globe, title: "Website URL Training", description: "Paste a website URL and automatically train the AI on your entire website content in minutes.", color: "#4f7cff", tag: "Training" },
@@ -20,7 +20,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section id="features" style={{ position: "relative", overflow: "hidden", padding: "96px 0" }}>
+    <section id="features" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
       <div style={{ position: "absolute", top: "20%", right: 0, width: "400px", height: "400px", background: "rgba(79,124,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: "20%", left: 0, width: "300px", height: "300px", background: "rgba(0,212,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
@@ -32,7 +32,10 @@ export default function FeaturesSection() {
           viewport={{ once: true }}
           style={{ textAlign: "center", marginBottom: "56px" }}
         >
-          <span className="badge" style={{ marginBottom: "16px" }}>🚀 Platform Features</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <Cpu style={{ width: "12px", height: "12px" }} />
+            Platform Features
+          </span> */}
           <h2 style={{ fontSize: "clamp(32px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
             Everything You Need to<br />
             <span className="gradient-text">Automate Support</span>

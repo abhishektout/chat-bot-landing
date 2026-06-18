@@ -7,7 +7,7 @@ import { SmoothScroll } from "@/components/SmoothScroll";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "SupportAI — AI Customer Support Platform | Reduce Costs, Capture Leads & Automate Support",
+  title: "Assistly — AI Customer Support Platform | Reduce Costs, Capture Leads & Automate Support",
   description:
     "Transform customer support with AI. Reduce support costs by 60%, capture more leads, and automate customer conversations using AI agents trained on your business knowledge and real-time data.",
   keywords: [
@@ -22,27 +22,27 @@ export const metadata: Metadata = {
     "WhatsApp AI chatbot",
     "white label AI platform",
   ],
-  authors: [{ name: "SupportAI" }],
-  creator: "SupportAI",
-  publisher: "SupportAI",
-  metadataBase: new URL("https://supportai.io"),
+  authors: [{ name: "Assistly" }],
+  creator: "Assistly",
+  publisher: "Assistly",
+  metadataBase: new URL("https://assistly.io"),
   alternates: { canonical: "/" },
   openGraph: {
-    title: "SupportAI — AI Customer Support Platform",
+    title: "Assistly — AI Customer Support Platform",
     description:
       "Reduce support costs, capture more leads, and automate customer conversations using AI-powered support agents trained on your business knowledge.",
-    url: "https://supportai.io",
-    siteName: "SupportAI",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "SupportAI Platform" }],
+    url: "https://assistly.io",
+    siteName: "Assistly",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Assistly Platform" }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SupportAI — AI Customer Support Platform",
+    title: "Assistly — AI Customer Support Platform",
     description: "Transform customer support with AI-powered agents. Reduce costs, capture leads, automate conversations.",
     images: ["/og-image.png"],
-    creator: "@supportai",
+    creator: "@assistly",
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 } },
   verification: { google: "your-google-verification-code" },
@@ -60,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "SupportAI",
+              name: "Assistly",
               applicationCategory: "BusinessApplication",
               description:
                 "AI-powered customer support platform with chatbots, live human support, business data integration, lead generation, analytics, and enterprise automation.",

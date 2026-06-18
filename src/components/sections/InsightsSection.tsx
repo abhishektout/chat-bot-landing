@@ -50,7 +50,7 @@ const tipStyle = { background: "var(--card-bg)", border: "1px solid var(--card-b
 
 export default function InsightsSection() {
   return (
-    <section id="insights" style={{ position: "relative", overflow: "hidden", padding: "96px 0" }}>
+    <section id="insights" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
       <div style={{ position: "absolute", bottom: 0, right: 0, width: "500px", height: "500px", background: "rgba(0,212,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
 
@@ -61,7 +61,10 @@ export default function InsightsSection() {
           viewport={{ once: true }}
           style={{ textAlign: "center", marginBottom: "56px" }}
         >
-          <span className="badge" style={{ marginBottom: "16px" }}>🧠 AI Insights</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <TrendingUp style={{ width: "12px", height: "12px" }} />
+            AI Insights
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
             Turn Conversations into<br />
             <span className="gradient-text">Business Intelligence</span>

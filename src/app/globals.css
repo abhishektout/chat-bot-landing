@@ -146,18 +146,46 @@ body {
   padding-bottom: 96px;
 }
 
-/* Badge */
+/* Redesigned Section Subtitle (Bespoke Human-Crafted style) */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 14px;
-  border-radius: 100px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px solid var(--accent);
+  gap: 8px;
+  padding: 4px 0 6px 0;
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
   color: var(--accent);
-  background: var(--accent-glow);
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  position: relative;
+  transition: color 0.25s ease;
+}
+
+.badge::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 20px;
+  height: 2px;
+  background: var(--accent);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.badge:hover {
+  color: var(--accent2);
+  transform: none !important;
+}
+
+.badge:hover::after {
+  width: 100%;
+  background: var(--accent2);
 }
 
 /* Primary button */

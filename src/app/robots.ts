@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/admin/"],
     },
-    sitemap: "https://supportai.io/sitemap.xml",
+    sitemap: "https://assistly.io/sitemap.xml",
   };
 }

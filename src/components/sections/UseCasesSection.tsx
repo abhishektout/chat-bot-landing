@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ShoppingCart, Heart, Shield, BookOpen, TrendingUp, Layers, Plane } from "lucide-react";
+import { ShoppingCart, Heart, Shield, BookOpen, TrendingUp, Layers, Plane, Briefcase } from "lucide-react";
 
 const industries = [
   { icon: ShoppingCart, name: "E-Commerce", desc: "Order tracking, returns, product queries, and upselling — automated.", stat: "45% fewer support tickets", color: "#4f7cff" },
@@ -15,17 +15,20 @@ const industries = [
 
 export default function UseCasesSection() {
   return (
-    <section id="use-cases" style={{ position: "relative", overflow: "hidden", padding: "96px 0" }}>
+    <section id="use-cases" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
 
       <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
         <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "56px" }}>
-          <span className="badge" style={{ marginBottom: "16px" }}>🏢 Industries</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <Briefcase style={{ width: "12px", height: "12px" }} />
+            Industries
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
             Built for Every<br /><span className="gradient-text">Industry</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>
-            No matter your industry, SupportAI adapts to your business processes and customer needs.
+            No matter your industry, Assistly adapts to your business processes and customer needs.
           </p>
         </motion.div>
 

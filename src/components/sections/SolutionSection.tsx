@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, User, Database, BarChart3, Target, Globe } from "lucide-react";
+import { Zap, User, Database, BarChart3, Target, Globe, Sparkles } from "lucide-react";
 
 const pillars = [
   { icon: Zap, label: "AI Agent", color: "#4f7cff", desc: "Handles 94% of queries instantly" },
@@ -14,7 +14,7 @@ const pillars = [
 
 export default function SolutionSection() {
   return (
-    <section id="solution" style={{ position: "relative", overflow: "hidden", padding: "96px 0", background: "rgba(79,124,255,0.02)" }}>
+    <section id="solution" style={{ position: "relative", overflow: "hidden", padding: "50px 0", background: "rgba(79,124,255,0.02)" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.25 }} />
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "600px", height: "600px", background: "rgba(79,124,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
 
@@ -23,9 +23,12 @@ export default function SolutionSection() {
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          style={{ textAlign: "center", marginBottom: "56px" }}
+          style={{ textAlign: "center", marginBottom: "90px" }}
         >
-          <span className="badge" style={{ marginBottom: "16px" }}>✨ The Solution</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <Sparkles style={{ width: "12px", height: "12px" }} />
+            The Solution
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
             One Platform.{" "}
             <span className="gradient-text">Complete</span>
@@ -37,7 +40,7 @@ export default function SolutionSection() {
         </motion.div>
 
         {/* Center hub */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "56px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "90px" }}>
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
@@ -56,7 +59,7 @@ export default function SolutionSection() {
               }}
             >
               <Zap style={{ width: "32px", height: "32px" }} fill="white" />
-              <span style={{ fontSize: "11px", fontWeight: 800, marginTop: "4px", textAlign: "center", lineHeight: 1.2 }}>Support<br/>AI</span>
+              <span style={{ fontSize: "11px", fontWeight: 800, marginTop: "4px", textAlign: "center", lineHeight: 1.2 }}>Support<br />AI</span>
             </div>
             {/* Orbit rings */}
             <div className="spin-slow" style={{ position: "absolute", inset: "-48px", borderRadius: "50%", border: "1px dashed rgba(79,124,255,0.3)" }} />
@@ -73,7 +76,7 @@ export default function SolutionSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-30px" }}
               transition={{ duration: 0.45, delay: i * 0.07 }}
-              whileHover={{ y: -6, boxShadow: `0 20px 50px var(--shadow)` }}
+              // whileHover={{ y: -6, boxShadow: `0 20px 50px var(--shadow)` }}
               className="card-gradient-border"
               style={{ padding: "24px", textAlign: "center" }}
             >

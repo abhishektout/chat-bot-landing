@@ -17,6 +17,7 @@ const logos = [
 
 export default function SocialProof() {
   const triple = [...logos, ...logos, ...logos];
+  // display: grid;grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));gap: 16px;margin-top: 48px;opacity: 1;transform: none;display: flex;justify-content: space-around;
 
   return (
     <section style={{ position: "relative", overflow: "hidden", padding: "56px 0", borderTop: "1px solid var(--card-border)", borderBottom: "1px solid var(--card-border)" }}>
@@ -85,7 +86,7 @@ export default function SocialProof() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px", marginTop: "48px" }}
+          style={{ display: "flex", justifyContent: 'space-around', gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px", marginTop: "48px" }}
         >
           {[
             { value: "60%", label: "Reduction in support costs", color: "#4f7cff" },

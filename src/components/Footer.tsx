@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Zap, Share2, Link2, Code2, Mail } from "lucide-react";
 
 const footerLinks = {
@@ -14,24 +16,33 @@ const footerLinks = {
 const socialIcons = [Share2, Link2, Code2, Mail];
 
 export default function Footer() {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <footer style={{ position: "relative", borderTop: "1px solid var(--card-border)", background: "rgba(79,124,255,0.02)" }}>
       <div className="mt-6" style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
         {/* Main grid */}
-        <div className="pt-20 pb-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8">
+        <div style={{ paddingBottom: "15px" }} className="pt-20 pb-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8">
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-2" style={{ minWidth: "180px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
               <div style={{
-                width: "32px", height: "32px", borderRadius: "10px",
-                background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-                display: "flex", alignItems: "center", justifyContent: "center",
+                width: "180px", height: "50px",
+                position: "relative",
+                display: "flex", alignItems: "center", justifyContent: "center"
               }}>
-                <Zap style={{ width: "16px", height: "16px", color: "#fff" }} fill="#fff" />
+                <img
+                  src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
+                  alt="Assistly Logo"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                />
               </div>
-              <span style={{ fontSize: "16px", fontWeight: 900, color: "var(--fg)" }}>
-                Support<span className="gradient-text">AI</span>
-              </span>
+
             </div>
             <p style={{ fontSize: "12.5px", color: "var(--muted-fg)", lineHeight: 1.6, marginBottom: "12px", maxWidth: "220px" }}>
               AI-powered customer support platform that reduces costs, captures leads, and delights customers 24/7.
@@ -98,7 +109,7 @@ export default function Footer() {
           gap: "14px",
         }}>
           <p style={{ fontSize: "12px", color: "var(--muted-fg)" }}>
-            © {new Date().getFullYear()} SupportAI Inc. All rights reserved.
+            © {new Date().getFullYear()} Assistly Inc. All rights reserved.
           </p>
           <div style={{ display: "flex", gap: "18px" }}>
             {["Privacy", "Terms", "Cookies"].map((label) => (

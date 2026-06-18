@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Settings } from "lucide-react";
 
 const techBadges = {
   "AI Models": [
@@ -47,12 +48,15 @@ const archLayers = [
 
 export default function TechShowcaseSection() {
   return (
-    <section id="tech" style={{ position: "relative", overflow: "hidden", padding: "96px 0" }}>
+    <section id="tech" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
 
       <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
         <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "56px" }}>
-          <span className="badge" style={{ marginBottom: "16px" }}>⚙️ Technology</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <Settings style={{ width: "12px", height: "12px" }} />
+            Technology
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
             Built on Modern<br /><span className="gradient-text">AI Infrastructure</span>
           </h2>
@@ -121,7 +125,7 @@ export default function TechShowcaseSection() {
                 </motion.div>
                 {i < archLayers.length - 1 && (
                   <motion.div initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 + 0.08 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "4px 0" }}>
-                    <div style={{ width: "1px", height: "18px", background: `linear-gradient(to bottom, ${layer.color}, ${archLayers[i+1].color})`, opacity: 0.6 }} />
+                    <div style={{ width: "1px", height: "18px", background: `linear-gradient(to bottom, ${layer.color}, ${archLayers[i + 1].color})`, opacity: 0.6 }} />
                     <span style={{ color: layer.color, fontSize: "14px", lineHeight: 1 }}>↓</span>
                   </motion.div>
                 )}

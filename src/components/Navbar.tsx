@@ -81,24 +81,16 @@ export default function Navbar() {
               style={{ display: "flex", alignItems: "center", gap: "10px", background: "none", border: "none", cursor: "pointer" }}
             >
               <div style={{
-                width: "36px", height: "36px", borderRadius: "10px",
-                background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 16px var(--accent-glow)",
+                width: "180px", height: "50px",
                 position: "relative",
+                display: "flex", alignItems: "center", justifyContent: "center"
               }}>
-                <Zap style={{ width: "18px", height: "18px", color: "#fff" }} fill="#fff" />
-                <div style={{
-                  position: "absolute", top: "-3px", right: "-3px",
-                  width: "10px", height: "10px", borderRadius: "50%",
-                  background: "#22c55e",
-                  border: "2px solid var(--bg)",
-                  animation: "pulseGlow 2s ease-in-out infinite",
-                }} />
+                <img
+                  src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
+                  alt="Assistly Logo"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                />
               </div>
-              <span style={{ fontSize: "18px", fontWeight: 900, color: "var(--fg)" }}>
-                Support<span className="gradient-text">AI</span>
-              </span>
             </motion.button>
 
             {/* Desktop Links */}

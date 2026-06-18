@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Database, BookOpen, User, LayoutDashboard, Zap, TrendingUp, ArrowUp } from "lucide-react";
+import { BarChart3, Database, BookOpen, User, LayoutDashboard, Zap, TrendingUp, ArrowUp, Play } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 const tabs = [
@@ -263,7 +263,7 @@ export default function DemoSection() {
   const ActiveContent = tabContent[activeTab];
 
   return (
-    <section id="demo" style={{ position: "relative", overflow: "hidden", padding: "96px 0", background: "rgba(79,124,255,0.02)" }}>
+    <section id="demo" style={{ position: "relative", overflow: "hidden", padding: "50px 0", background: "rgba(79,124,255,0.02)" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.2 }} />
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "600px", height: "400px", background: "rgba(79,124,255,0.05)", filter: "blur(80px)", pointerEvents: "none" }} />
 
@@ -274,7 +274,10 @@ export default function DemoSection() {
           viewport={{ once: true }}
           style={{ textAlign: "center", marginBottom: "48px" }}
         >
-          <span className="badge" style={{ marginBottom: "16px" }}>🖥️ Live Demo</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <Play style={{ width: "12px", height: "12px" }} fill="currentColor" />
+            Live Demo
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 54px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
             See the Platform in <span className="gradient-text">Action</span>
           </h2>

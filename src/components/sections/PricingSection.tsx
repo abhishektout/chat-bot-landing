@@ -2,26 +2,26 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Zap } from "lucide-react";
+import { Check, ArrowRight, Zap, CreditCard } from "lucide-react";
 
 const plans = [
   {
     name: "Starter", icon: "🚀",
-    price: { monthly: 49, annual: 39 },
+    price: { monthly: 3999, annual: 3199 },
     desc: "Perfect for small businesses getting started with AI support.",
     features: ["Up to 1,000 conversations/mo", "1 AI Agent", "Website widget", "PDF & URL training", "Basic analytics", "Email support", "API access"],
     color: "#4f7cff", featured: false, cta: "Start Free Trial",
   },
   {
     name: "Growth", icon: "📈",
-    price: { monthly: 149, annual: 119 },
+    price: { monthly: 11999, annual: 9599 },
     desc: "For growing teams that need more power and integrations.",
     features: ["Up to 10,000 conversations/mo", "5 AI Agents", "All channels (Web, WhatsApp, FB)", "Database integration", "Human takeover", "Lead capture & sentiment", "Advanced analytics", "Priority support", "Custom branding"],
     color: "#00d4ff", featured: true, cta: "Start Free Trial",
   },
   {
     name: "Agency", icon: "🏢",
-    price: { monthly: 399, annual: 319 },
+    price: { monthly: 31999, annual: 25599 },
     desc: "For agencies managing multiple client accounts.",
     features: ["Unlimited conversations", "20 AI Agents", "White label platform", "Custom domains", "Multi-tenant management", "AI business insights", "Voice agent (beta)", "Dedicated account manager", "SLA guarantee"],
     color: "#8b5cf6", featured: false, cta: "Start Free Trial",
@@ -39,13 +39,16 @@ export default function PricingSection() {
   const [annual, setAnnual] = useState(false);
 
   return (
-    <section id="pricing" style={{ position: "relative", overflow: "hidden", padding: "96px 0", background: "rgba(79,124,255,0.02)" }}>
+    <section id="pricing" style={{ position: "relative", overflow: "hidden", padding: "50px 0", background: "rgba(79,124,255,0.02)" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.18 }} />
       <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "700px", height: "350px", background: "rgba(79,124,255,0.05)", filter: "blur(80px)", pointerEvents: "none" }} />
 
       <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
         <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "52px" }}>
-          <span className="badge" style={{ marginBottom: "16px" }}>💰 Pricing</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <CreditCard style={{ width: "12px", height: "12px" }} />
+            Pricing
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
             Simple, Transparent <span className="gradient-text">Pricing</span>
           </h2>
@@ -115,13 +118,13 @@ export default function PricingSection() {
                       style={{ display: "flex", alignItems: "flex-end", gap: "4px" }}
                     >
                       <span style={{ fontSize: "40px", fontWeight: 900, color: "var(--fg)", lineHeight: 1 }}>
-                        ${annual ? plan.price.annual : plan.price.monthly}
+                        ₹{(annual ? plan.price.annual : plan.price.monthly)?.toLocaleString("en-IN")}
                       </span>
                       <span style={{ fontSize: "14px", color: "var(--muted-fg)", paddingBottom: "4px" }}>/mo</span>
                     </motion.div>
                     {annual && (
                       <div style={{ fontSize: "11px", color: "#22c55e", fontWeight: 600, marginTop: "4px" }}>
-                        ${(plan.price.monthly! - plan.price.annual!) * 12}/yr saved
+                        ₹{((plan.price.monthly! - plan.price.annual!) * 12).toLocaleString("en-IN")}/yr saved
                       </div>
                     )}
                   </>

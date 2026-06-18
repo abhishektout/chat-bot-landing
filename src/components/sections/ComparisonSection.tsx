@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, X, Minus } from "lucide-react";
+import { Check, X, Minus, BarChart3 } from "lucide-react";
 
 const features = [
   "AI Responses", "Human Takeover", "Database Integration",
@@ -10,9 +10,9 @@ const features = [
 ];
 
 const columns = [
-  { name: "SupportAI", subtitle: "Our Platform", highlight: true, values: [true, true, true, true, true, true, true, true, true, true, true], price: "From $49/mo", color: "#4f7cff" },
-  { name: "Live Chat", subtitle: "Traditional", highlight: false, values: [false, true, false, false, false, false, false, false, "partial", false, false], price: "From $200/mo", color: "#8899bb" },
-  { name: "Basic AI Bots", subtitle: "Rule-based", highlight: false, values: ["partial", false, false, false, "partial", false, false, false, "partial", false, false], price: "From $99/mo", color: "#8899bb" },
+  { name: "Assistly", subtitle: "Our Platform", highlight: true, values: [true, true, true, true, true, true, true, true, true, true, true], price: "From ₹3,999/mo", color: "#4f7cff" },
+  { name: "Live Chat", subtitle: "Traditional", highlight: false, values: [false, true, false, false, false, false, false, false, "partial", false, false], price: "From ₹16,000/mo", color: "#8899bb" },
+  { name: "Basic AI Bots", subtitle: "Rule-based", highlight: false, values: ["partial", false, false, false, "partial", false, false, false, "partial", false, false], price: "From ₹8,000/mo", color: "#8899bb" },
 ];
 
 function Cell({ v }: { v: boolean | "partial" }) {
@@ -23,7 +23,7 @@ function Cell({ v }: { v: boolean | "partial" }) {
 
 export default function ComparisonSection() {
   return (
-    <section id="comparison" style={{ position: "relative", overflow: "hidden", padding: "96px 0", background: "rgba(79,124,255,0.02)" }}>
+    <section id="comparison" style={{ position: "relative", overflow: "hidden", padding: "50px 0", background: "rgba(79,124,255,0.02)" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.2 }} />
       <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "700px", height: "300px", background: "rgba(79,124,255,0.05)", filter: "blur(80px)", pointerEvents: "none" }} />
 
@@ -34,11 +34,14 @@ export default function ComparisonSection() {
           viewport={{ once: true }}
           style={{ textAlign: "center", marginBottom: "52px" }}
         >
-          <span className="badge" style={{ marginBottom: "16px" }}>🏆 Comparison</span>
+          {/* <span className="badge" style={{ marginBottom: "16px" }}>
+            <BarChart3 style={{ width: "12px", height: "12px" }} />
+            Comparison
+          </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 54px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
             Why Businesses <span className="gradient-text">Choose Us</span>
           </h2>
-          <p style={{ fontSize: "18px", color: "var(--muted-fg)" }}>See how SupportAI stacks up against the competition.</p>
+          <p style={{ fontSize: "18px", color: "var(--muted-fg)" }}>See how Assistly stacks up against the competition.</p>
         </motion.div>
 
         <motion.div

@@ -9,7 +9,7 @@ export default function CTASection() {
   };
 
   return (
-    <section id="contact" style={{ position: "relative", overflow: "hidden", padding: "96px 0" }}>
+    <section id="contact" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.2 }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(79,124,255,0.08) 0%, transparent 50%, rgba(0,212,255,0.06) 100%)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "700px", height: "500px", background: "rgba(79,124,255,0.08)", filter: "blur(80px)", borderRadius: "50%", pointerEvents: "none" }} />
@@ -28,10 +28,10 @@ export default function CTASection() {
           <div style={{ position: "absolute", bottom: 0, right: "20%", width: "200px", height: "200px", background: "rgba(0,212,255,0.1)", borderRadius: "50%", filter: "blur(60px)", pointerEvents: "none" }} />
 
           <div style={{ position: "relative", zIndex: 1 }}>
-            <span className="badge" style={{ marginBottom: "20px" }}>
+            {/* <span className="badge" style={{ marginBottom: "20px" }}>
               <Sparkles style={{ width: "13px", height: "13px" }} />
               Get Started Today
-            </span>
+            </span> */}
 
             <h2 style={{ fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginBottom: "20px", lineHeight: 1.1, marginTop: "12px" }}>
               Ready to Automate<br /><span className="gradient-text">Customer Support?</span>

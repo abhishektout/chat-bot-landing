@@ -380,7 +380,7 @@ function AIDashboard() {
             <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#eab308", opacity: 0.8 }} />
             <div style={{ width: "11px", height: "11px", borderRadius: "50%", background: "#22c55e", opacity: 0.8 }} />
           </div>
-          <span style={{ fontSize: "11px", color: "var(--muted-fg)", fontWeight: 600 }}>SupportAI — Live Dashboard</span>
+          <span style={{ fontSize: "11px", color: "var(--muted-fg)", fontWeight: 600 }}>Assistly — Live Dashboard</span>
           <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
             <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#22c55e", animation: "pulseGlow 2s ease-in-out infinite" }} />
             <span style={{ fontSize: "11px", color: "#22c55e", fontWeight: 600 }}>Live</span>
@@ -949,7 +949,7 @@ function AIDashboard() {
         </div>
         <div>
           <div style={{ fontSize: "9px", color: "var(--muted-fg)" }}>Cost Saved</div>
-          <div style={{ fontSize: "13px", fontWeight: 800, color: "#22c55e" }}>$24,847/mo</div>
+          <div style={{ fontSize: "13px", fontWeight: 800, color: "#22c55e" }}>₹2,00,000/mo</div>
         </div>
       </motion.div>
 
@@ -1107,7 +1107,7 @@ export default function HeroSection() {
                 <div>
                   <div style={{ color: "#f59e0b", fontSize: "13px", letterSpacing: "2px" }}>★★★★★</div>
                   <p style={{ fontSize: "13px", color: "var(--muted-fg)" }}>
-                    <strong style={{ color: "var(--fg)" }}>2,847+</strong> businesses trust SupportAI
+                    <strong style={{ color: "var(--fg)" }}>2,847+</strong> businesses trust Assistly
                   </p>
                 </div>
               </motion.div>
