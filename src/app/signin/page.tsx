@@ -104,7 +104,7 @@ export default function SignInPage() {
               padding: "6px 12px", borderRadius: "100px", marginBottom: "20px",
             }}
           >
-            3 Advanced Modules
+            2 Advanced Modules
           </div>
 
           <h1
@@ -195,7 +195,7 @@ export default function SignInPage() {
                 border: "1px solid var(--card-border)",
               }}
             >
-              {(["super-admin", "admin", "team-member"] as Role[]).map((r) => {
+              {(["admin", "team-member"] as Role[]).map((r) => {
                 const isActive = role === r;
                 return (
                   <button

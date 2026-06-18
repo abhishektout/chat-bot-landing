@@ -266,7 +266,26 @@ export default function Navbar() {
                 </motion.button>
               )}
 
-              <div className="hidden md:flex" style={{ gap: "8px" }}>
+              <div className="hidden md:flex" style={{ gap: "8px", alignItems: "center" }}>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { router.push("/signin"); }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--muted-fg)",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    padding: "9px 16px",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "var(--fg)"; }}
+                  onMouseLeave={(e) => { (e.target as HTMLElement).style.color = "var(--muted-fg)"; }}
+                >
+                  Sign In
+                </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -335,6 +354,20 @@ export default function Navbar() {
                 </button>
               ))}
               <div style={{ paddingTop: "12px", borderTop: "1px solid var(--card-border)", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <button
+                  onClick={() => { router.push("/signin"); }}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--card-border)",
+                    color: "var(--fg)",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  Sign In
+                </button>
                 <button onClick={() => { router.push("/book-demo"); }} className="btn-secondary">Book Demo</button>
                 <button onClick={() => { router.push("/get-started"); }} className="btn-primary">Start Free Trial</button>
               </div>
