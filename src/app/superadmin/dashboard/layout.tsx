@@ -4,22 +4,22 @@ import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { 
-  Building, 
-  Trash2, 
-  Settings, 
-  ChevronLeft, 
-  ChevronRight, 
-  Sun, 
-  Moon, 
-  LogOut, 
-  Crown, 
-  Menu, 
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Building,
+  Trash2,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Sun,
+  Moon,
+  LogOut,
+  Crown,
+  Menu,
   X,
-  Compass
+  Bell,
 } from "lucide-react";
 import { useToast } from "@/components/Toast";
-import { Button } from "@/components/ui";
 
 export default function SuperAdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
@@ -27,14 +27,18 @@ export default function SuperAdminDashboardLayout({ children }: { children: Reac
   const [adminName, setAdminName] = useState("Super Admin");
   const [isLoading, setIsLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
+  const { showToast } = useToast();
 
   useEffect(() => {
+    setMounted(true);
     const token = localStorage.getItem("sa_token");
     const name = localStorage.getItem("sa_name");
-    
+
     if (!token) {
       router.push("/signin");
       return;
@@ -43,14 +47,20 @@ export default function SuperAdminDashboardLayout({ children }: { children: Reac
     if (name) {
       setAdminName(name);
     }
-    
-    // Load collapsed state
+
     const savedState = localStorage.getItem("saas_superadmin_sidebar_collapsed");
     if (savedState === "true") {
       setIsCollapsed(true);
     }
-    
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
     setIsLoading(false);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, [router]);
 
   const handleLogout = () => {
@@ -59,23 +69,59 @@ export default function SuperAdminDashboardLayout({ children }: { children: Reac
     router.push("/signin");
   };
 
-  const toggleSidebar = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    localStorage.setItem("saas_superadmin_sidebar_collapsed", String(newState));
+  const toggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem("saas_superadmin_sidebar_collapsed", next ? "true" : "false");
+      return next;
+    });
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
+  const showExpanded = !isCollapsed || isMobile;
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[var(--bg)] text-[var(--fg)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin w-8 h-8 rounded-full border-3 border-[var(--accent)] border-t-transparent"></div>
-          <span className="text-sm font-medium text-[var(--muted-fg)]">Loading administrative services...</span>
+      <div style={{
+        display: "flex",
+        height: "100vh",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--bg)",
+        color: "var(--fg)",
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+          <div style={{
+            width: "52px",
+            height: "52px",
+            borderRadius: "14px",
+            background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 40px var(--accent-glow)",
+            animation: "pulseGlow 2s ease-in-out infinite",
+          }}>
+            <Crown style={{ width: "24px", height: "24px", color: "#fff" }} />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+            <div style={{
+              width: "32px",
+              height: "3px",
+              borderRadius: "100px",
+              background: "linear-gradient(90deg, var(--accent), var(--accent2))",
+              animation: "loadingBar 1.2s ease-in-out infinite",
+            }} />
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--muted-fg)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Loading Console...
+            </span>
+          </div>
         </div>
+        <style>{`
+          @keyframes loadingBar {
+            0%, 100% { width: 32px; opacity: 0.5; }
+            50% { width: 80px; opacity: 1; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -83,160 +129,685 @@ export default function SuperAdminDashboardLayout({ children }: { children: Reac
   const navLinks = [
     { href: "/superadmin/dashboard/clients", label: "Manage Clients", icon: Building },
     { href: "/superadmin/dashboard/settings", label: "Global Settings", icon: Settings },
-    { href: "/superadmin/dashboard/deleted", label: "Deleted Accounts", icon: Trash2 }
+    { href: "/superadmin/dashboard/deleted", label: "Deleted Accounts", icon: Trash2 },
   ];
 
   return (
-    <div className="dot-bg flex min-h-screen bg-[var(--bg)] text-[var(--fg)] transition-all duration-300">
-      {/* Mobile Header */}
-      <div className="flex items-center justify-between md:hidden fixed top-0 left-0 right-0 h-16 bg-[var(--glass-bg)] backdrop-blur-md border-b border-[var(--glass-border)] px-4 z-40 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[var(--accent)] to-[var(--accent2)] flex items-center justify-center text-white">
-            <Crown className="w-4 h-4" />
+    <>
+      <div className="dot-bg" style={{
+        minHeight: "100vh",
+        display: "flex",
+        background: "var(--bg)",
+        color: "var(--fg)",
+        transition: "background 0.4s ease, color 0.3s ease",
+      }}>
+
+        {/* ── Mobile Top Bar ── */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "64px",
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid var(--glass-border)",
+          padding: "0 20px",
+          zIndex: 40,
+          boxShadow: "0 2px 20px var(--shadow)",
+        }} className="mobile-navbar">
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--fg)",
+                cursor: "pointer",
+                padding: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "8px",
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--muted-bg)")}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+              title="Open Menu"
+            >
+              <Menu style={{ width: "20px", height: "20px" }} />
+            </button>
+            <div style={{
+              width: "120px",
+              height: "28px",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+            }}>
+              <img
+                src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
+                alt="Assistly Logo"
+                style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }}
+              />
+            </div>
           </div>
-          <h1 className="text-sm font-extrabold tracking-tight">
-            Assistly <span className="gradient-text">Master</span>
-          </h1>
+
+          {/* Right Side of Mobile Top Bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Notification Icon */}
+            <button style={{
+              background: "none",
+              border: "none",
+              color: "var(--muted-fg)",
+              cursor: "pointer",
+              padding: "6px",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+            }}>
+              <Bell style={{ width: "18px", height: "18px" }} />
+              <span style={{
+                position: "absolute",
+                top: "4px",
+                right: "4px",
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#ef4444",
+                border: "1.5px solid var(--bg)"
+              }} />
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--muted-fg)",
+                cursor: "pointer",
+                padding: "6px",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {theme === "dark"
+                ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} />
+                : <Moon style={{ width: "18px", height: "18px", color: "var(--accent)" }} />}
+            </button>
+          </div>
         </div>
-        <button 
-          onClick={() => setIsMobileMenuOpen(true)} 
-          className="p-2.5 rounded-xl bg-[var(--muted-bg)] border-0 text-[var(--fg)] cursor-pointer"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      </div>
 
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div 
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-45"
-        />
-      )}
-
-      {/* Sidebar Navigation */}
-      <aside 
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-[var(--glass-bg)] backdrop-blur-md border-r border-[var(--glass-border)] transition-all duration-300 ease-in-out ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:sticky md:top-0 md:h-screen md:z-30`}
-        style={{ width: isCollapsed ? "80px" : "280px" }}
-      >
-        {/* Brand/Header */}
-        <div className="p-5 border-b border-[var(--glass-border)] flex items-center justify-between relative">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[var(--accent)] to-[var(--accent2)] flex items-center justify-center text-white shrink-0 shadow-md">
-              <Crown className="w-4.5 h-4.5" />
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col">
-                <h1 className="text-sm font-black tracking-tight text-[var(--fg)]">
-                  Assistly <span className="gradient-text">Master</span>
-                </h1>
-                <span className="text-[10px] text-[var(--muted-fg)] font-bold uppercase tracking-wider">
-                  Admin Platform
-                </span>
-              </div>
-            )}
-          </div>
-          
-          <button 
-            onClick={() => setIsMobileMenuOpen(false)} 
-            className="md:hidden p-1.5 text-[var(--muted-fg)] hover:text-[var(--fg)] cursor-pointer bg-transparent border-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          {/* Desktop Toggle Button */}
-          <button
-            onClick={toggleSidebar}
-            className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--card-bg)] border border-[var(--card-border)] items-center justify-center text-[var(--muted-fg)] hover:text-[var(--fg)] shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer"
-          >
-            {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-
-        {/* Workspace Quick-Info */}
-        {!isCollapsed && (
-          <div className="mx-4 mt-5 p-4 rounded-2xl bg-[var(--muted-bg)]/40 border border-[var(--card-border)]/55 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-500/10 border border-[var(--card-border)] flex items-center justify-center text-[var(--accent)] font-bold text-xs uppercase shadow-inner">
-              {adminName.substring(0, 2)}
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-[var(--fg)] truncate">{adminName}</span>
-              <span className="text-[9px] text-[var(--muted-fg)] uppercase tracking-wider font-semibold">
-                Superuser Console
-              </span>
-            </div>
-          </div>
+        {/* ── Mobile Overlay ── */}
+        {isMobileMenuOpen && (
+          <div
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(4px)",
+              zIndex: 45,
+            }}
+            className="md:hidden"
+          />
         )}
 
-        {/* Links Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
+        {/* ── Sidebar ── */}
+        <motion.aside
+          animate={{ width: showExpanded ? 260 : 72 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            bottom: 0,
+            zIndex: 50,
+            display: "flex",
+            flexDirection: "column",
+            background: "var(--glass-bg)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            borderRight: "1px solid var(--glass-border)",
+            boxShadow: "2px 0 32px var(--shadow)",
+            transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1)",
+          }}
+          className={`${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        >
+          {/* ── Sidebar User Header (No Logo!) ── */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: !showExpanded ? "16px 8px" : "24px 16px",
+            borderBottom: "1px solid var(--glass-border)",
+            position: "relative",
+            minHeight: "72px",
+            gap: "12px",
+            transition: "padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}>
+            {/* User Avatar */}
+            <div style={{
+              width: !showExpanded ? "36px" : "56px",
+              height: !showExpanded ? "36px" : "56px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: !showExpanded ? "14px" : "20px",
+              boxShadow: "0 4px 12px var(--accent-glow)",
+              flexShrink: 0,
+              overflow: "hidden",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}>
+              <Crown style={{ width: !showExpanded ? "16px" : "24px", height: !showExpanded ? "16px" : "24px", color: "#fff" }} />
+            </div>
+
+            {/* Name + Workspace stack */}
+            <AnimatePresence initial={false}>
+              {showExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    width: "100%",
+                    overflow: "hidden",
+                  }}
+                >
+                  <span style={{
+                    fontSize: "14px",
+                    fontWeight: 750,
+                    color: "var(--fg)",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                    width: "100%",
+                    lineHeight: 1.3,
+                  }}>
+                    {adminName}
+                  </span>
+                  <span style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    color: "var(--muted-fg)",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                    width: "100%",
+                    marginTop: "2.5px",
+                  }}>
+                    Superuser Console
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Desktop collapse toggle */}
+            <button
+              onClick={toggleCollapse}
+              className="desktop-collapse-btn"
+              style={{
+                position: "absolute",
+                right: "-12px",
+                top: "100%",
+                transform: "translateY(-50%)",
+                width: "24px",
+                height: "24px",
+                borderRadius: "50%",
+                background: "var(--card-bg)",
+                border: "1px solid var(--card-border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--muted-fg)",
+                cursor: "pointer",
+                zIndex: 100,
+                boxShadow: "0 2px 8px var(--shadow)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--muted-fg)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--card-border)";
+              }}
+            >
+              {isCollapsed
+                ? <ChevronRight style={{ width: "12px", height: "12px" }} />
+                : <ChevronLeft style={{ width: "12px", height: "12px" }} />}
+            </button>
+
+            {/* Mobile close button inside sidebar */}
+            {isMobileMenuOpen && (
+              <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl font-bold text-xs transition-all relative group ${
-                  isActive
-                    ? "bg-[var(--accent-glow)] text-[var(--accent)] border border-[var(--accent)]/10"
-                    : "text-[var(--muted-fg)] hover:text-[var(--fg)] hover:bg-[var(--muted-bg)]/60 border border-transparent"
-                }`}
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  top: "16px",
+                  padding: "5px",
+                  borderRadius: "6px",
+                  color: "var(--muted-fg)",
+                  background: "var(--muted-bg)",
+                  border: "1px solid var(--card-border)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 10,
+                }}
+                className="md:hidden"
               >
-                <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-105 ${
-                  isActive ? "text-[var(--accent)]" : "text-[var(--muted-fg)]"
-                }`} />
-                {!isCollapsed && <span>{link.label}</span>}
-                
-                {/* Tooltip for collapsed mode */}
-                {isCollapsed && (
-                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-slate-950 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-md">
-                    {link.label}
-                  </div>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Footer / Utility actions */}
-        <div className="p-4 border-t border-[var(--glass-border)] space-y-1">
-          <button 
-            onClick={toggleTheme} 
-            className="flex items-center gap-3.5 w-full px-4 py-3 rounded-xl hover:bg-[var(--muted-bg)]/60 text-[var(--muted-fg)] hover:text-[var(--fg)] transition-all font-bold text-xs text-left cursor-pointer border-0 bg-transparent"
-          >
-            {theme === "dark" ? (
-              <>
-                <Sun className="w-4 h-4 text-amber-500 shrink-0" />
-                {!isCollapsed && <span>Light Theme</span>}
-              </>
-            ) : (
-              <>
-                <Moon className="w-4 h-4 text-[var(--accent)] shrink-0" />
-                {!isCollapsed && <span>Dark Theme</span>}
-              </>
+                <X style={{ width: "12px", height: "12px" }} />
+              </button>
             )}
-          </button>
-          
-          <button 
-            onClick={handleLogout} 
-            className="flex items-center gap-3.5 w-full px-4 py-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-all font-bold text-xs text-left cursor-pointer border-0 bg-transparent"
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!isCollapsed && <span>Exit Session</span>}
-          </button>
-        </div>
-      </aside>
+          </div>
 
-      {/* Main Administrative Panel Content */}
-      <main className="flex-1 min-w-0 overflow-y-auto flex flex-col px-6 pt-24 pb-10 md:px-10 md:pt-10 md:pb-10">
-        <div className="max-w-6xl mx-auto w-full">
-          {children}
-        </div>
-      </main>
-    </div>
+          {/* ── Navigation Links ── */}
+          <nav style={{ flex: 1, padding: "12px 10px", display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
+            {showExpanded && (
+              <span style={{
+                fontSize: "9px",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
+                color: "var(--muted-fg)",
+                padding: "8px 10px 4px",
+              }}>Administrative Portal</span>
+            )}
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: !showExpanded ? "12px" : "11px 12px",
+                    borderRadius: "12px",
+                    fontSize: "12.5px",
+                    fontWeight: isActive ? 700 : 600,
+                    color: isActive ? "var(--accent)" : "var(--muted-fg)",
+                    background: isActive ? "var(--accent-glow)" : "transparent",
+                    border: isActive ? "1px solid rgba(79,124,255,0.2)" : "1px solid transparent",
+                    textDecoration: "none",
+                    transition: "all 0.18s ease",
+                    justifyContent: !showExpanded ? "center" : "flex-start",
+                    position: "relative",
+                    boxShadow: isActive ? "0 2px 8px var(--accent-glow)" : "none",
+                    overflow: "hidden",
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLAnchorElement).style.color = "var(--fg)";
+                      (e.currentTarget as HTMLAnchorElement).style.background = "var(--muted-bg)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) {
+                      (e.currentTarget as HTMLAnchorElement).style.color = "var(--muted-fg)";
+                      (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
+                    }
+                  }}
+                >
+                  <Icon style={{
+                    width: "16px",
+                    height: "16px",
+                    flexShrink: 0,
+                    color: isActive ? "var(--accent)" : "inherit",
+                  }} />
+                  <AnimatePresence initial={false}>
+                    {showExpanded && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        style={{ whiteSpace: "nowrap", overflow: "hidden" }}
+                      >
+                        {link.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Active indicator */}
+                  {isActive && showExpanded && (
+                    <span style={{
+                      marginLeft: "auto",
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      background: "var(--accent)",
+                      flexShrink: 0,
+                    }} />
+                  )}
+
+                  {/* Collapsed tooltip */}
+                  {!showExpanded && (
+                    <div style={{
+                      position: "absolute",
+                      left: "calc(100% + 12px)",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      padding: "6px 12px",
+                      background: "var(--card-bg)",
+                      border: "1px solid var(--card-border)",
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "var(--fg)",
+                      whiteSpace: "nowrap",
+                      zIndex: 99,
+                      boxShadow: "0 4px 16px var(--shadow)",
+                      opacity: 0,
+                      pointerEvents: "none",
+                      transition: "opacity 0.15s",
+                    }} className="sidebar-tooltip">
+                      {link.label}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* ── Sidebar Footer ── */}
+          <div style={{
+            padding: "12px 10px",
+            borderTop: "1px solid var(--glass-border)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+          }}>
+            {/* Theme toggle in sidebar */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: !showExpanded ? "12px" : "11px 12px",
+                borderRadius: "12px",
+                fontSize: "12.5px",
+                fontWeight: 600,
+                color: "var(--muted-fg)",
+                background: "transparent",
+                border: "1px solid transparent",
+                cursor: "pointer",
+                width: "100%",
+                justifyContent: !showExpanded ? "center" : "flex-start",
+                transition: "all 0.18s ease",
+                overflow: "hidden",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--fg)";
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--muted-bg)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--muted-fg)";
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              }}
+            >
+              {theme === "dark"
+                ? <Sun style={{ width: "16px", height: "16px", color: "#f59e0b", flexShrink: 0 }} />
+                : <Moon style={{ width: "16px", height: "16px", color: "var(--accent)", flexShrink: 0 }} />}
+              <AnimatePresence initial={false}>
+                {showExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ whiteSpace: "nowrap", overflow: "hidden" }}
+                  >
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: !showExpanded ? "12px" : "11px 12px",
+                borderRadius: "12px",
+                fontSize: "12.5px",
+                fontWeight: 600,
+                color: "#ef4444",
+                background: "transparent",
+                border: "1px solid transparent",
+                cursor: "pointer",
+                width: "100%",
+                justifyContent: !showExpanded ? "center" : "flex-start",
+                transition: "all 0.18s ease",
+                overflow: "hidden",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,0.08)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(239,68,68,0.2)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "transparent";
+              }}
+            >
+              <LogOut style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+              <AnimatePresence initial={false}>
+                {showExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ whiteSpace: "nowrap", overflow: "hidden" }}
+                  >
+                    Exit Session
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+          </div>
+        </motion.aside>
+
+        {/* ── Main Content ── */}
+        <motion.main
+          animate={{ marginLeft: showExpanded ? 260 : 72 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            paddingTop: 0,
+            paddingBottom: "40px",
+            paddingLeft: 0,
+            paddingRight: 0,
+          }}
+          className="admin-main"
+        >
+          {/* ── Desktop Top Navbar ── */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "16px 32px",
+            background: "var(--glass-bg)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            borderBottom: "1px solid var(--glass-border)",
+            minHeight: "64px",
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
+            boxShadow: "0 2px 20px var(--shadow)",
+          }} className="desktop-navbar">
+            {/* Left Side: Assistly Logo (Super Admin brand) */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{
+                width: "170px",
+                height: "44px",
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+              }}>
+                <img
+                  src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
+                  alt="Assistly Logo"
+                  style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }}
+                />
+              </div>
+            </div>
+
+            {/* Right Side: Notification Icon + Theme Toggle */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              {/* Notification Icon */}
+              <button style={{
+                background: "none",
+                border: "none",
+                color: "var(--muted-fg)",
+                cursor: "pointer",
+                padding: "8px",
+                borderRadius: "10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                transition: "all 0.2s",
+              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = "var(--fg)";
+                  e.currentTarget.style.backgroundColor = "var(--muted-bg)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = "var(--muted-fg)";
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                <Bell style={{ width: "18px", height: "18px" }} />
+                <span style={{
+                  position: "absolute",
+                  top: "6px",
+                  right: "6px",
+                  width: "7px",
+                  height: "7px",
+                  borderRadius: "50%",
+                  background: "#ef4444",
+                  border: "1.5px solid var(--bg)"
+                }} />
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted-fg)",
+                  cursor: "pointer",
+                  padding: "8px",
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = "var(--fg)";
+                  e.currentTarget.style.backgroundColor = "var(--muted-bg)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = "var(--muted-fg)";
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                {theme === "dark"
+                  ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} />
+                  : <Moon style={{ width: "18px", height: "18px", color: "var(--accent)" }} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Page content */}
+          <div style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column" }} className="admin-content">
+            {children}
+          </div>
+        </motion.main>
+      </div>
+
+      {/* Global responsive styles using explicit media queries to guarantee proper hide/show */}
+      <style>{`
+      @media (max-width: 768px) {
+        .desktop-navbar {
+          display: none !important;
+        }
+        .mobile-navbar {
+          display: flex !important;
+        }
+        .desktop-collapse-btn {
+          display: none !important;
+        }
+        .admin-main {
+          margin-left: 0 !important;
+          padding-top: 80px !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
+        .admin-content {
+          padding-top: 0 !important;
+          padding-left: 16px !important;
+          padding-right: 16px !important;
+        }
+      }
+      @media (min-width: 769px) {
+        .desktop-navbar {
+          display: flex !important;
+        }
+        .mobile-navbar {
+          display: none !important;
+        }
+        .desktop-collapse-btn {
+          display: flex !important;
+        }
+        .admin-content {
+          padding-top: 24px !important;
+          padding-left: 32px !important;
+          padding-right: 32px !important;
+        }
+      }
+      a:has(.sidebar-tooltip):hover .sidebar-tooltip,
+      a:hover .sidebar-tooltip {
+        opacity: 1 !important;
+      }
+    `}</style>
+    </>
   );
 }
