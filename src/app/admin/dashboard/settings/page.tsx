@@ -120,7 +120,7 @@ export default function BotSettingsPage() {
         {/* Card 2: Design & Embedding */}
         <div className="card" style={{ padding: "32px" }}>
           {sectionHeader(<Palette style={{ width: "20px", height: "20px" }} />, "Design & Embedding", "Design custom UI colors and extract integration snippet.", "#10b981", "rgba(16,185,129,0.1)", "rgba(16,185,129,0.15)")}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "28px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "20px", marginBottom: "28px" }}>
             {/* API Key */}
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted-fg)" }}>API Authorization Key</label>

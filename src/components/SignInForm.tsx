@@ -11,7 +11,7 @@ import { useToast } from "@/components/Toast";
 type Role = "super-admin" | "admin" | "team-member";
 type AdminMethod = "otp" | "password";
 
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { authService } from "@/services/authService";
 
 const ROLE_INFO = {
   "super-admin": {
@@ -109,11 +109,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
     try {
       if (role === "super-admin") {
         // Step 1: Login Super Admin
-        const loginResponse = await fetch(`${BASE_API}/superadmin/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), password }),
-        });
+        const loginResponse = await authService.loginSuperAdmin(email.trim(), password);
         const loginData = await loginResponse.json();
 
         if (!loginResponse.ok || loginData.status !== "success") {
@@ -123,11 +119,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
         }
 
         // Step 2: Request OTP
-        const otpResponse = await fetch(`${BASE_API}/superadmin/auth/send-otp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), password }),
-        });
+        const otpResponse = await authService.sendSuperAdminOtp(email.trim(), password);
         const otpData = await otpResponse.json();
 
         if (otpResponse.ok && otpData.status === "success") {
@@ -139,11 +131,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
       } else if (role === "admin") {
         if (adminLoginMethod === "otp") {
           // Request OTP for Client Admin
-          const res = await fetch(`${BASE_API}/client/auth/send-otp`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: email.trim() }),
-          });
+          const res = await authService.sendClientOtp(email.trim());
           const data = await res.json();
 
           if (res.ok && data.status === "success") {
@@ -154,11 +142,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
           }
         } else {
           // Password Login for Admin
-          let res = await fetch(`${BASE_API}/client/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: email.trim(), password }),
-          });
+          let res = await authService.loginClientPassword(email.trim(), password);
           let data;
           try {
             data = await res.json();
@@ -168,14 +152,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
           if (!res.ok) {
             // Try x-www-form-urlencoded format
-            const formData = new URLSearchParams();
-            formData.append("username", email.trim());
-            formData.append("password", password);
-            res = await fetch(`${BASE_API}/client/login`, {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: formData,
-            });
+            res = await authService.loginClientPasswordUrlEncoded(email.trim(), password);
             try {
               data = await res.json();
             } catch (e) {
@@ -194,14 +171,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
         }
       } else if (role === "team-member") {
         // Direct Password login for Agents
-        const formData = new FormData();
-        formData.append("email", email.trim());
-        formData.append("password", password);
-
-        const res = await fetch(`${BASE_API}/agent/login`, {
-          method: "POST",
-          body: formData,
-        });
+        const res = await authService.loginAgent(email.trim(), password);
         const data = await res.json();
 
         if (res.ok && data.status === "success") {
@@ -225,8 +195,8 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp.trim()) {
-      setErrors({ otp: "Verification code is required." });
+    if (!otp.trim() || otp.length !== 6) {
+      setErrors({ otp: "Please enter the complete 6-digit verification code." });
       return;
     }
 
@@ -234,11 +204,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
     try {
       if (role === "super-admin") {
-        const res = await fetch(`${BASE_API}/superadmin/auth/verify-otp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), otp_code: otp.trim() }),
-        });
+        const res = await authService.verifySuperAdminOtp(email.trim(), otp.trim());
         const data = await res.json();
 
         if (res.ok && data.status === "success") {
@@ -252,11 +218,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
           showToast("error", "Verification Failed", data.message || "Incorrect verification code.");
         }
       } else if (role === "admin") {
-        const res = await fetch(`${BASE_API}/client/auth/verify-otp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), otp_code: otp.trim() }),
-        });
+        const res = await authService.verifyClientOtp(email.trim(), otp.trim());
         const data = await res.json();
 
         if (res.ok && data.status === "success") {
@@ -284,9 +246,11 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      showToast("error", "Email Required", "Please enter your work email address to receive password reset link.");
-      setErrors({ email: "Email is required to reset password." });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!email.trim() || !emailRegex.test(email)) {
+      showToast("error", "Invalid Email", "Please enter a valid work email address to receive password reset link.");
+      setErrors({ email: "Valid email is required to reset password." });
       return;
     }
 

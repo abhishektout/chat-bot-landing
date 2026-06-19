@@ -46,7 +46,7 @@ export default function DashboardOverviewPage() {
         setLiveSessions(sessionsList);
       }
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.warn("Error fetching dashboard data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -58,32 +58,33 @@ export default function DashboardOverviewPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      {/* ── Page Header ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge" style={{ marginBottom: "4px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
-          Workspace Overview
-        </span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Performance{" "}
-          <span className="gradient-text">Analytics</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Real-time telemetry and automation performance details.
-        </p>
-      </div>
+      {/* ── Header & Actions ── */}
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: "20px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span className="badge" style={{ marginBottom: "4px" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
+            Workspace Overview
+          </span>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Performance{" "}
+            <span className="gradient-text">Analytics</span>
+          </h2>
+          <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
+            Real-time telemetry and automation performance details.
+          </p>
+        </div>
 
-      {/* ── Top Actions ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-        <Button
-          variant="outline"
-          onClick={fetchDashboardData}
-          isLoading={isLoading}
-          icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
-          style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
-        >
-          Sync Telemetry
-        </Button>
+        <div style={{ display: "flex", alignItems: "center" ,alignSelf: "center"}}>
+          <Button
+            variant="outline"
+            onClick={fetchDashboardData}
+            isLoading={isLoading}
+            icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
+            style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
+          >
+            Sync Telemetry
+          </Button>
+        </div>
       </div>
 
       {/* ── KPI Stats Grid ── */}

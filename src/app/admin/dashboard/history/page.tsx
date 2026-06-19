@@ -36,7 +36,7 @@ export default function ChatLogsPage() {
       const token = localStorage.getItem("saas_client_token");
       const res = await fetch(`${BASE_API}/admin/live-sessions`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const data = await res.json(); setSessions(data.sessions || data || []); }
-    } catch (error) { console.error("Error fetching sessions:", error); }
+    } catch (error) { console.warn("Error fetching sessions:", error); }
   };
 
   const fetchChats = async (sessionId: string) => {
@@ -54,7 +54,7 @@ export default function ChatLogsPage() {
         else if (Array.isArray(data)) chatsData = data;
         setChats(chatsData);
       }
-    } catch (error) { console.error("Error fetching chats:", error); }
+    } catch (error) { console.warn("Error fetching chats:", error); }
   };
 
   useEffect(() => { fetchSessions(); }, []);

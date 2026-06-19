@@ -27,7 +27,7 @@ export default function KnowledgeBasePage() {
       const token = localStorage.getItem("saas_client_token");
       const res = await fetch(`${BASE_API}/admin/uploaded-documents`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const data = await res.json(); setDocuments(data.documents || []); }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.warn(e); }
   };
 
   const fetchFaqs = async () => {
@@ -35,7 +35,7 @@ export default function KnowledgeBasePage() {
       const token = localStorage.getItem("saas_client_token");
       const res = await fetch(`${BASE_API}/admin/faqs`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const data = await res.json(); setFaqs(data.faqs || []); }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.warn(e); }
   };
 
   useEffect(() => { fetchDocuments(); fetchFaqs(); }, []);

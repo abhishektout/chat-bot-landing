@@ -124,7 +124,7 @@ export default function ProfilePage() {
           await refreshTenantInfo();
         }
       } catch (err) {
-        console.error("Error loading profile details:", err);
+        console.warn("Error loading profile details:", err);
         if (storedRole === "agent" || storedRole === "team-member") {
           setAgentDetails({
             id: storedAgentId || "ast_agent_99",

@@ -28,7 +28,7 @@ export default function TeamManagementPage() {
       const token = localStorage.getItem("saas_client_token");
       const res = await fetch(`${BASE_API}/admin/agents`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const data = await res.json(); setAgents(data.agents || []); }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.warn(e); }
   };
 
   useEffect(() => { fetchAgents(); }, []);
