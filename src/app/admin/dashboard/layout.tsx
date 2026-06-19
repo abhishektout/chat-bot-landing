@@ -745,7 +745,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         </motion.aside>
 
         {/* ── Main Content ── */}
-        <main
+        <motion.main
+          animate={{ marginLeft: showExpanded ? 260 : 72 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           style={{
             flex: 1,
             minWidth: 0,
@@ -756,8 +758,6 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             paddingBottom: "40px",
             paddingLeft: 0,
             paddingRight: 0,
-            marginLeft: showExpanded ? "260px" : "72px",
-            transition: "margin-left 0.3s cubic-bezier(0.4,0,0.2,1)",
           }}
           className="admin-main"
         >
@@ -865,7 +865,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           <div style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column" }} className="admin-content">
             {children}
           </div>
-        </main>
+        </motion.main>
       </div>
 
       {/* Global responsive styles using explicit media queries to guarantee proper hide/show */}
