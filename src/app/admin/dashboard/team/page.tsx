@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Users, UserPlus, Pencil, Trash2, Mail, Phone, Clock, RefreshCw, X, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Input, Select, Button, Badge } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { adminService } from "@/services/admin.service";
 
 interface Agent {
   id: string | number;
@@ -25,10 +24,11 @@ export default function TeamManagementPage() {
 
   const fetchAgents = async () => {
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/agents`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { const data = await res.json(); setAgents(data.agents || []); }
-    } catch (e) { console.error(e); }
+      const data = await adminService.getAgents();
+      setAgents(data.agents || []);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   useEffect(() => { fetchAgents(); }, []);
@@ -42,19 +42,17 @@ export default function TeamManagementPage() {
     setIsSaving(true);
     const payload = { name: formData.name, email: formData.email, role: "agent", phone_number: formData.phone_number, chat_hours: `${formData.startTime} - ${formData.endTime}`, is_active: formData.is_active === "true" };
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/agents`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (res.ok) {
-        if (editingId) { showToast("info", "Information", "Backend update API pending. Please delete and recreate for now."); setEditingId(null); }
-        else showToast("success", "Agent Created", "They will receive an email with their auto-generated password.");
-        setFormData({ name: "", email: "", phone_number: "", startTime: "09:00", endTime: "17:00", is_active: "true" });
-        fetchAgents();
-      } else {
-        const err = await res.json();
-        showToast("error", "Process Failed", err.detail || "Failed to process agent details.");
-      }
-    } catch { showToast("error", "Error", "Server connection failed."); }
-    finally { setIsSaving(false); }
+      await adminService.addAgent(payload);
+      if (editingId) { showToast("info", "Information", "Backend update API pending. Please delete and recreate for now."); setEditingId(null); }
+      else showToast("success", "Agent Created", "They will receive an email with their auto-generated password.");
+      setFormData({ name: "", email: "", phone_number: "", startTime: "09:00", endTime: "17:00", is_active: "true" });
+      fetchAgents();
+    } catch (err: any) {
+      const errMsg = err.response?.data?.detail || "Failed to process agent details.";
+      showToast("error", "Process Failed", errMsg);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleEdit = (agent: Agent) => {
@@ -73,10 +71,12 @@ export default function TeamManagementPage() {
   const handleDelete = async (agentId: string | number) => {
     if (!window.confirm("Delete this agent?")) return;
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/agents/${agentId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { showToast("success", "Deleted", "Agent deleted successfully."); fetchAgents(); }
-    } catch { showToast("error", "Error", "Failed to delete agent."); }
+      await adminService.deleteAgent(agentId);
+      showToast("success", "Deleted", "Agent deleted successfully.");
+      fetchAgents();
+    } catch {
+      showToast("error", "Error", "Failed to delete agent.");
+    }
   };
 
   return (

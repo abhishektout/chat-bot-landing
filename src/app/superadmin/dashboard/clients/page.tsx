@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Building, UserPlus, RefreshCw, Pencil, Trash2, Key, HelpCircle, Shield, Check, Info, Settings, Eye, AlertTriangle, Sparkles } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Card, Input, Select, Textarea, Button, Badge, Alert, Modal, Skeleton } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { superAdminService } from "@/services/superadmin.service";
 
 interface Client {
   id: string | number;
@@ -42,14 +41,8 @@ export default function ManageClientsPage() {
   const fetchClients = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data.clients || []);
-      }
+      const data = await superAdminService.getClients();
+      setClients(data.clients || []);
     } catch (e) {
       console.error(e);
       showToast("error", "Sync Error", "Failed to retrieve tenants list.");
@@ -70,38 +63,25 @@ export default function ManageClientsPage() {
     }
 
     setIsSaving(true);
-    const payload = new URLSearchParams();
-    payload.append("company_name", companyName.trim());
-    payload.append("bot_name", botName.trim());
-    payload.append("support_email", supportEmail.trim());
-    payload.append("subscription_plan", subscriptionPlan);
-    payload.append("is_active", String(isActive));
-
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload,
+      await superAdminService.createClient({
+        company_name: companyName.trim(),
+        bot_name: botName.trim(),
+        support_email: supportEmail.trim(),
+        subscription_plan: subscriptionPlan,
+        is_active: String(isActive),
       });
 
-      if (res.ok) {
-        showToast("success", "Tenant Onboarded", "Client created successfully! Verification details emailed.");
-        setCompanyName("");
-        setBotName("");
-        setSupportEmail("");
-        setSubscriptionPlan("free");
-        setIsActive(true);
-        fetchClients();
-      } else {
-        const err = await res.json();
-        showToast("error", "Process Failed", err.detail || "Failed to create client.");
-      }
-    } catch (error) {
-      showToast("error", "Error", "Server error creating client.");
+      showToast("success", "Tenant Onboarded", "Client created successfully! Verification details emailed.");
+      setCompanyName("");
+      setBotName("");
+      setSupportEmail("");
+      setSubscriptionPlan("free");
+      setIsActive(true);
+      fetchClients();
+    } catch (error: any) {
+      const errMsg = error.response?.data?.detail || "Failed to create client.";
+      showToast("error", "Process Failed", errMsg);
     } finally {
       setIsSaving(false);
     }
@@ -109,19 +89,9 @@ export default function ManageClientsPage() {
 
   const handleToggleStatus = async (clientId: string | number, currentStatus: boolean) => {
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients/${clientId}/status`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ is_active: String(!currentStatus) }),
-      });
-      if (res.ok) {
-        showToast("success", "Status Updated", "Client status toggled successfully.");
-        fetchClients();
-      }
+      await superAdminService.toggleClientStatus(clientId, !currentStatus);
+      showToast("success", "Status Updated", "Client status toggled successfully.");
+      fetchClients();
     } catch (error) {
       showToast("error", "Error", "Failed to toggle status.");
     }
@@ -132,34 +102,21 @@ export default function ManageClientsPage() {
     if (!editingId) return;
 
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const payload = new URLSearchParams();
-      payload.append("company_name", editDetails.company_name || "");
-      payload.append("bot_name", editDetails.bot_name || "");
-      payload.append("support_email", editDetails.support_email || "");
-      payload.append("subscription_plan", editDetails.subscription_plan || "free");
-      payload.append("custom_rules", editDetails.custom_rules || "");
-      payload.append("primary_color", editDetails.primary_color || "#2563eb");
-      payload.append("widget_position", editDetails.widget_position || "right");
-      payload.append("widget_icon_url", editDetails.widget_icon_url || "");
-
-      const res = await fetch(`${BASE_API}/superadmin/clients/${editingId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload,
+      await superAdminService.updateClientDetails(editingId, {
+        company_name: editDetails.company_name || "",
+        bot_name: editDetails.bot_name || "",
+        support_email: editDetails.support_email || "",
+        subscription_plan: editDetails.subscription_plan || "free",
+        custom_rules: editDetails.custom_rules || "",
+        primary_color: editDetails.primary_color || "#2563eb",
+        widget_position: editDetails.widget_position || "right",
+        widget_icon_url: editDetails.widget_icon_url || "",
       });
 
-      if (res.ok) {
-        showToast("success", "Configuration Saved", "Client information updated successfully.");
-        setShowEditModal(false);
-        setEditingId(null);
-        fetchClients();
-      } else {
-        showToast("error", "Update Failed", "Failed to save client details.");
-      }
+      showToast("success", "Configuration Saved", "Client information updated successfully.");
+      setShowEditModal(false);
+      setEditingId(null);
+      fetchClients();
     } catch (e) {
       showToast("error", "Error", "Server error during details update.");
     }
@@ -168,15 +125,9 @@ export default function ManageClientsPage() {
   const handleDelete = async (clientId: string | number) => {
     if (!window.confirm("Archive this client account? It will be suspended and moved to archive.")) return;
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients/${clientId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        showToast("success", "Archived", "Client account archived successfully.");
-        fetchClients();
-      }
+      await superAdminService.deleteClient(clientId);
+      showToast("success", "Archived", "Client account archived successfully.");
+      fetchClients();
     } catch (e) {
       showToast("error", "Error", "Failed to delete account.");
     }

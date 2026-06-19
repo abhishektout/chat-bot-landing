@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Users, MessageSquare, ArrowUpRight, RefreshCw, Calendar, Sparkles, TrendingUp } from "lucide-react";
 import { Card, Badge, Button, Skeleton } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { adminService } from "@/services/admin.service";
 
 interface Session {
   id?: string;
@@ -23,28 +22,19 @@ export default function DashboardOverviewPage() {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const headers = { Authorization: `Bearer ${token}` };
+      const statsData = await adminService.getDashboardStats();
+      setStats(statsData.data || statsData || { total_sessions: 0, total_messages: 0 });
 
-      const statsRes = await fetch(`${BASE_API}/admin/dashboard-stats`, { headers });
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData.data || statsData || { total_sessions: 0, total_messages: 0 });
+      const sessionsData = await adminService.getLiveSessions();
+      let sessionsList: Session[] = [];
+      if (sessionsData?.sessions && Array.isArray(sessionsData.sessions)) {
+        sessionsList = sessionsData.sessions;
+      } else if (sessionsData?.data && Array.isArray(sessionsData.data)) {
+        sessionsList = sessionsData.data;
+      } else if (Array.isArray(sessionsData)) {
+        sessionsList = sessionsData;
       }
-
-      const sessionsRes = await fetch(`${BASE_API}/admin/live-sessions`, { headers });
-      if (sessionsRes.ok) {
-        const sessionsData = await sessionsRes.json();
-        let sessionsList: Session[] = [];
-        if (sessionsData?.sessions && Array.isArray(sessionsData.sessions)) {
-          sessionsList = sessionsData.sessions;
-        } else if (sessionsData?.data && Array.isArray(sessionsData.data)) {
-          sessionsList = sessionsData.data;
-        } else if (Array.isArray(sessionsData)) {
-          sessionsList = sessionsData;
-        }
-        setLiveSessions(sessionsList);
-      }
+      setLiveSessions(sessionsList);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

@@ -6,6 +6,7 @@ import { Send, Check, Calendar, MessageSquare, Building2, ChevronDown } from "lu
 import SubpageLayout from "@/components/layouts/SubpageLayout";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
+import { authService } from "@/services/auth.service";
 
 const BENEFITS = [
   "Live walkthrough tailored to your industry",
@@ -112,6 +113,7 @@ export default function BookDemoPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isOpenSlotDropdown, setIsOpenSlotDropdown] = useState(false);
   const [isOpenIndustryDropdown, setIsOpenIndustryDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const slotDropdownRef = useRef<HTMLDivElement>(null);
   const industryDropdownRef = useRef<HTMLDivElement>(null);
@@ -235,7 +237,7 @@ export default function BookDemoPage() {
     return Object.keys(tempErrors).length === 0;
   }, [form]);
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateAll()) {
@@ -243,8 +245,20 @@ export default function BookDemoPage() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      // Simulate successful API response
+      // Call bookDemo API via authService
+      await authService.bookDemo({
+        name: form.name,
+        email: form.email,
+        company: form.company,
+        industry: form.industry,
+        date: form.date,
+        slot: form.slot,
+        message: form.message,
+      });
+
       showToast("success", "Demo booked successfully!", `We scheduled your demo on ${form.date} at ${form.slot}.`);
       setForm({
         name: "",
@@ -256,10 +270,13 @@ export default function BookDemoPage() {
         message: "",
       });
       setErrors({});
-    } catch {
-      showToast("error", "Network Error", "Could not complete request. Please try again.");
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || "Could not complete request. Please try again.";
+      showToast("error", "Network Error", errMsg);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <SubpageLayout accentColor="#4f7cff">
@@ -750,12 +767,13 @@ export default function BookDemoPage() {
           {/* Submit */}
           <motion.button
             type="submit"
+            disabled={isLoading}
             whileHover={{ scale: 1.02, boxShadow: "0 12px 40px rgba(79,124,255,0.35)" }}
             whileTap={{ scale: 0.97 }}
             className="btn-primary"
-            style={{ padding: "14px", fontSize: "15px", justifyContent: "center", cursor: "pointer" }}
+            style={{ padding: "14px", fontSize: "15px", justifyContent: "center", cursor: "pointer", opacity: isLoading ? 0.7 : 1 }}
           >
-            Book My Demo
+            {isLoading ? "Booking..." : "Book My Demo"}
             <Send style={{ width: "16px", height: "16px" }} />
           </motion.button>
 

@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { adminService } from "@/services/admin.service";
 
 interface TenantInfo {
   company_name: string;
@@ -119,11 +119,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       return;
     }
     try {
-      const res = await fetch(`${BASE_API}/admin/tenant-info`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      const data = await res.json();
-      if (res.ok && data.status === "success") {
+      const data = await adminService.getTenantInfo();
+      if (data.status === "success") {
         setTenantInfo(data.data);
       } else {
         if (process.env.NODE_ENV === "development") {

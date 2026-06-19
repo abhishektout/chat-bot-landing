@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Trash2, RotateCcw, RefreshCw, Archive, AlertTriangle, Building } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Card, Badge, Button, Loader, Skeleton } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { superAdminService } from "@/services/superadmin.service";
 
 interface DeletedClient {
   id: string | number;
@@ -22,14 +21,8 @@ export default function DeletedAccountsPage() {
   const fetchDeletedClients = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients/deleted`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDeletedClients(data.deleted_clients || []);
-      }
+      const data = await superAdminService.getDeletedClients();
+      setDeletedClients(data.deleted_clients || []);
     } catch (e) {
       console.error(e);
       showToast("error", "Sync Error", "Failed to retrieve archives list.");
@@ -45,17 +38,9 @@ export default function DeletedAccountsPage() {
   const handleRecover = async (clientId: string | number) => {
     if (!window.confirm("Recover this client account? It will become active again.")) return;
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients/${clientId}/recover`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        showToast("success", "Account Restored", "Client workspace recovered successfully.");
-        fetchDeletedClients();
-      } else {
-        showToast("error", "Error", "Failed to recover account.");
-      }
+      await superAdminService.recoverClient(clientId);
+      showToast("success", "Account Restored", "Client workspace recovered successfully.");
+      fetchDeletedClients();
     } catch (e) {
       showToast("error", "Error", "Error recovering account.");
     }

@@ -4,8 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, RefreshCw, Bot, User, Send, Zap, Sparkles, Clock } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Button, Badge } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { adminService } from "@/services/admin.service";
 
 interface LiveSession {
   id?: string;
@@ -33,28 +32,27 @@ export default function ChatLogsPage() {
 
   const fetchSessions = async () => {
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/live-sessions`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { const data = await res.json(); setSessions(data.sessions || data || []); }
-    } catch (error) { console.error("Error fetching sessions:", error); }
+      const data = await adminService.getLiveSessions();
+      setSessions(data.sessions || data || []);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
   };
 
   const fetchChats = async (sessionId: string) => {
     if (!sessionId) return;
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/sessions/${sessionId}/chats`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const data = await res.json();
-        let chatsData: ChatMessage[] = [];
-        if (data?.chats && Array.isArray(data.chats)) chatsData = data.chats;
-        else if (data?.messages && Array.isArray(data.messages)) chatsData = data.messages;
-        else if (data?.history && Array.isArray(data.history)) chatsData = data.history;
-        else if (data?.data && Array.isArray(data.data)) chatsData = data.data;
-        else if (Array.isArray(data)) chatsData = data;
-        setChats(chatsData);
-      }
-    } catch (error) { console.error("Error fetching chats:", error); }
+      const data = await adminService.getSessionChats(sessionId);
+      let chatsData: ChatMessage[] = [];
+      if (data?.chats && Array.isArray(data.chats)) chatsData = data.chats;
+      else if (data?.messages && Array.isArray(data.messages)) chatsData = data.messages;
+      else if (data?.history && Array.isArray(data.history)) chatsData = data.history;
+      else if (data?.data && Array.isArray(data.data)) chatsData = data.data;
+      else if (Array.isArray(data)) chatsData = data;
+      setChats(chatsData);
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+    }
   };
 
   useEffect(() => { fetchSessions(); }, []);
@@ -79,15 +77,14 @@ export default function ChatLogsPage() {
     try {
       const sId = selectedSession.id || selectedSession.session_id;
       if (!sId) return;
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/sessions/${sId}/takeover`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const isNowHuman = !selectedSession.human_takeover;
-        showToast("success", isNowHuman ? "Takeover Activated" : "AI Restored", isNowHuman ? "You have taken over this chat." : "AI has resumed control.");
-        setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman } : null);
-        fetchSessions();
-      }
-    } catch { showToast("error", "Error", "Failed to toggle takeover."); }
+      await adminService.takeoverSession(sId);
+      const isNowHuman = !selectedSession.human_takeover;
+      showToast("success", isNowHuman ? "Takeover Activated" : "AI Restored", isNowHuman ? "You have taken over this chat." : "AI has resumed control.");
+      setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman } : null);
+      fetchSessions();
+    } catch {
+      showToast("error", "Error", "Failed to toggle takeover.");
+    }
   };
 
   const handleSendReply = async () => {
@@ -96,16 +93,14 @@ export default function ChatLogsPage() {
     try {
       const sId = selectedSession.id || selectedSession.session_id;
       if (!sId) return;
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/sessions/${sId}/send`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: replyText.trim() }),
-      });
-      if (res.ok) { setReplyText(""); fetchChats(sId); }
-      else showToast("error", "Error", "Failed to send message.");
-    } catch { showToast("error", "Error", "Error sending message."); }
-    finally { setIsSending(false); }
+      await adminService.sendChatMessage(sId, replyText.trim());
+      setReplyText("");
+      fetchChats(sId);
+    } catch {
+      showToast("error", "Error", "Error sending message.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (

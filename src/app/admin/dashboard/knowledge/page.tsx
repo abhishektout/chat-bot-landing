@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { BookOpen, FileText, Trash2, RefreshCw, UploadCloud, Plus, HelpCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Input, Textarea, Button } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { adminService } from "@/services/admin.service";
 
 interface DocumentItem { id: string | number; name?: string; display_name?: string; }
 interface FaqItem { id: string | number; question: string; answer: string; }
@@ -24,18 +23,20 @@ export default function KnowledgeBasePage() {
 
   const fetchDocuments = async () => {
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/uploaded-documents`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { const data = await res.json(); setDocuments(data.documents || []); }
-    } catch (e) { console.error(e); }
+      const data = await adminService.getUploadedDocuments();
+      setDocuments(data.documents || []);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const fetchFaqs = async () => {
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/faqs`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { const data = await res.json(); setFaqs(data.faqs || []); }
-    } catch (e) { console.error(e); }
+      const data = await adminService.getFaqs();
+      setFaqs(data.faqs || []);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   useEffect(() => { fetchDocuments(); fetchFaqs(); }, []);
@@ -48,65 +49,69 @@ export default function KnowledgeBasePage() {
     formData.append("files", file);
     formData.append("display_names", docName.trim());
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/upload-documents`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData });
-      if (res.ok) {
-        showToast("success", "Success", "PDF trained successfully!");
-        setFile(null); setDocName("");
-        (e.target as HTMLFormElement).reset();
-        fetchDocuments();
-      } else {
-        const err = await res.json();
-        showToast("error", "Upload Failed", err.detail || "Failed to upload document.");
-      }
-    } catch { showToast("error", "Error", "Server error during upload."); }
-    finally { setIsUploading(false); }
+      await adminService.uploadDocuments(formData);
+      showToast("success", "Success", "PDF trained successfully!");
+      setFile(null); setDocName("");
+      (e.target as HTMLFormElement).reset();
+      fetchDocuments();
+    } catch (error: any) {
+      const errMsg = error.response?.data?.detail || "Failed to upload document.";
+      showToast("error", "Upload Failed", errMsg);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDeleteAll = async () => {
     if (!window.confirm("Delete all trained knowledge? This cannot be undone.")) return;
     setIsDeleting(true);
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/delete-vectors`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { showToast("success", "Deleted", "All knowledge deleted successfully."); fetchDocuments(); }
-      else showToast("error", "Delete Failed", "Failed to delete knowledge.");
-    } catch { showToast("error", "Error", "Server error during vector clearing."); }
-    finally { setIsDeleting(false); }
+      await adminService.deleteVectors();
+      showToast("success", "Deleted", "All knowledge deleted successfully.");
+      fetchDocuments();
+    } catch {
+      showToast("error", "Delete Failed", "Failed to delete knowledge.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleDeleteDoc = async (docId: string | number) => {
     if (!window.confirm("Delete this document?")) return;
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/documents/${docId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { showToast("success", "Deleted", "Document deleted."); fetchDocuments(); }
-    } catch { showToast("error", "Error", "Error deleting document."); }
+      await adminService.deleteDocument(docId);
+      showToast("success", "Deleted", "Document deleted.");
+      fetchDocuments();
+    } catch {
+      showToast("error", "Error", "Error deleting document.");
+    }
   };
 
   const handleFAQSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!faqQuestion.trim() || !faqAnswer.trim()) return;
     setIsSubmittingFaq(true);
-    const formData = new URLSearchParams();
-    formData.append("question", faqQuestion.trim());
-    formData.append("answer", faqAnswer.trim());
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/faqs`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/x-www-form-urlencoded" }, body: formData });
-      if (res.ok) { showToast("success", "FAQ Saved", "FAQ saved successfully!"); setFaqQuestion(""); setFaqAnswer(""); fetchFaqs(); }
-      else showToast("error", "Failed", "Failed to save FAQ.");
-    } catch { showToast("error", "Error", "Server error while saving FAQ."); }
-    finally { setIsSubmittingFaq(false); }
+      await adminService.addFaq(faqQuestion.trim(), faqAnswer.trim());
+      showToast("success", "FAQ Saved", "FAQ saved successfully!");
+      setFaqQuestion(""); setFaqAnswer("");
+      fetchFaqs();
+    } catch {
+      showToast("error", "Failed", "Failed to save FAQ.");
+    } finally {
+      setIsSubmittingFaq(false);
+    }
   };
 
   const handleDeleteFAQ = async (faqId: string | number) => {
     if (!window.confirm("Delete this FAQ?")) return;
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/faqs/${faqId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { showToast("success", "Deleted", "FAQ deleted."); fetchFaqs(); }
-    } catch { showToast("error", "Error", "Error deleting FAQ."); }
+      await adminService.deleteFaq(faqId);
+      showToast("success", "Deleted", "FAQ deleted.");
+      fetchFaqs();
+    } catch {
+      showToast("error", "Error", "Error deleting FAQ.");
+    }
   };
 
   const cardSection = (icon: React.ReactNode, title: string, desc: string, color = "var(--accent)", bg = "var(--accent-glow)", border = "rgba(79,124,255,0.15)") => (

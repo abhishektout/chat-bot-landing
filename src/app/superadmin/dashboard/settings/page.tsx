@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Key, Mail, Server, Eye, EyeOff, ShieldAlert, Settings, Save, Sparkles } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Card, Input, Button } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { superAdminService } from "@/services/superadmin.service";
 
 export default function GlobalSettingsPage() {
   const { showToast } = useToast();
@@ -21,19 +20,13 @@ export default function GlobalSettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/settings`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await superAdminService.getSettings();
+      setFormData({
+        gemini_api_key: data.gemini_api_key || "",
+        smtp_server: data.smtp_server || "",
+        smtp_email: data.smtp_email || "",
+        smtp_password: data.smtp_password || "",
       });
-      if (res.ok) {
-        const data = await res.json();
-        setFormData({
-          gemini_api_key: data.gemini_api_key || "",
-          smtp_server: data.smtp_server || "",
-          smtp_email: data.smtp_email || "",
-          smtp_password: data.smtp_password || "",
-        });
-      }
     } catch (e) {
       console.error(e);
     }
@@ -52,27 +45,8 @@ export default function GlobalSettingsPage() {
     setIsSaving(true);
 
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const payload = new URLSearchParams();
-      payload.append("gemini_api_key", formData.gemini_api_key);
-      payload.append("smtp_server", formData.smtp_server);
-      payload.append("smtp_email", formData.smtp_email);
-      payload.append("smtp_password", formData.smtp_password);
-
-      const res = await fetch(`${BASE_API}/superadmin/settings`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload,
-      });
-
-      if (res.ok) {
-        showToast("success", "Settings Saved", "Global fallback config saved successfully.");
-      } else {
-        showToast("error", "Error", "Failed to save settings");
-      }
+      await superAdminService.saveSettings(formData);
+      showToast("success", "Settings Saved", "Global fallback config saved successfully.");
     } catch (e) {
       showToast("error", "Error", "Server connection error.");
     } finally {

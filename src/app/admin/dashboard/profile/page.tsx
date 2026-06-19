@@ -21,6 +21,8 @@ import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
 import { Card, Input, Button, Badge, Skeleton } from "@/components/ui";
 
+import { adminService } from "@/services/admin.service";
+
 const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
 
 interface AgentProfile {
@@ -96,18 +98,13 @@ export default function ProfilePage() {
       try {
         if (storedRole === "agent" || storedRole === "team-member") {
           // If the user is a Support Agent, let's fetch the agents directory to find their detailed shift & profile info
-          const res = await fetch(`${BASE_API}/admin/agents`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const currentAgent = (data.agents || []).find(
-              (a: AgentProfile) => String(a.id) === String(storedAgentId)
-            );
-            if (currentAgent) {
-              setAgentDetails(currentAgent);
-              return;
-            }
+          const data = await adminService.getAgents();
+          const currentAgent = (data.agents || []).find(
+            (a: AgentProfile) => String(a.id) === String(storedAgentId)
+          );
+          if (currentAgent) {
+            setAgentDetails(currentAgent);
+            return;
           }
           
           // Fallback Agent Info
@@ -161,45 +158,21 @@ export default function ProfilePage() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    const token = localStorage.getItem("saas_client_token") || "test_token";
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_client_token") || "" : "";
     try {
-      const urlEncodedData = new URLSearchParams();
-      urlEncodedData.append("company_name", formData.companyName);
-      urlEncodedData.append("bot_name", formData.botName);
-      urlEncodedData.append("support_email", formData.supportEmail);
-      
-      // Preserve other fields
-      urlEncodedData.append("custom_rules", activeTenantInfo.custom_rules || "");
-      urlEncodedData.append("primary_color", activeTenantInfo.primary_color || "#4f7cff");
-      urlEncodedData.append("widget_position", activeTenantInfo.widget_position || "right");
-      urlEncodedData.append("widget_icon_url", activeTenantInfo.widget_icon_url || "");
-
-      const res = await fetch(`${BASE_API}/admin/settings`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`, 
-          "Content-Type": "application/x-www-form-urlencoded" 
-        },
-        body: urlEncodedData,
+      await adminService.saveSettings({
+        company_name: formData.companyName,
+        bot_name: formData.botName,
+        support_email: formData.supportEmail,
+        custom_rules: activeTenantInfo.custom_rules || "",
+        primary_color: activeTenantInfo.primary_color || "#4f7cff",
+        widget_position: activeTenantInfo.widget_position || "right",
+        widget_icon_url: activeTenantInfo.widget_icon_url || "",
       });
 
-      if (res.ok) {
-        showToast("success", "Profile Updated", "Your workspace profile has been successfully updated.");
-        await refreshTenantInfo();
-      } else {
-        if (token.startsWith("test_") || process.env.NODE_ENV === "development") {
-          showToast("success", "Profile Saved (Local Mock)", "Profile updated successfully with dummy data.");
-          if (tenantInfo) {
-            tenantInfo.company_name = formData.companyName;
-            tenantInfo.bot_name = formData.botName;
-            tenantInfo.support_email = formData.supportEmail;
-          }
-        } else {
-          const err = await res.json();
-          showToast("error", "Update Failed", err.detail || "Failed to save profile changes.");
-        }
-      }
-    } catch (err) {
+      showToast("success", "Profile Updated", "Your workspace profile has been successfully updated.");
+      await refreshTenantInfo();
+    } catch (err: any) {
       if (token.startsWith("test_") || process.env.NODE_ENV === "development") {
         showToast("success", "Profile Saved (Local Mock)", "Profile updated successfully with dummy data.");
         if (tenantInfo) {
@@ -208,7 +181,8 @@ export default function ProfilePage() {
           tenantInfo.support_email = formData.supportEmail;
         }
       } else {
-        showToast("error", "Error", "Failed to connect to the administration server.");
+        const errMsg = err.response?.data?.detail || "Failed to save profile changes.";
+        showToast("error", "Update Failed", errMsg);
       }
     } finally {
       setIsSaving(false);

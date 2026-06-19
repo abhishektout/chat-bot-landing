@@ -5,8 +5,7 @@ import { Settings, Palette, Eye, EyeOff, Copy, Save, Mail, Bot, Globe } from "lu
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
 import { Card, Input, Select, Textarea, Button } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { adminService } from "@/services/admin.service";
 
 export default function BotSettingsPage() {
   const { tenantInfo, refreshTenantInfo } = useAdminDashboard();
@@ -43,29 +42,21 @@ export default function BotSettingsPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const urlEncodedData = new URLSearchParams();
-      urlEncodedData.append("company_name", formData.companyName);
-      urlEncodedData.append("bot_name", formData.botName);
-      urlEncodedData.append("support_email", formData.supportEmail);
-      urlEncodedData.append("custom_rules", formData.customRules);
-      urlEncodedData.append("primary_color", formData.primaryColor);
-      urlEncodedData.append("widget_position", formData.widgetPosition);
-      urlEncodedData.append("widget_icon_url", formData.widgetIconUrl);
-      const res = await fetch(`${BASE_API}/admin/settings`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/x-www-form-urlencoded" },
-        body: urlEncodedData,
+      await adminService.saveSettings({
+        company_name: formData.companyName,
+        bot_name: formData.botName,
+        support_email: formData.supportEmail,
+        custom_rules: formData.customRules,
+        primary_color: formData.primaryColor,
+        widget_position: formData.widgetPosition,
+        widget_icon_url: formData.widgetIconUrl,
       });
-      if (res.ok) {
-        showToast("success", "Settings Saved", "Your workspace configuration has been updated.");
-        await refreshTenantInfo();
-      } else {
-        const err = await res.json();
-        showToast("error", "Save Failed", err.detail || "Failed to save settings.");
-      }
-    } catch {
-      showToast("error", "Error", "Server error while saving settings.");
+
+      showToast("success", "Settings Saved", "Your workspace configuration has been updated.");
+      await refreshTenantInfo();
+    } catch (err: any) {
+      const errMsg = err.response?.data?.detail || "Failed to save settings.";
+      showToast("error", "Save Failed", errMsg);
     } finally {
       setIsSaving(false);
     }
