@@ -1000,7 +1000,7 @@ export default function HeroSection() {
       <div className="orb" style={{ width: "300px", height: "300px", bottom: "0", left: "35%", background: "#8b5cf6" }} />
 
       <motion.div style={{ y, opacity, position: "relative", zIndex: 10, width: "100%" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+        <div className="layout-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left: Copy */}
             <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>

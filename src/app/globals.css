@@ -496,3 +496,24 @@ html.lenis {
 .mt-6 {
   margin-top: calc(var(--spacing)* 6) !important;
 }
+
+/* Responsive layout container to prevent huge side gaps on wide screens */
+.layout-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  transition: max-width 0.3s ease;
+}
+
+@media (min-width: 1440px) {
+  .layout-container {
+    max-width: 1400px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .layout-container {
+    max-width: 1536px;
+  }
+}

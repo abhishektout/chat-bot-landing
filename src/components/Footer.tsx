@@ -43,7 +43,7 @@ export default function Footer() {
 
   return (
     <footer style={{ position: "relative", borderTop: "1px solid var(--card-border)", background: "rgba(79,124,255,0.02)" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container">
 
         {/* Main grid */}
         <div className="mt-6 pt-20 pb-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8" style={{ paddingBottom: "15px" }}>

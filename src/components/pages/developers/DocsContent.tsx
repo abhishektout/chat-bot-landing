@@ -36,7 +36,7 @@ export default function DocsContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   function copyToClipboard(text: string, id: string) {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch(() => { });
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   }
@@ -45,7 +45,7 @@ export default function DocsContent() {
   const CONFIG_CODE = `window.AssistlyOptions = {\n  theme: "dark",\n  accentColor: "#4f7cff",\n  welcomeMessage: "Hello! How can I help you?",\n  userId: "user_12345"\n};`;
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+    <div >
       {/* Breadcrumb */}
       <nav style={{ fontSize: "13px", color: "var(--muted-fg)", marginBottom: "32px", display: "flex", gap: "6px" }} aria-label="Breadcrumb">
         <Link href="/" style={{ color: "var(--muted-fg)", textDecoration: "none" }}>Home</Link>
@@ -79,7 +79,7 @@ export default function DocsContent() {
         </aside>
 
         {/* Content */}
-        <div style={{ flex: 1, minWidth: 0 }} className="card-gradient-border p-[32px]">
+        <div style={{ flex: 1, minWidth: 0, padding: "32px" }} className="card-gradient-border">
           {activeSection === "getting-started" && (
             <>
               <h1 style={{ fontSize: "24px", fontWeight: 800, marginBottom: "16px" }}>Getting Started with Assistly</h1>

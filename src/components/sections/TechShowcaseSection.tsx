@@ -51,7 +51,7 @@ export default function TechShowcaseSection() {
     <section id="tech" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container">
         <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "56px" }}>
           {/* <span className="badge" style={{ marginBottom: "16px" }}>
             <Settings style={{ width: "12px", height: "12px" }} />

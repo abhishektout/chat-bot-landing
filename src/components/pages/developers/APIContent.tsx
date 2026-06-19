@@ -52,13 +52,13 @@ export default function APIContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   function copy(text: string, id: string) {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch(() => { });
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   }
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+    <div >
       {/* Breadcrumb */}
       <nav style={{ fontSize: "13px", color: "var(--muted-fg)", marginBottom: "32px", display: "flex", gap: "6px" }} aria-label="Breadcrumb">
         <Link href="/" style={{ color: "var(--muted-fg)", textDecoration: "none" }}>Home</Link>

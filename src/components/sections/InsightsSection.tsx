@@ -54,7 +54,7 @@ export default function InsightsSection() {
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
       <div style={{ position: "absolute", bottom: 0, right: 0, width: "500px", height: "500px", background: "rgba(0,212,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -10,7 +10,7 @@ const services = [
 
 export default function StatusContent() {
   return (
-    <div style={{ maxWidth: "760px", margin: "0 auto" }}>
+    <div>
       {/* Breadcrumb */}
       <nav style={{ fontSize: "13px", color: "var(--muted-fg)", marginBottom: "32px", display: "flex", gap: "6px" }} aria-label="Breadcrumb">
         <Link href="/" style={{ color: "var(--muted-fg)", textDecoration: "none" }}>Home</Link>

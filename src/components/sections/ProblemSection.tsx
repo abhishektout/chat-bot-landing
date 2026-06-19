@@ -24,7 +24,7 @@ export default function ProblemSection() {
         borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none",
       }} />
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container" style={{ position: "relative", zIndex: 10 }}>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 28 }}
