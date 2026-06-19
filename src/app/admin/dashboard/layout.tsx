@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart3,
   Settings,
@@ -20,6 +21,7 @@ import {
   X,
   Zap,
   User,
+  Bell,
 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 
@@ -66,12 +68,20 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   const [agentName, setAgentName] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const val = localStorage.getItem("saas_sidebar_collapsed");
     if (val === "true") setIsCollapsed(true);
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleCollapse = () => {
@@ -81,6 +91,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       return next;
     });
   };
+
+  const showExpanded = !isCollapsed || isMobile;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -169,7 +181,6 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         color: "var(--fg)",
       }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-          {/* Animated logo icon */}
           <div style={{
             width: "52px",
             height: "52px",
@@ -207,18 +218,19 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   }
 
   const isAdmin = role !== "agent";
-  const displayName = isAdmin ? (tenantInfo?.company_name || "Workspace") : (agentName || "Team Agent");
-  const displayInitial = displayName.charAt(0).toUpperCase();
   const customIcon = tenantInfo?.widget_icon_url || "";
+  
+  // Ensure "Test Agent" doesn't show in the sidebar, fallback to default name "Nitesh Bagora"
+  const rawName = mounted ? localStorage.getItem("saas_agent_name") : "";
+  const storedUserName = (rawName && rawName !== "Test Agent") ? rawName : "Nitesh Bagora";
 
+  // Sidebar links (Show all links to both admins and agents as requested)
   const navLinks = [
     { href: "/admin/dashboard/overview", label: "Dashboard", icon: BarChart3, color: "var(--accent)" },
-    ...(isAdmin ? [
-      { href: "/admin/dashboard/settings", label: "Bot Settings", icon: Settings, color: "var(--accent)" },
-      { href: "/admin/dashboard/knowledge", label: "Knowledge Base", icon: BookOpen, color: "var(--accent)" },
-      { href: "/admin/dashboard/database", label: "Database Auth", icon: Database, color: "var(--accent)" },
-      { href: "/admin/dashboard/team", label: "Team Management", icon: Users, color: "var(--accent)" },
-    ] : []),
+    { href: "/admin/dashboard/settings", label: "Bot Settings", icon: Settings, color: "var(--accent)" },
+    { href: "/admin/dashboard/knowledge", label: "Knowledge Base", icon: BookOpen, color: "var(--accent)" },
+    { href: "/admin/dashboard/database", label: "Database Auth", icon: Database, color: "var(--accent)" },
+    { href: "/admin/dashboard/team", label: "Team Management", icon: Users, color: "var(--accent)" },
     { href: "/admin/dashboard/history", label: "Chat Logs", icon: MessageSquare, color: "var(--accent)" },
     { href: "/admin/dashboard/profile", label: "My Profile", icon: User, color: "var(--accent)" },
   ];
@@ -233,7 +245,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         transition: "background 0.4s ease, color 0.3s ease",
       }}>
 
-        {/* ── Mobile Top Bar (only on mobile) ── */}
+        {/* ── Mobile Top Bar (only on mobile via CSS) ── */}
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -250,8 +262,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           padding: "0 20px",
           zIndex: 40,
           boxShadow: "0 2px 20px var(--shadow)",
-        }} className="md:hidden">
-          {/* Brand logo on mobile navbar left with hamburger menu */}
+        }} className="mobile-navbar">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
@@ -274,8 +285,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               <Menu style={{ width: "20px", height: "20px" }} />
             </button>
             <div style={{
-              width: "120px",
-              height: "32px",
+              width: "100px",
+              height: "28px",
               position: "relative",
               display: "flex",
               alignItems: "center",
@@ -287,31 +298,55 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               />
             </div>
           </div>
-          <Link
-            href="/admin/dashboard/profile"
-            style={{
-              width: "38px",
-              height: "38px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+
+          {/* Right Side of Mobile Top Bar: Notifications + Theme Toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Notification Icon */}
+            <button style={{
+              background: "none",
               border: "none",
-              color: "#fff",
+              color: "var(--muted-fg)",
               cursor: "pointer",
+              padding: "6px",
+              borderRadius: "8px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontWeight: 800,
-              fontSize: "15px",
-              overflow: "hidden",
-              boxShadow: "0 4px 12px var(--accent-glow)",
-              flexShrink: 0,
-              textDecoration: "none",
-            }}
-          >
-            {isAdmin && customIcon
-              ? <img src={customIcon} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-              : displayInitial}
-          </Link>
+              position: "relative",
+            }}>
+              <Bell style={{ width: "18px", height: "18px" }} />
+              <span style={{
+                position: "absolute",
+                top: "4px",
+                right: "4px",
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#ef4444",
+                border: "1.5px solid var(--bg)"
+              }} />
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--muted-fg)",
+                cursor: "pointer",
+                padding: "6px",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {theme === "dark" 
+                ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} /> 
+                : <Moon style={{ width: "18px", height: "18px", color: "var(--accent)" }} />}
+            </button>
+          </div>
         </div>
 
         {/* ── Mobile Overlay ── */}
@@ -330,9 +365,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         )}
 
         {/* ── Sidebar ── */}
-        <aside
+        <motion.aside
+          animate={{ width: showExpanded ? 260 : 72 }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           style={{
-            width: isCollapsed ? "72px" : "260px",
             position: "fixed",
             top: 0,
             left: 0,
@@ -345,120 +381,100 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             WebkitBackdropFilter: "blur(24px)",
             borderRight: "1px solid var(--glass-border)",
             boxShadow: "2px 0 32px var(--shadow)",
-            transition: "width 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.3s cubic-bezier(0.4,0,0.2,1)",
+            transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1)",
           }}
           className={`${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
         >
-          {/* ── Brand Header ── */}
+          {/* ── Sidebar User Header (No Logo!) ── */}
           <div style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "20px 16px",
+            justifyContent: "center",
+            padding: !showExpanded ? "16px 8px" : "24px 16px",
             borderBottom: "1px solid var(--glass-border)",
             position: "relative",
             minHeight: "72px",
+            gap: "12px",
+            transition: "padding 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
           }}>
+            {/* User Avatar */}
             <div style={{
+              width: !showExpanded ? "36px" : "56px",
+              height: !showExpanded ? "36px" : "56px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, var(--accent), var(--accent2))",
               display: "flex",
               alignItems: "center",
-              gap: isCollapsed ? "0px" : "12px",
-              width: "100%",
-              justifyContent: isCollapsed ? "center" : "flex-start",
+              justifyContent: "center",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: !showExpanded ? "14px" : "20px",
+              boxShadow: "0 4px 12px var(--accent-glow)",
+              flexShrink: 0,
+              overflow: "hidden",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             }}>
-              {/* Logo icon container */}
-              <div style={{
-                width: "36px",
-                height: "36px",
-                overflow: "hidden",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                transform: isCollapsed ? "translateX(2px)" : "translateX(0px)",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}>
-                <img
-                  src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
-                  alt="Assistly Logo"
-                  style={{
-                    height: "100%",
-                    width: "140px",
-                    objectFit: "contain",
-                    objectPosition: "left center",
-                  }}
-                />
-              </div>
-
-              {/* Organization name and console label (hidden on mobile) */}
-              <div style={{
-                display: "flex",
-                flexDirection: "column",
-                minWidth: 0,
-                opacity: isCollapsed ? 0 : 1,
-                maxWidth: isCollapsed ? "0px" : "160px",
-                transform: isCollapsed ? "translateX(-10px)" : "translateX(0px)",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-              }}
-                className="hidden md:flex"
-              >
-                <span style={{
-                  fontSize: "13px",
-                  fontWeight: 800,
-                  color: "var(--fg)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  lineHeight: 1.3,
-                }}>
-                  {displayName}
-                </span>
-                <span style={{
-                  fontSize: "9px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.12em",
-                  color: "var(--accent)",
-                  marginTop: "2px",
-                }}>
-                  {isAdmin ? "Admin Console" : "Agent Console"}
-                </span>
-              </div>
+              {isAdmin && customIcon ? (
+                <img src={customIcon} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+              ) : (
+                storedUserName.charAt(0).toUpperCase()
+              )}
             </div>
 
-            {/* Mobile close button - only when mobile menu is open */}
-            {isMobileMenuOpen && (
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                style={{
-                  padding: "7px",
-                  borderRadius: "8px",
-                  color: "var(--muted-fg)",
-                  background: "var(--muted-bg)",
-                  border: "1px solid var(--card-border)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-                className="md:hidden"
-              >
-                <X style={{ width: "15px", height: "15px" }} />
-              </button>
-            )}
+            {/* Name + Workspace stack */}
+            <AnimatePresence initial={false}>
+              {showExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    width: "100%",
+                    overflow: "hidden",
+                  }}
+                >
+                  <span style={{
+                    fontSize: "14px",
+                    fontWeight: 750,
+                    color: "var(--fg)",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                    width: "100%",
+                    lineHeight: 1.3,
+                  }}>
+                    {storedUserName}
+                  </span>
+                  <span style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    color: "var(--muted-fg)",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    overflow: "hidden",
+                    width: "100%",
+                    marginTop: "2.5px",
+                  }}>
+                    {tenantInfo?.company_name || "Assistly Dev Corp"}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Desktop collapse toggle */}
+            {/* Desktop collapse toggle (Floats exactly on the horizontal dividing border line!) */}
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex"
+              className="desktop-collapse-btn"
               style={{
                 position: "absolute",
                 right: "-12px",
-                top: "50%",
+                top: "100%",
                 transform: "translateY(-50%)",
                 width: "24px",
                 height: "24px",
@@ -470,7 +486,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 justifyContent: "center",
                 color: "var(--muted-fg)",
                 cursor: "pointer",
-                zIndex: 10,
+                zIndex: 100,
                 boxShadow: "0 2px 8px var(--shadow)",
                 transition: "all 0.2s ease",
               }}
@@ -484,14 +500,39 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               }}
             >
               {isCollapsed
-                ? <ChevronRight style={{ width: "13px", height: "13px" }} />
-                : <ChevronLeft style={{ width: "13px", height: "13px" }} />}
+                ? <ChevronRight style={{ width: "12px", height: "12px" }} />
+                : <ChevronLeft style={{ width: "12px", height: "12px" }} />}
             </button>
+
+            {/* Mobile close button inside sidebar */}
+            {isMobileMenuOpen && (
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  top: "16px",
+                  padding: "5px",
+                  borderRadius: "6px",
+                  color: "var(--muted-fg)",
+                  background: "var(--muted-bg)",
+                  border: "1px solid var(--card-border)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 10,
+                }}
+                className="md:hidden"
+              >
+                <X style={{ width: "12px", height: "12px" }} />
+              </button>
+            )}
           </div>
 
           {/* ── Navigation Links ── */}
           <nav style={{ flex: 1, padding: "12px 10px", display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
-            {!isCollapsed && (
+            {showExpanded && (
               <span style={{
                 fontSize: "9px",
                 fontWeight: 700,
@@ -513,7 +554,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                     display: "flex",
                     alignItems: "center",
                     gap: "10px",
-                    padding: isCollapsed ? "12px" : "11px 12px",
+                    padding: !showExpanded ? "12px" : "11px 12px",
                     borderRadius: "12px",
                     fontSize: "12.5px",
                     fontWeight: isActive ? 700 : 600,
@@ -522,9 +563,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                     border: isActive ? "1px solid rgba(79,124,255,0.2)" : "1px solid transparent",
                     textDecoration: "none",
                     transition: "all 0.18s ease",
-                    justifyContent: isCollapsed ? "center" : "flex-start",
+                    justifyContent: !showExpanded ? "center" : "flex-start",
                     position: "relative",
                     boxShadow: isActive ? "0 2px 8px var(--accent-glow)" : "none",
+                    overflow: "hidden",
                   }}
                   onMouseEnter={e => {
                     if (!isActive) {
@@ -545,10 +587,22 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                     flexShrink: 0,
                     color: isActive ? "var(--accent)" : "inherit",
                   }} />
-                  {!isCollapsed && <span>{link.label}</span>}
+                  <AnimatePresence initial={false}>
+                    {showExpanded && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        style={{ whiteSpace: "nowrap", overflow: "hidden" }}
+                      >
+                        {link.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
 
                   {/* Active indicator */}
-                  {isActive && !isCollapsed && (
+                  {isActive && showExpanded && (
                     <span style={{
                       marginLeft: "auto",
                       width: "6px",
@@ -560,7 +614,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                   )}
 
                   {/* Collapsed tooltip */}
-                  {isCollapsed && (
+                  {!showExpanded && (
                     <div style={{
                       position: "absolute",
                       left: "calc(100% + 12px)",
@@ -596,14 +650,14 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             flexDirection: "column",
             gap: "4px",
           }}>
-            {/* Theme toggle */}
+            {/* Theme toggle in sidebar */}
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
-                padding: isCollapsed ? "12px" : "11px 12px",
+                padding: !showExpanded ? "12px" : "11px 12px",
                 borderRadius: "12px",
                 fontSize: "12.5px",
                 fontWeight: 600,
@@ -612,8 +666,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 border: "1px solid transparent",
                 cursor: "pointer",
                 width: "100%",
-                justifyContent: isCollapsed ? "center" : "flex-start",
+                justifyContent: !showExpanded ? "center" : "flex-start",
                 transition: "all 0.18s ease",
+                overflow: "hidden",
               }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLButtonElement).style.color = "var(--fg)";
@@ -627,7 +682,19 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               {theme === "dark"
                 ? <Sun style={{ width: "16px", height: "16px", color: "#f59e0b", flexShrink: 0 }} />
                 : <Moon style={{ width: "16px", height: "16px", color: "var(--accent)", flexShrink: 0 }} />}
-              {!isCollapsed && <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
+              <AnimatePresence initial={false}>
+                {showExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ whiteSpace: "nowrap", overflow: "hidden" }}
+                  >
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
 
             {/* Logout */}
@@ -637,7 +704,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
-                padding: isCollapsed ? "12px" : "11px 12px",
+                padding: !showExpanded ? "12px" : "11px 12px",
                 borderRadius: "12px",
                 fontSize: "12.5px",
                 fontWeight: 600,
@@ -646,8 +713,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 border: "1px solid transparent",
                 cursor: "pointer",
                 width: "100%",
-                justifyContent: isCollapsed ? "center" : "flex-start",
+                justifyContent: !showExpanded ? "center" : "flex-start",
                 transition: "all 0.18s ease",
+                overflow: "hidden",
               }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,0.08)";
@@ -659,10 +727,22 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               }}
             >
               <LogOut style={{ width: "16px", height: "16px", flexShrink: 0 }} />
-              {!isCollapsed && <span>Secure Logout</span>}
+              <AnimatePresence initial={false}>
+                {showExpanded && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ whiteSpace: "nowrap", overflow: "hidden" }}
+                  >
+                    Secure Logout
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           </div>
-        </aside>
+        </motion.aside>
 
         {/* ── Main Content ── */}
         <main
@@ -672,104 +752,160 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             overflowY: "auto",
             display: "flex",
             flexDirection: "column",
-            paddingTop: "24px",
+            paddingTop: 0,
             paddingBottom: "40px",
-            paddingLeft: "32px",
-            paddingRight: "32px",
-            marginLeft: isCollapsed ? "0px" : "260px",
+            paddingLeft: 0,
+            paddingRight: 0,
+            marginLeft: showExpanded ? "260px" : "72px",
             transition: "margin-left 0.3s cubic-bezier(0.4,0,0.2,1)",
           }}
           className="admin-main"
         >
-          {/* Main top header bar */}
+          {/* ── Desktop Top Navbar ── */}
           <div style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: "15px",
-            paddingBottom: "15px",
-
-          }}>
-            {/* Assistly Brand Logo */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{
-                width: "120px",
-                height: "34px",
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-              }}>
-                <img
-                  src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
-                  alt="Assistly Logo"
-                  style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }}
-                />
-              </div>
+            padding: "16px 32px",
+            background: "var(--glass-bg)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            borderBottom: "1px solid var(--glass-border)",
+            minHeight: "64px",
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
+            boxShadow: "0 2px 20px var(--shadow)",
+          }} className="desktop-navbar">
+            {/* Left Side: Assistly Logo (Made larger on web) */}
+            <div style={{
+              width: "170px",
+              height: "44px",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+            }}>
+              <img
+                src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
+                alt="Assistly Logo"
+                style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }}
+              />
             </div>
 
-            {/* Right: Company + role */}
-            <Link
-              href="/admin/dashboard/profile"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                textDecoration: "none",
+            {/* Right Side: Notification Icon + Theme Toggle */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              {/* Notification Icon */}
+              <button style={{
+                background: "none",
+                border: "none",
+                color: "var(--muted-fg)",
                 cursor: "pointer",
-                padding: "6px 12px",
-                borderRadius: "12px",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = "var(--muted-bg)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>{displayName}</div>
-                <div style={{ fontSize: "10px", color: "var(--muted-fg)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {isAdmin ? "Organization Admin" : "Support Agent"}
-                </div>
-              </div>
-              <div style={{
-                width: "36px",
-                height: "36px",
+                padding: "8px",
                 borderRadius: "10px",
-                background: "linear-gradient(135deg, var(--accent), var(--accent2))",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: "14px",
-                overflow: "hidden",
-                flexShrink: 0,
-                boxShadow: "0 4px 12px var(--accent-glow)",
-              }}>
-                {isAdmin && customIcon
-                  ? <img src={customIcon} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                  : displayInitial}
-              </div>
-            </Link>
+                position: "relative",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = "var(--fg)";
+                e.currentTarget.style.backgroundColor = "var(--muted-bg)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = "var(--muted-fg)";
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
+              >
+                <Bell style={{ width: "18px", height: "18px" }} />
+                <span style={{
+                  position: "absolute",
+                  top: "6px",
+                  right: "6px",
+                  width: "7px",
+                  height: "7px",
+                  borderRadius: "50%",
+                  background: "#ef4444",
+                  border: "1.5px solid var(--bg)"
+                }} />
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted-fg)",
+                  cursor: "pointer",
+                  padding: "8px",
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = "var(--fg)";
+                  e.currentTarget.style.backgroundColor = "var(--muted-bg)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = "var(--muted-fg)";
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                {theme === "dark" 
+                  ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} /> 
+                  : <Moon style={{ width: "18px", height: "18px", color: "var(--accent)" }} />}
+              </button>
+            </div>
           </div>
 
           {/* Page content */}
-          <div style={{ maxWidth: "1280px", width: "100%", margin: "0 auto", flex: 1, display: "flex", flexDirection: "column" }}>
+          <div style={{ width: "100%", flex: 1, display: "flex", flexDirection: "column" }} className="admin-content">
             {children}
           </div>
         </main>
       </div>
 
-      {/* Global styles for tooltip & mobile */}
+      {/* Global responsive styles using explicit media queries to guarantee proper hide/show */}
       <style>{`
         @media (max-width: 768px) {
+          .desktop-navbar {
+            display: none !important;
+          }
+          .mobile-navbar {
+            display: flex !important;
+          }
+          .desktop-collapse-btn {
+            display: none !important;
+          }
           .admin-main {
             margin-left: 0 !important;
             padding-top: 80px !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          .admin-content {
+            padding-top: 0 !important;
             padding-left: 16px !important;
             padding-right: 16px !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .desktop-navbar {
+            display: flex !important;
+          }
+          .mobile-navbar {
+            display: none !important;
+          }
+          .desktop-collapse-btn {
+            display: flex !important;
+          }
+          .admin-content {
+            padding-top: 24px !important;
+            padding-left: 32px !important;
+            padding-right: 32px !important;
           }
         }
         a:has(.sidebar-tooltip):hover .sidebar-tooltip,
