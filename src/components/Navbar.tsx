@@ -145,12 +145,12 @@ export default function Navbar() {
               <div style={{
                 width: "180px", height: "50px",
                 position: "relative",
-                display: "flex", alignItems: "center", justifyContent: "center"
+                display: "flex", alignItems: "center", justifyContent: "flex-start"
               }}>
                 <img
                   src={mounted && theme === "light" ? "/light-theme-logo.png" : "/dark-theme-logo.png"}
                   alt="Assistly Logo"
-                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  style={{ width: "auto", height: "100%", objectFit: "contain" }}
                 />
               </div>
             </motion.button>
