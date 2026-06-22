@@ -49,7 +49,7 @@ export default function CTASection() {
                 whileTap={{ scale: 0.97 }}
                 className="btn-primary"
                 style={{ fontSize: "17px", padding: "15px 34px" }}
-                onClick={() => scrollTo("#pricing")}
+                onClick={() => router.push('/get-started')}
               >
                 Start Free Trial
                 <ArrowRight style={{ width: "18px", height: "18px" }} />

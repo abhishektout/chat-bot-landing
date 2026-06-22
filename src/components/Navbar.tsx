@@ -118,7 +118,7 @@ export default function Navbar() {
           borderBottom: scrolled ? "1px solid var(--card-border)" : "1px solid transparent",
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+        <div className="layout-container">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "66px" }}>
 
             {/* Logo */}
@@ -338,7 +338,7 @@ export default function Navbar() {
               boxShadow: "0 8px 32px var(--shadow)",
             }}
           >
-            <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "16px 24px", display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div className="layout-container" style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "4px" }}>
               {navLinks.map((link) => (
                 <button
                   key={link.label}

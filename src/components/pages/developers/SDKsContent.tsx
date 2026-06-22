@@ -42,7 +42,7 @@ fmt.Println(reply.Text)`,
 function CopyButton({ text, id }: { text: string; id: string }) {
   const [copied, setCopied] = useState(false);
   function copy() {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch(() => { });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -58,7 +58,7 @@ export default function SDKsContent() {
   const sdk = SDKS[activeTab];
 
   return (
-    <div style={{ maxWidth: "760px", margin: "0 auto" }}>
+    <div>
       {/* Breadcrumb */}
       <nav style={{ fontSize: "13px", color: "var(--muted-fg)", marginBottom: "32px", display: "flex", gap: "6px" }} aria-label="Breadcrumb">
         <Link href="/" style={{ color: "var(--muted-fg)", textDecoration: "none" }}>Home</Link>

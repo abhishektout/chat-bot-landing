@@ -21,7 +21,7 @@ export default function SocialProof() {
 
   return (
     <section style={{ position: "relative", overflow: "hidden", padding: "56px 0", borderTop: "1px solid var(--card-border)", borderBottom: "1px solid var(--card-border)" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container">
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}

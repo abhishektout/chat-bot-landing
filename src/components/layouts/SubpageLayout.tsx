@@ -55,12 +55,10 @@ export default function SubpageLayout({ children, accentColor = "#4f7cff" }: Sub
 
         {/* Page content */}
         <div
+          className="layout-container"
           style={{
             position: "relative",
             zIndex: 10,
-            maxWidth: "1280px",
-            margin: "0 auto",
-            padding: "0 24px",
           }}
         >
           {children}

@@ -25,7 +25,7 @@ export default function FeaturesSection() {
       <div style={{ position: "absolute", top: "20%", right: 0, width: "400px", height: "400px", background: "rgba(79,124,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", bottom: "20%", left: 0, width: "300px", height: "300px", background: "rgba(0,212,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container" style={{ position: "relative", zIndex: 10 }}>
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}

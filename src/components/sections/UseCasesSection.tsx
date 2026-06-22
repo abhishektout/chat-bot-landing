@@ -25,7 +25,7 @@ export default function UseCasesSection() {
     <section id="use-cases" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="dot-bg" style={{ position: "absolute", inset: 0, opacity: 0.3 }} />
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container" style={{ position: "relative", zIndex: 10 }}>
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 28 }}

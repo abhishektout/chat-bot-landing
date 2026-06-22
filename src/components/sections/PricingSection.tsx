@@ -45,7 +45,7 @@ export default function PricingSection() {
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.18 }} />
       <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "700px", height: "350px", background: "rgba(79,124,255,0.05)", filter: "blur(80px)", pointerEvents: "none" }} />
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+      <div className="layout-container">
         <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "52px" }}>
           {/* <span className="badge" style={{ marginBottom: "16px" }}>
             <CreditCard style={{ width: "12px", height: "12px" }} />
