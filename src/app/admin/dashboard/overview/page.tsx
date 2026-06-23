@@ -366,9 +366,9 @@ export default function DashboardOverviewPage() {
                       </td>
                       <td style={{ padding: "16px" }}>
                         {session.human_takeover ? (
-                          <Badge variant="warning">Live Agent</Badge>
+                          <Badge variant="warning" style={{ padding:"4px"}}>Live Agent</Badge>
                         ) : (
-                          <Badge variant="success">AI Autopilot</Badge>
+                          <Badge variant="success" style={{ padding:"4px"}}>AI Autopilot</Badge>
                         )}
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>

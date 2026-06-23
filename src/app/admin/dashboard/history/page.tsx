@@ -235,7 +235,7 @@ export default function ChatLogsPage() {
             style={{ width: "100%", fontSize: "12px", padding: "10px" } as React.CSSProperties}>
             Refresh Stream
           </Button>
-          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", paddingRight: "4px" }}>
             {sessions.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 12px", fontSize: "12px", color: "var(--muted-fg)", fontStyle: "italic" }}>
                 No active conversations

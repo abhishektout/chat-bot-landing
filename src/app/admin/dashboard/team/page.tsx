@@ -740,7 +740,7 @@ export default function TeamManagementPage() {
         title={editingId ? "Modify Team Member" : "Register Team Member"}
         maxWidthClass="max-w-md"
       >
-        <form onSubmit={handleSaveAgent} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <form onSubmit={handleSaveAgent} style={{ display: "flex", flexDirection: "column", gap: "20px", paddingRight: "5px" }}>
           <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
             {editingId 
               ? "Update this agent's account credentials, active shifts, and access settings."
