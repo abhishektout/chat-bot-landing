@@ -21,21 +21,29 @@ const getLenis = () => {
 const navLinks = [
   {
     label: "Features",
-    href: "#features",
+    href: "/features",
   },
   {
     label: "Solutions",
-    href: "#use-cases",
+    href: "/solutions",
     dropdown: [
       { label: "E-Commerce", href: "/solutions/e-commerce" },
-      { label: "Healthcare", href: "/solutions/healthcare" },
       { label: "SaaS", href: "/solutions/saas" },
+      { label: "Healthcare", href: "/solutions/healthcare" },
       { label: "Finance", href: "/solutions/finance" },
+      { label: "Education", href: "/solutions/education" },
+      { label: "Travel", href: "/solutions/travel" },
     ],
   },
+  {
+    label: "Enterprise",
+    href: "/enterprise",
+  },
+  {
+    label: "Resources",
+    href: "/resources",
+  },
   { label: "Pricing", href: "/pricing" },
-  { label: "Resources", href: "#faq" },
-  { label: "Contact", href: "#contact" },
 ];
 
 export default function Navbar() {

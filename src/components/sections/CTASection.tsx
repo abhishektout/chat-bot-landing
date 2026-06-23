@@ -36,7 +36,7 @@ export default function CTASection() {
             </span> */}
 
             <h2 style={{ fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginBottom: "20px", lineHeight: 1.1, marginTop: "12px" }}>
-              Start Using <br /><span className="gradient-text">Assistly Today</span>
+              Ready to Automate <br /><span className="gradient-text">Customer Support?</span>
             </h2>
 
             <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "560px", margin: "0 auto 36px", lineHeight: 1.75 }}>
