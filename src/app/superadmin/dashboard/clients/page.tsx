@@ -29,10 +29,11 @@ export default function ManageClientsPage() {
 
   // Form states
   const [companyName, setCompanyName] = useState("");
-  const [botName, setBotName] = useState("");
-  const [supportEmail, setSupportEmail] = useState("");
-  const [subscriptionPlan, setSubscriptionPlan] = useState("free");
-  const [isActive, setIsActive] = useState(true);
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [subscriptionPlan, setSubscriptionPlan] = useState("Basic");
 
   // Edit states for details
   const [showEditModal, setShowEditModal] = useState(false);
@@ -69,31 +70,68 @@ export default function ManageClientsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName.trim() || !botName.trim() || !supportEmail.trim()) {
-      showToast("error", "Validation Error", "Please fill in all required fields.");
+
+    const trimmedCompany = companyName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedWebsite = website.trim();
+    const trimmedIndustry = industry.trim();
+
+    // 1. Required Fields Validation
+    if (!trimmedCompany || !trimmedEmail || !trimmedPhone) {
+      showToast("error", "Validation Error", "Company Name, Admin Email, and Phone Number are required.");
       return;
+    }
+
+    // 2. Email Format Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      showToast("error", "Validation Error", "Please enter a valid admin email address.");
+      return;
+    }
+
+    // 3. Phone Number Validation
+    const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      showToast("error", "Validation Error", "Please enter a valid phone number.");
+      return;
+    }
+
+    // 4. Website URL Validation (if entered)
+    if (trimmedWebsite) {
+      try {
+        const urlToTest = trimmedWebsite.startsWith("http://") || trimmedWebsite.startsWith("https://")
+          ? trimmedWebsite
+          : "http://" + trimmedWebsite;
+        new URL(urlToTest);
+      } catch (e) {
+        showToast("error", "Validation Error", "Please enter a valid Website URL.");
+        return;
+      }
     }
 
     setIsSaving(true);
     try {
       await superAdminService.createClient({
-        company_name: companyName.trim(),
-        bot_name: botName.trim(),
-        support_email: supportEmail.trim(),
+        company_name: trimmedCompany,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        website: trimmedWebsite,
+        industry: trimmedIndustry,
         subscription_plan: subscriptionPlan,
-        is_active: String(isActive),
       });
 
-      showToast("success", "Tenant Onboarded", "Client created successfully! Verification details emailed.");
+      showToast("success", "Tenant Onboarded", "Client created successfully! API Key generated.");
       setCompanyName("");
-      setBotName("");
-      setSupportEmail("");
-      setSubscriptionPlan("free");
-      setIsActive(true);
+      setEmail("");
+      setPhone("");
+      setWebsite("");
+      setIndustry("");
+      setSubscriptionPlan("Basic");
       fetchClients();
     } catch (error: any) {
       const errMsg = error.response?.data?.detail || "Failed to create client.";
-      showToast("error", "Process Failed", errMsg);
+      showToast("error", "Onboarding Failed", errMsg);
     } finally {
       setIsSaving(false);
     }
@@ -101,7 +139,7 @@ export default function ManageClientsPage() {
 
   const handleToggleStatus = async (clientId: string | number, currentStatus: boolean) => {
     try {
-      await superAdminService.toggleClientStatus(clientId, !currentStatus);
+      await superAdminService.toggleClientStatus(clientId);
       showToast("success", "Status Updated", "Client status toggled successfully.");
       fetchClients();
     } catch (error) {
@@ -224,52 +262,61 @@ export default function ManageClientsPage() {
 
           <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <Input
-              label="Company Name"
+              label="Company Name *"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="e.g. Acme Corp"
               required
             />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Admin Email *"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@acme.com"
+                required
+              />
+              <Input
+                label="Phone Number *"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. +1 555-0199"
+                required
+              />
+            </div>
             <Input
-              label="Bot Identifier Name"
-              value={botName}
-              onChange={(e) => setBotName(e.target.value)}
-              placeholder="e.g. Acme Assistant"
-              required
+              label="Website URL"
+              type="url"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://www.acme.com"
             />
-            <Input
-              label="Super User Email"
-              type="email"
-              value={supportEmail}
-              onChange={(e) => setSupportEmail(e.target.value)}
-              placeholder="admin@acme.com"
-              required
-            />
-            <Select
-              label="Subscription Tier"
-              value={subscriptionPlan}
-              onChange={(e) => setSubscriptionPlan(e.target.value)}
-            >
-              <option value="free">Free Starter Plan</option>
-              <option value="premium">Premium Pro Plan</option>
-              <option value="enterprise">Enterprise Scaling Plan</option>
-            </Select>
-
-            <Select
-              label="Access Status"
-              value={String(isActive)}
-              onChange={(e) => setIsActive(e.target.value === "true")}
-            >
-              <option value="true">Active / Verified</option>
-              <option value="false">Deactivated / Suspended</option>
-            </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Industry"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                placeholder="e.g. Technology"
+              />
+              <Select
+                label="Plan Tier"
+                value={subscriptionPlan}
+                onChange={(e) => setSubscriptionPlan(e.target.value)}
+              >
+                <option value="Basic">Basic</option>
+                <option value="Premium">Premium</option>
+                <option value="Enterprise">Enterprise</option>
+              </Select>
+            </div>
 
             <Button
               type="submit"
               isLoading={isSaving}
               style={{ fontSize: "13px", padding: "12px", width: "100%", marginTop: "8px" }}
             >
-              Onboard Account
+              Generate API Key & Save
             </Button>
           </form>
         </Card>

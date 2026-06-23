@@ -2,10 +2,11 @@ import { superAdminClient } from "./apiClient";
 
 export interface ClientPayload {
   company_name: string;
-  bot_name: string;
-  support_email: string;
-  subscription_plan: string;
-  is_active: string;
+  email: string;
+  phone: string;
+  website?: string;
+  industry?: string;
+  subscription_plan?: string;
 }
 
 export interface ClientUpdatePayload {
@@ -35,46 +36,19 @@ export const superAdminService = {
 
   // Onboard new client
   createClient: async (payload: ClientPayload) => {
-    const params = new URLSearchParams();
-    Object.entries(payload).forEach(([key, val]) => {
-      params.append(key, val);
-    });
-
-    const response = await superAdminClient.post("/superadmin/clients", params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
+    const response = await superAdminClient.post("/superadmin/clients", payload);
     return response.data;
   },
 
-  // Toggle client status (Active/Suspended)
-  toggleClientStatus: async (clientId: string | number, isActive: boolean) => {
-    const params = new URLSearchParams();
-    params.append("is_active", String(isActive));
-
-    const response = await superAdminClient.put(`/superadmin/clients/${clientId}/status`, params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
+  // Toggle client status (Active/Suspended) - Uses the PUT /toggle endpoint
+  toggleClientStatus: async (clientId: string | number) => {
+    const response = await superAdminClient.put(`/superadmin/clients/${clientId}/toggle`);
     return response.data;
   },
 
-  // Update client configuration details
+  // Update client configuration details (if supported by client-level admin)
   updateClientDetails: async (clientId: string | number, payload: ClientUpdatePayload) => {
-    const params = new URLSearchParams();
-    Object.entries(payload).forEach(([key, val]) => {
-      if (val !== undefined) {
-        params.append(key, val);
-      }
-    });
-
-    const response = await superAdminClient.put(`/superadmin/clients/${clientId}`, params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
+    const response = await superAdminClient.put(`/superadmin/clients/${clientId}`, payload);
     return response.data;
   },
 
@@ -104,18 +78,15 @@ export const superAdminService = {
     return response.data;
   },
 
-  // Update global settings
+  // Update global settings - Uses PUT and maps field names for Gemini
   saveSettings: async (payload: GlobalSettingsPayload) => {
-    const params = new URLSearchParams();
-    Object.entries(payload).forEach(([key, val]) => {
-      params.append(key, val);
-    });
-
-    const response = await superAdminClient.post("/superadmin/settings", params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
+    const backendPayload = {
+      master_gemini_key: payload.gemini_api_key || "",
+      smtp_server: payload.smtp_server || "",
+      smtp_email: payload.smtp_email || "",
+      smtp_password: payload.smtp_password || "",
+    };
+    const response = await superAdminClient.put("/superadmin/settings", backendPayload);
     return response.data;
   },
 };
