@@ -66,8 +66,8 @@ export default function InsightsSection() {
             AI Insights
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
-            Turn Conversations into<br />
-            <span className="gradient-text">Business Intelligence</span>
+            Get Insights from <br />
+            <span className="gradient-text">Customer Conversations</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "540px", margin: "0 auto", lineHeight: 1.7 }}>
             AI analyzes every conversation to surface actionable insights that grow your business.

@@ -38,8 +38,8 @@ export default function ProblemSection() {
             The Problem
           </span> */}
           <h2 style={{ fontSize: "clamp(32px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
-            Customer Support Is{" "}
-            <span className="gradient-text">Broken</span>
+            Common Customer Support{" "}
+            <span className="gradient-text">Problems</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "560px", margin: "0 auto", lineHeight: 1.7 }}>
             Traditional customer support costs too much, moves too slow, and loses too many opportunities.

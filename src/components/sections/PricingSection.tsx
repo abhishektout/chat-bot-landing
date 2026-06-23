@@ -52,7 +52,7 @@ export default function PricingSection() {
             Pricing
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            Simple, Transparent <span className="gradient-text">Pricing</span>
+            Choose Your <span className="gradient-text"> Plan</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", marginBottom: "28px" }}>No setup fees. No hidden charges. Cancel anytime.</p>
 

@@ -58,7 +58,7 @@ export default function TechShowcaseSection() {
             Technology
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            Built on Modern<br /><span className="gradient-text">AI Infrastructure</span>
+            Integrations & Technology<br /><span className="gradient-text">We Support</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>
             Enterprise-grade infrastructure powering AI conversations at global scale.

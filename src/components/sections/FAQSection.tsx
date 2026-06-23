@@ -80,7 +80,7 @@ export default function FAQSection() {
             FAQ
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 54px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            Frequently Asked <span className="gradient-text">Questions</span>
+            <span className="gradient-text">Questions</span> You May Have
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)" }}>Everything you need to know about Assistly.</p>
         </motion.div>

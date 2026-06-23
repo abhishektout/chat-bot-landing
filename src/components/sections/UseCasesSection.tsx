@@ -42,9 +42,9 @@ export default function UseCasesSection() {
               marginBottom: "18px",
             }}
           >
-            Built for Every
+            Works for Every
             <br />
-            <span className="gradient-text">Industry</span>
+            <span className="gradient-text">Business Type</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>
             No matter your industry, Assistly adapts to your business processes and customer needs.

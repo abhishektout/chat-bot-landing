@@ -47,7 +47,7 @@ export default function EnterpriseSection() {
             Enterprise
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            Built for <span className="gradient-text">Enterprise Teams</span>
+            Advanced Features for <span className="gradient-text">Growing Businesses</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>
             Security, compliance, and control at enterprise scale — without the enterprise complexity.
