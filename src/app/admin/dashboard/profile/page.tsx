@@ -452,48 +452,120 @@ export default function ProfilePage() {
       const savedPhone = localStorage.getItem('saas_profile_phone') || '+1 (555) 019-2834';
       setPhoneValue(savedPhone);
       setProfileData(prev => ({ ...prev, phone: savedPhone }));
-    } else if (isAgent) {
-      const savedPhone = localStorage.getItem('saas_profile_phone') || '+1 (555) 432-1098';
-      setPhoneValue(savedPhone);
-      setProfileData(prev => ({ ...prev, phone: savedPhone }));
-    } else if (tenantInfo) {
-      const company = tenantInfo.company_name || 'Acme Corp';
-      const email = tenantInfo.support_email || 'admin@acmecorp.com';
-      const phone = (tenantInfo as any).phone || localStorage.getItem('saas_profile_phone') || '+1 (555) 123-4567';
-      const website = (tenantInfo as any).website || 'https://www.acmecorp.com';
-      const industry = (tenantInfo as any).industry || 'Software Development';
-      const plan = tenantInfo.subscription_plan || 'Enterprise';
+    } else {
+      const savedPhone = localStorage.getItem('saas_profile_phone') || (isAgent ? '+1 (555) 432-1098' : '+1 (555) 123-4567');
+      const company = tenantInfo?.company_name || 'Acme Corp';
+      const email = isAgent ? (localStorage.getItem('saas_agent_email') || 'support.agent@company.com') : (tenantInfo?.support_email || 'admin@acmecorp.com');
+      const website = (tenantInfo as any)?.website || 'https://www.acmecorp.com';
+      const industry = (tenantInfo as any)?.industry || 'Software Development';
+      const plan = tenantInfo?.subscription_plan || 'Enterprise';
 
-      setProfileData({
-        fullName: 'Workspace Administrator',
+      setProfileData(prev => ({
+        ...prev,
         email: email,
-        phone: phone,
-        role: 'Workspace Admin',
+        phone: savedPhone,
         companyName: company,
         website: website,
         industry: industry,
         planType: plan,
-        status: 'Active'
-      });
-      setPhoneValue(phone);
+      }));
+      setPhoneValue(savedPhone);
     }
   }, [tenantInfo, isSuperAdmin, isAgent]);
 
   // Keep state in sync with tenantInfo if it resolves asynchronously
   useEffect(() => {
-    if (tenantInfo && !isSuperAdmin && !isAgent) {
+    if (tenantInfo && !isSuperAdmin) {
       setProfileData(prev => ({
         ...prev,
-        email: tenantInfo.support_email || prev.email,
-        phone: (tenantInfo as any).phone || prev.phone,
+        email: isAgent ? prev.email : (tenantInfo.support_email || prev.email),
+        phone: isAgent ? prev.phone : ((tenantInfo as any).phone || prev.phone),
         companyName: tenantInfo.company_name || prev.companyName,
         website: (tenantInfo as any).website || prev.website,
         industry: (tenantInfo as any).industry || prev.industry,
         planType: tenantInfo.subscription_plan || prev.planType
       }));
-      setPhoneValue((tenantInfo as any).phone || profileData.phone);
+      if (!isAgent) {
+        setPhoneValue((tenantInfo as any).phone || profileData.phone);
+      }
     }
   }, [tenantInfo, isSuperAdmin, isAgent]);
+
+  // Fetch active agent details from team list to get real email and phone number
+  useEffect(() => {
+    const fetchAgentDetails = async () => {
+      if (isAgent) {
+        try {
+          const agents = await adminService.getAgents();
+          const agentId = typeof window !== "undefined" ? localStorage.getItem("saas_agent_id") : null;
+          const agentName = typeof window !== "undefined" ? localStorage.getItem("saas_agent_name") : null;
+          const currentAgent = agents.find((a: any) => 
+            (agentId && String(a.id) === String(agentId)) || 
+            (agentName && a.name === agentName)
+          );
+          if (currentAgent) {
+            setProfileData(prev => ({
+              ...prev,
+              email: currentAgent.email || prev.email,
+              phone: currentAgent.phone_number || prev.phone,
+            }));
+            if (currentAgent.phone_number) {
+              setPhoneValue(currentAgent.phone_number);
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to fetch agent details from API", e);
+        }
+      }
+    };
+    fetchAgentDetails();
+  }, [isAgent]);
+
+  // Direct tenant info fallback fetch
+  useEffect(() => {
+    const loadTenantDetailsDirect = async () => {
+      if (!isSuperAdmin) {
+        try {
+          const data = await adminService.getTenantInfo();
+          const info = data && data.status === "success" ? data.data : data;
+          if (info && info.company_name) {
+            setProfileData(prev => ({
+              ...prev,
+              companyName: info.company_name || prev.companyName,
+              website: info.website || prev.website,
+              industry: info.industry || prev.industry,
+              planType: info.subscription_plan || prev.planType,
+            }));
+          }
+        } catch (e) {
+          console.warn("Failed to load tenant info directly in profile page", e);
+        }
+      }
+    };
+    loadTenantDetailsDirect();
+  }, [isSuperAdmin]);
+
+  // Direct settings fallback fetch for maximum data coverage
+  useEffect(() => {
+    const loadSettingsFallback = async () => {
+      if (!isSuperAdmin) {
+        try {
+          const settings = await adminService.getSettings();
+          if (settings && settings.company_name) {
+            setProfileData(prev => ({
+              ...prev,
+              companyName: settings.company_name || prev.companyName,
+              website: settings.website || prev.website,
+              industry: settings.industry || prev.industry,
+            }));
+          }
+        } catch (e) {
+          console.warn("Failed to load settings fallback in profile page", e);
+        }
+      }
+    };
+    loadSettingsFallback();
+  }, [isSuperAdmin]);
 
   // Handle Phone Number update
   const handlePhoneSave = async (e: React.FormEvent) => {
@@ -593,6 +665,16 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {isAgent && (
+              <Input 
+                label="Support Person Name" 
+                name="fullName"
+                value={profileData.fullName}
+                readOnly 
+                style={{ opacity: 0.8, cursor: "not-allowed" }}
+              />
+            )}
+
             <Input 
               label="Email Address" 
               name="emailAddress" 
@@ -674,7 +756,7 @@ export default function ProfilePage() {
               />
             )}
 
-            {isAdmin && (
+            {(isAdmin || isAgent) && (
               <>
                 <div style={{ margin: "8px 0", borderTop: "1px solid var(--card-border)" }} />
                 

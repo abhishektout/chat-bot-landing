@@ -13,6 +13,8 @@ interface Session {
   human_takeover?: boolean;
   agent_name?: string;
   user_name?: string;
+  visitor_name?: string;
+  client_name?: string;
   last_active?: string;
 }
 
@@ -53,14 +55,27 @@ export default function DashboardOverviewPage() {
         }
       };
 
+      const getLocalTakeoverAgents = () => {
+        if (typeof window === "undefined") return {};
+        try {
+          const stored = localStorage.getItem("saas_takeover_agents");
+          return stored ? JSON.parse(stored) : {};
+        } catch {
+          return {};
+        }
+      };
+
       const localStates = getLocalTakeoverStates();
+      const localAgents = getLocalTakeoverAgents();
       const mapped = sessionsList.map((s: Session) => {
         const sId = s.id || s.session_id || "";
         const localTakeover = localStates[sId];
         return {
           ...s,
           human_takeover: typeof localTakeover === "boolean" ? localTakeover : !!s.human_takeover,
-          agent_name: s.agent_name || (localTakeover ? localStorage.getItem("saas_agent_name") || "Human Support" : "")
+          agent_name: localTakeover
+            ? (localAgents[sId] || s.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
+            : (s.agent_name || "")
         };
       });
 
@@ -349,9 +364,7 @@ export default function DashboardOverviewPage() {
                       <td style={{ padding: "16px 24px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                           <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                            {session.human_takeover 
-                              ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
-                              : (session.user_name || "Anonymous Session")}
+                            {session.visitor_name || (session as any).client_name || session.user_name || "Web Visitor"}
                           </span>
                           <span style={{ fontSize: "10px", color: "var(--muted-fg)", fontFamily: "monospace" }}>
                             {session.id || session.session_id || "Unknown"}

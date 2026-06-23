@@ -274,14 +274,14 @@ export default function ManageClientsPage() {
         </Card>
 
         {/* Tenants Table Grid */}
-        <Card className="card" style={{ padding: 0, overflow: "hidden", gridColumn: "span 2" } as React.CSSProperties}>
+        <Card className="card" style={{ padding: 0, overflow: "hidden", gridColumn: "span 2", background: "#0b1329", border: "1px solid #1e293b" } as React.CSSProperties}>
           <div style={{
             padding: "20px 24px",
-            borderBottom: "1px solid var(--card-border)",
+            borderBottom: "1px solid #1e293b",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "var(--muted-bg)",
+            background: "#0f172a",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ position: "relative", display: "inline-flex", width: "8px", height: "8px" }}>
@@ -289,39 +289,39 @@ export default function ManageClientsPage() {
                   position: "absolute",
                   inset: 0,
                   borderRadius: "50%",
-                  background: "var(--accent)",
+                  background: "#3b82f6",
                   opacity: 0.6,
                   animation: "pulseGlow 1.5s ease-in-out infinite",
                 }} />
-                <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+                <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "#3b82f6", display: "inline-block" }} />
               </span>
-              <h3 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#f8fafc" }}>
                 Active Business Tenants
               </h3>
             </div>
-            <Badge variant="info" style={{ fontSize: "9px" } as React.CSSProperties}>
+            <span className="rounded-full text-[10px] font-extrabold bg-[#1d4ed8] text-white uppercase tracking-wider shadow-sm" style={{ padding: "4px 12px" }}>
               {clients.length} Total
-            </Badge>
+            </span>
           </div>
 
           <div style={{ overflowX: "auto", width: "100%" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{
-                  background: "var(--muted-bg)",
-                  borderBottom: "1px solid var(--card-border)",
+                  background: "#0f172a",
+                  borderBottom: "1px solid #1e293b",
                 }}>
-                  {["Business / Bot", "Super User", "API Key", "Tier Plan", "Status", "Actions"].map((h, i) => (
+                  {["Business Name", "Plan", "Workspace API Key", "Status", "Actions"].map((h, i) => (
                     <th key={h} style={{
-                      padding: "14px 16px",
+                      padding: "16px 16px",
                       paddingLeft: i === 0 ? "24px" : "16px",
-                      paddingRight: i === 5 ? "24px" : "16px",
-                      fontSize: "10px",
+                      paddingRight: i === 4 ? "24px" : "16px",
+                      fontSize: "10.5px",
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.1em",
-                      color: "var(--muted-fg)",
-                      textAlign: i === 5 ? "right" : "left",
+                      color: "#94a3b8",
+                      textAlign: i === 4 ? "right" : "left",
                     }}>
                       {h}
                     </th>
@@ -331,24 +331,23 @@ export default function ManageClientsPage() {
               <tbody>
                 {isLoading ? (
                   Array.from({ length: 4 }).map((_, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid var(--card-border)" }}>
+                    <tr key={idx} style={{ borderBottom: "1px solid #1e293b" }}>
                       <td style={{ padding: "16px 24px" }}><Skeleton className="h-5 w-40" /></td>
-                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-32" /></td>
-                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-24" /></td>
                       <td style={{ padding: "16px" }}><Skeleton className="h-5 w-16" /></td>
+                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-24" /></td>
                       <td style={{ padding: "16px" }}><Skeleton className="h-5 w-16" /></td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}><Skeleton className="h-8 w-16 ml-auto" /></td>
                     </tr>
                   ))
                 ) : clients.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: "60px 24px", textAlign: "center" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", color: "var(--muted-fg)" }}>
+                    <td colSpan={5} style={{ padding: "60px 24px", textAlign: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", color: "#94a3b8" }}>
                         <div style={{
                           width: "48px",
                           height: "48px",
                           borderRadius: "12px",
-                          background: "var(--muted-bg)",
+                          background: "#0f172a",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -356,7 +355,7 @@ export default function ManageClientsPage() {
                           <Building style={{ width: "22px", height: "22px", opacity: 0.5 }} />
                         </div>
                         <div>
-                          <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)", marginBottom: "4px" }}>No Business Tenants</p>
+                          <p style={{ fontSize: "14px", fontWeight: 700, color: "#f8fafc", marginBottom: "4px" }}>No Business Tenants</p>
                           <p style={{ fontSize: "12px", maxWidth: "320px", lineHeight: 1.6 }}>
                             Provision your first organization workspace using the panel on the left.
                           </p>
@@ -369,67 +368,66 @@ export default function ManageClientsPage() {
                     <tr
                       key={client.id}
                       style={{
-                        borderBottom: "1px solid var(--card-border)",
+                        borderBottom: "1px solid #1e293b",
                         transition: "background 0.15s",
                       }}
-                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "var(--muted-bg)"}
+                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "#0f172a50"}
                       onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
                     >
                       <td style={{ padding: "16px 24px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                          <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
+                          <span style={{ fontSize: "14px", fontWeight: 700, color: "#f8fafc" }}>
                             {client.company_name}
                           </span>
-                          <span style={{ fontSize: "10px", color: "var(--muted-fg)" }}>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
                             Bot: {client.bot_name}
                           </span>
                         </div>
                       </td>
-                      <td style={{ padding: "16px", fontSize: "12.5px", color: "var(--muted-fg)", fontWeight: 500 }}>
-                        {client.support_email}
-                      </td>
-                      <td style={{ padding: "16px", fontFamily: "monospace", fontSize: "12px", color: "var(--accent)", fontWeight: 600 }}>
-                        {client.api_key ? `${client.api_key.substring(0, 10)}...` : "None"}
+                      <td style={{ padding: "16px" }}>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#0f172a] border border-[#1e293b] text-[#cbd5e1] uppercase tracking-wider">
+                          {client.subscription_plan}
+                        </span>
                       </td>
                       <td style={{ padding: "16px" }}>
-                        <Badge variant="neutral" style={{ fontSize: "9px", padding: "3px 8px" }}>
-                          {client.subscription_plan}
-                        </Badge>
+                        <code style={{
+                          fontFamily: "monospace",
+                          fontSize: "13px",
+                          color: "#38bdf8",
+                          fontWeight: 600,
+                        }}>
+                          {client.api_key ? `${client.api_key.substring(0, 10)}...` : "None"}
+                        </code>
                       </td>
                       <td style={{ padding: "16px" }}>
                         <button
                           onClick={() => handleToggleStatus(client.id, client.is_active)}
                           style={{ border: "none", background: "none", padding: 0, cursor: "pointer" }}
                         >
-                          <Badge
-                            variant={client.is_active ? "success" : "error"}
-                            style={{ fontSize: "9px", padding: "3px 8px", cursor: "pointer" }}
-                          >
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${client.is_active ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/20' : 'bg-red-950/60 text-red-400 border border-red-500/20'}`}>
                             {client.is_active ? "Active" : "Suspended"}
-                          </Badge>
+                          </span>
                         </button>
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
+                        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", alignItems: "center" }}>
                           <button
                             type="button"
                             onClick={() => openEditModal(client)}
                             style={{
                               background: "none",
                               border: "none",
-                              color: "var(--accent)",
+                              color: "#38bdf8",
                               cursor: "pointer",
-                              padding: "6px",
-                              borderRadius: "8px",
+                              padding: "4px",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              outline: "none",
                             }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--accent-glow)")}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                             title="Edit"
                           >
-                            <Pencil style={{ width: "15px", height: "15px" }} />
+                            <Pencil style={{ width: "16px", height: "16px" }} />
                           </button>
                           <button
                             type="button"
@@ -439,17 +437,15 @@ export default function ManageClientsPage() {
                               border: "none",
                               color: "#ef4444",
                               cursor: "pointer",
-                              padding: "6px",
-                              borderRadius: "8px",
+                              padding: "4px",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              outline: "none",
                             }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.1)")}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                             title="Archive"
                           >
-                            <Trash2 style={{ width: "15px", height: "15px" }} />
+                            <Trash2 style={{ width: "16px", height: "16px" }} />
                           </button>
                         </div>
                       </td>

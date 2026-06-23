@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Database, Link2, Key, Shield, Check, Trash2 } from "lucide-react";
+import { Database, Link2, Key, Shield, Check, Trash2, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
 import { Card, Textarea, Button, Badge, ConfirmModal } from "@/components/ui";
@@ -11,6 +11,7 @@ export default function DatabaseAuthPage() {
   const { tenantInfo, refreshTenantInfo } = useAdminDashboard();
   const { showToast } = useToast();
   const [dbUri, setDbUri] = useState("");
+  const [dbUriError, setDbUriError] = useState("");
   const [dbRules, setDbRules] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -55,7 +56,12 @@ export default function DatabaseAuthPage() {
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dbUri.trim()) { showToast("error", "Validation Error", "Please enter a Database URI."); return; }
+    if (!dbUri.trim()) {
+      setDbUriError("Database URI is required.");
+      showToast("error", "Validation Error", "Please enter a Database URI.");
+      return;
+    }
+    setDbUriError("");
     setIsConnecting(true);
     try {
       const data = await adminService.dbConnect(dbUri.trim());
@@ -85,6 +91,7 @@ export default function DatabaseAuthPage() {
           await adminService.dbDisconnect();
           showToast("success", "Disconnected", "Database disconnected successfully.");
           setIsConnected(false); setDbUri(""); setDbRules("");
+          setDbUriError("");
           setAvailableTables([]); setSelectedTables([]);
           await refreshTenantInfo();
         } catch {
@@ -156,7 +163,7 @@ export default function DatabaseAuthPage() {
           )}
         </div>
 
-        <form onSubmit={handleConnect}>
+        <form onSubmit={handleConnect} noValidate>
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted-fg)" }}>
               PostgreSQL DB Connection String URI
@@ -164,12 +171,15 @@ export default function DatabaseAuthPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <input
-                  type="text" value={dbUri} onChange={e => setDbUri(e.target.value)} disabled={isConnected}
+                  type="text" value={dbUri} onChange={e => {
+                    setDbUri(e.target.value);
+                    if (dbUriError) setDbUriError("");
+                  }} disabled={isConnected}
                   placeholder="postgresql://username:password@your-database-host:5432/production"
                   style={{
                     flex: 1, minWidth: "200px", padding: "13px 16px",
                     background: isConnected ? "var(--muted-bg)" : "var(--card-bg)",
-                    border: "1px solid var(--card-border)", borderRadius: "12px",
+                    border: dbUriError ? "1.5px solid #ef4444" : "1px solid var(--card-border)", borderRadius: "12px",
                     fontSize: "13px", fontFamily: "monospace", color: "var(--fg)", outline: "none",
                     opacity: isConnected ? 0.7 : 1,
                     transition: "all 0.2s",
@@ -188,6 +198,12 @@ export default function DatabaseAuthPage() {
                   </Button>
                 )}
               </div>
+              {dbUriError && (
+                <span style={{ fontSize: "12px", fontWeight: 500, color: "#ef4444", marginTop: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <AlertCircle style={{ width: "13px", height: "13px" }} />
+                  {dbUriError}
+                </span>
+              )}
             </div>
           </div>
         </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, RefreshCw, Bot, User, Send, Zap, Sparkles, Clock } from "lucide-react";
+import { MessageSquare, RefreshCw, Bot, User, Send, Zap, Sparkles, Clock, Lock } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Button, Badge } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
@@ -13,6 +13,8 @@ interface LiveSession {
   human_takeover?: boolean;
   agent_name?: string;
   user_name?: string;
+  visitor_name?: string;
+  client_name?: string;
   last_active?: string;
 }
 
@@ -33,12 +35,55 @@ export default function ChatLogsPage() {
   const hasScrolledForSessionRef = useRef<string | number | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  const currentRole = typeof window !== "undefined" ? localStorage.getItem("saas_user_role") : null;
+  const currentAgentName = typeof window !== "undefined" ? localStorage.getItem("saas_agent_name") : null;
+  const currentAdminName = typeof window !== "undefined" ? localStorage.getItem("sa_name") || "Workspace Administrator" : "Workspace Administrator";
+
   const getLocalTakeoverStates = () => {
     try {
       return JSON.parse(localStorage.getItem("saas_takeover_states") || "{}") || {};
     } catch (e) {
       return {};
     }
+  };
+
+  const getLocalTakeoverAgents = () => {
+    try {
+      return JSON.parse(localStorage.getItem("saas_takeover_agents") || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  };
+
+  const isTakeoverOwner = (() => {
+    if (!selectedSession || !selectedSession.human_takeover) return false;
+    
+    const takenBy = selectedSession.agent_name;
+    if (!takenBy) {
+      // Fallback to localStorage if backend is offline / doesn't provide agent_name
+      const localStates = getLocalTakeoverStates();
+      const sId = selectedSession.id || selectedSession.session_id;
+      return sId ? localStates[sId] === true : false;
+    }
+
+    const cleanTakenBy = takenBy.trim().toLowerCase();
+    
+    if (currentRole === "agent") {
+      return currentAgentName && cleanTakenBy === currentAgentName.trim().toLowerCase();
+    } else {
+      // For client admin / admin role
+      const cleanAdminName = currentAdminName.trim().toLowerCase();
+      return cleanTakenBy === cleanAdminName || cleanTakenBy === "admin" || cleanTakenBy === "workspace administrator" || cleanTakenBy === "human support";
+    }
+  })();
+
+  const [deducedStates, setDeducedStates] = useState<Record<string, { human_takeover: boolean; agent_name: string }>>({});
+  const deducedStatesRef = useRef<Record<string, { human_takeover: boolean; agent_name: string }>>({});
+
+  const updateDeducedState = (sId: string, takeover: boolean, name: string) => {
+    const updated = { ...deducedStatesRef.current, [sId]: { human_takeover: takeover, agent_name: name } };
+    deducedStatesRef.current = updated;
+    setDeducedStates(updated);
   };
 
   const fetchSessions = async () => {
@@ -60,12 +105,25 @@ export default function ChatLogsPage() {
         return timeB - timeA;
       });
 
-      // Apply persistent takeover state from localStorage
+      // Apply persistent takeover state from localStorage and deduced chat history states
       const localStates = getLocalTakeoverStates();
+      const localAgents = getLocalTakeoverAgents();
+      const currentDeduced = deducedStatesRef.current;
       sessionsList = sessionsList.map(s => {
         const sId = s.id || s.session_id;
+        if (sId && currentDeduced[sId] !== undefined) {
+          return { 
+            ...s, 
+            human_takeover: currentDeduced[sId].human_takeover, 
+            agent_name: currentDeduced[sId].agent_name 
+          };
+        }
         if (sId && localStates[sId] !== undefined) {
-          return { ...s, human_takeover: localStates[sId] };
+          return { 
+            ...s, 
+            human_takeover: localStates[sId],
+            agent_name: localStates[sId] ? (localAgents[sId] || s.agent_name || "Human Support") : ""
+          };
         }
         return s;
       });
@@ -94,6 +152,66 @@ export default function ChatLogsPage() {
       });
 
       setChats(validChats);
+
+      // Deduce human takeover state and owner from the chat message history
+      let deducedTakeover = false;
+      let deducedAgentName = "";
+
+      for (let i = validChats.length - 1; i >= 0; i--) {
+        const msg = validChats[i];
+        const text = msg.message || msg.content || msg.text || "";
+        const plainText = text.replace(/<[^>]+>/g, "").trim();
+        
+        if (/took over the conversation|has taken over the chat|joined the chat|joined the conversation/i.test(plainText)) {
+          deducedTakeover = true;
+          const match = plainText.match(/(?:👤|User)?\s*(?:Admin|Agent)?\s*(.*?)\s+(?:has taken over|joined|took over)/i);
+          deducedAgentName = match ? match[1].trim() : "Human Support";
+          break;
+        } else if (/resumed control/i.test(plainText)) {
+          deducedTakeover = false;
+          deducedAgentName = "";
+          break;
+        }
+      }
+
+      updateDeducedState(sessionId, deducedTakeover, deducedAgentName);
+
+      // Save deduced states back to local storage to sync across pages/tabs
+      const localStates = getLocalTakeoverStates();
+      const localAgents = getLocalTakeoverAgents();
+      localStates[sessionId] = deducedTakeover;
+      localAgents[sessionId] = deducedAgentName;
+      localStorage.setItem("saas_takeover_states", JSON.stringify(localStates));
+      localStorage.setItem("saas_takeover_agents", JSON.stringify(localAgents));
+
+      setSelectedSession(prev => {
+        if (!prev) return null;
+        const prevId = prev.id || prev.session_id;
+        if (prevId === sessionId) {
+          if (prev.human_takeover !== deducedTakeover || prev.agent_name !== deducedAgentName) {
+            return {
+              ...prev,
+              human_takeover: deducedTakeover,
+              agent_name: deducedTakeover ? (deducedAgentName || prev.agent_name || "Human Support") : ""
+            };
+          }
+        }
+        return prev;
+      });
+
+      setSessions(prev => prev.map(s => {
+        const sId = s.id || s.session_id;
+        if (sId === sessionId) {
+          if (s.human_takeover !== deducedTakeover || s.agent_name !== deducedAgentName) {
+            return {
+              ...s,
+              human_takeover: deducedTakeover,
+              agent_name: deducedTakeover ? (deducedAgentName || s.agent_name || "Human Support") : ""
+            };
+          }
+        }
+        return s;
+      }));
     } catch (error) {
       console.error("Error fetching chats:", error);
     }
@@ -168,22 +286,42 @@ export default function ChatLogsPage() {
     try {
       const sId = selectedSession.id || selectedSession.session_id;
       if (!sId) return;
+
+      if (selectedSession.human_takeover && !isTakeoverOwner) {
+        showToast("error", "Access Denied", `This chat is locked by ${selectedSession.agent_name || "another user"}.`);
+        return;
+      }
+
       await adminService.takeoverSession(sId);
       const isNowHuman = !selectedSession.human_takeover;
       
+      const takerName = isNowHuman
+        ? (currentRole === "agent"
+          ? (currentAgentName || "Human Support")
+          : (currentAdminName || "Workspace Administrator"))
+        : "";
+
       // Update localStorage persistent state
       const localStates = getLocalTakeoverStates();
+      const localAgents = getLocalTakeoverAgents();
       localStates[sId] = isNowHuman;
+      localAgents[sId] = takerName;
       localStorage.setItem("saas_takeover_states", JSON.stringify(localStates));
+      localStorage.setItem("saas_takeover_agents", JSON.stringify(localAgents));
+
+      // Sync deducedState directly to prevent visual lag
+      updateDeducedState(sId, isNowHuman, takerName);
 
       showToast("success", isNowHuman ? "Takeover Activated" : "AI Restored", isNowHuman ? "You have taken over this chat." : "AI has resumed control.");
-      setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman } : null);
+      setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman, agent_name: takerName } : null);
       
       // Optimistically update sessions list
-      setSessions(prev => prev.map(s => (s.id || s.session_id) === sId ? { ...s, human_takeover: isNowHuman, agent_name: localStorage.getItem("saas_agent_name") || "Human Support" } : s));
+      setSessions(prev => prev.map(s => (s.id || s.session_id) === sId ? { ...s, human_takeover: isNowHuman, agent_name: takerName } : s));
 
       // Send a system takeover/resume notification message to the conversation
-      const notificationMsg = isNowHuman ? "👤 A human agent has joined the chat." : "🤖 The AI has resumed control of the chat.";
+      const notificationMsg = isNowHuman 
+        ? `👤 ${currentRole === "agent" ? "Agent" : "Admin"} ${takerName} has taken over the chat.` 
+        : "🤖 The AI has resumed control of the chat.";
       try {
         await adminService.sendChatMessage(sId, notificationMsg);
         fetchChats(sId);
@@ -244,6 +382,7 @@ export default function ChatLogsPage() {
               sessions.map((session, idx) => {
                 const sId = session.id || session.session_id || "";
                 const isSelected = selectedSession && (selectedSession.id || selectedSession.session_id) === sId;
+                const isSessionAdmin = session.agent_name?.toLowerCase().includes("admin") || session.agent_name?.toLowerCase().includes("workspace");
                 return (
                   <div key={sId || idx} onClick={() => setSelectedSession(session)}
                     style={{
@@ -257,13 +396,24 @@ export default function ChatLogsPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "var(--accent)" : "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {session.human_takeover 
-                          ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
-                          : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
+                        {session.visitor_name || (session as any).client_name || session.user_name || "Web Visitor"}
                       </span>
-                      {session.human_takeover
-                        ? <Badge variant="warning" style={{ fontSize: "9px" , padding: "3px" } as React.CSSProperties}>Agent</Badge>
-                        : <Badge variant="success" style={{ fontSize: "9px", padding: "3px 6px" } as React.CSSProperties}>AI</Badge>}
+                      {session.human_takeover ? (
+                        <Badge 
+                          variant="warning" 
+                          style={{ 
+                            fontSize: "9px", 
+                            padding: "3px 6px",
+                            background: isSessionAdmin ? "#ef4444" : "#f59e0b",
+                            borderColor: "transparent",
+                            color: "#fff"
+                          } as React.CSSProperties}
+                        >
+                          {isSessionAdmin ? "Admin" : "Agent"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="success" style={{ fontSize: "9px", padding: "3px 6px" } as React.CSSProperties}>AI</Badge>
+                      )}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", fontSize: "10px", color: "var(--muted-fg)" }}>
                       <Clock style={{ width: "10px", height: "10px" }} />
@@ -300,29 +450,34 @@ export default function ChatLogsPage() {
               }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                    Auditing: {selectedSession.human_takeover 
-                      ? `${selectedSession.agent_name || localStorage.getItem("saas_agent_name") || "Human Support"} (${selectedSession.id || selectedSession.session_id})`
-                      : (selectedSession.user_name ? `${selectedSession.user_name} (${selectedSession.id || selectedSession.session_id})` : (selectedSession.id || selectedSession.session_id))}
+                    Auditing: {selectedSession.visitor_name || (selectedSession as any).client_name || selectedSession.user_name || "Web Visitor"} ({selectedSession.id || selectedSession.session_id})
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px" , padding: "4px"} as React.CSSProperties}>
-                      {selectedSession.human_takeover ? "Handed Over" : "AI Automated"}
+                      {selectedSession.human_takeover ? "Live Agent" : "AI Autopilot"}
                     </Badge>
                     {selectedSession.human_takeover && (
                       <span style={{ fontSize: "10px", color: "var(--muted-fg)", fontWeight: 500 }}>
-                        Agent: {selectedSession.agent_name || localStorage.getItem("saas_agent_name") || "Human Support"}
+                        Active Handler: {isTakeoverOwner ? `You (${currentRole === "agent" ? "Agent" : "Admin"})` : selectedSession.agent_name}
                       </span>
                     )}
                   </div>
                 </div>
                 <Button
                   type="button"
-                  variant={selectedSession.human_takeover ? "outline" : "danger"}
+                  variant={selectedSession.human_takeover ? (isTakeoverOwner ? "outline" : "secondary") : "danger"}
                   onClick={handleTakeover}
-                  icon={<Zap style={{ width: "14px", height: "14px" }} />}
-                  style={{ fontSize: "12px", padding: "10px 20px" } as React.CSSProperties}
+                  disabled={selectedSession.human_takeover && !isTakeoverOwner}
+                  icon={selectedSession.human_takeover && !isTakeoverOwner ? <Lock style={{ width: "14px", height: "14px" }} /> : <Zap style={{ width: "14px", height: "14px" }} />}
+                  style={{ 
+                    fontSize: "12px", 
+                    padding: "10px 20px", 
+                    cursor: selectedSession.human_takeover && !isTakeoverOwner ? "not-allowed" : "pointer" 
+                  } as React.CSSProperties}
                 >
-                  {selectedSession.human_takeover ? "Return Control to AI" : "Take Over Stream"}
+                  {selectedSession.human_takeover 
+                    ? (isTakeoverOwner ? "Return Control to AI" : `Locked by ${selectedSession.agent_name || "Agent"}`) 
+                    : "Take Over Stream"}
                 </Button>
               </div>
 
@@ -451,29 +606,42 @@ export default function ChatLogsPage() {
 
               {/* Input Panel */}
               {selectedSession.human_takeover ? (
-                <div style={{
-                  padding: "14px 16px", borderTop: "1px solid var(--card-border)",
-                  background: "var(--card-bg)", display: "flex", gap: "10px", alignItems: "center",
-                }}>
-                  <input
-                    type="text" value={replyText} onChange={e => setReplyText(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleSendReply()}
-                    placeholder="Type response as agent..."
-                    style={{
-                      flex: 1, padding: "11px 16px", background: "var(--muted-bg)",
-                      border: "1px solid var(--card-border)", borderRadius: "12px",
-                      fontSize: "13px", fontWeight: 500, color: "var(--fg)", outline: "none",
-                      transition: "border-color 0.15s",
-                    }}
-                    onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--accent)"}
-                    onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--card-border)"}
-                  />
-                  <Button type="button" isLoading={isSending} disabled={!replyText.trim()} onClick={handleSendReply}
-                    icon={<Send style={{ width: "13px", height: "13px" }} />}
-                    style={{ padding: "10px 20px", fontSize: "12px" } as React.CSSProperties}>
-                    Send
-                  </Button>
-                </div>
+                isTakeoverOwner ? (
+                  <div style={{
+                    padding: "14px 16px", borderTop: "1px solid var(--card-border)",
+                    background: "var(--card-bg)", display: "flex", gap: "10px", alignItems: "center",
+                  }}>
+                    <input
+                      type="text" value={replyText} onChange={e => setReplyText(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && handleSendReply()}
+                      placeholder="Type response as agent..."
+                      style={{
+                        flex: 1, padding: "11px 16px", background: "var(--muted-bg)",
+                        border: "1px solid var(--card-border)", borderRadius: "12px",
+                        fontSize: "13px", fontWeight: 500, color: "var(--fg)", outline: "none",
+                        transition: "border-color 0.15s",
+                      }}
+                      onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--accent)"}
+                      onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--card-border)"}
+                    />
+                    <Button type="button" isLoading={isSending} disabled={!replyText.trim()} onClick={handleSendReply}
+                      icon={<Send style={{ width: "13px", height: "13px" }} />}
+                      style={{ padding: "10px 20px", fontSize: "12px" } as React.CSSProperties}>
+                      Send
+                    </Button>
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: "16px 20px", borderTop: "1px solid var(--card-border)",
+                    background: "rgba(239, 68, 68, 0.04)", display: "flex", alignItems: "center",
+                    justifyContent: "center", gap: "8px", borderBottomRightRadius: "12px", borderBottomLeftRadius: "12px"
+                  }}>
+                    <Lock style={{ width: "14px", height: "14px", color: "#ef4444" }} />
+                    <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 700, letterSpacing: "0.02em" }}>
+                      🔒 Chat locked. Taken over by {selectedSession.agent_name || "another team member"}.
+                    </span>
+                  </div>
+                )
               ) : (
                 <div style={{
                   padding: "12px 16px", borderTop: "1px solid var(--card-border)",

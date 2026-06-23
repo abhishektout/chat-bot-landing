@@ -34,7 +34,7 @@ export default function DeletedAccountsPage() {
     setIsLoading(true);
     try {
       const data = await superAdminService.getDeletedClients();
-      setDeletedClients(data.deleted_clients || []);
+      setDeletedClients(data.clients || data.deleted_clients || []);
     } catch (e) {
       console.error(e);
       showToast("error", "Sync Error", "Failed to retrieve archives list.");

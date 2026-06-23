@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BookOpen, FileText, Trash2, RefreshCw, UploadCloud, Plus, HelpCircle, AlertTriangle } from "lucide-react";
+import { BookOpen, FileText, Trash2, RefreshCw, UploadCloud, Plus, HelpCircle, AlertTriangle, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Input, Textarea, Button, ConfirmModal } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
@@ -19,6 +19,8 @@ export default function KnowledgeBasePage() {
   const [docName, setDocName] = useState("");
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
+  const [uploadErrors, setUploadErrors] = useState<{ file?: string; docName?: string }>({});
+  const [faqErrors, setFaqErrors] = useState<{ question?: string; answer?: string }>({});
   const [isSubmittingFaq, setIsSubmittingFaq] = useState(false);
   const [editingFaqId, setEditingFaqId] = useState<string | number | null>(null);
   const [isLoadingFaqs, setIsLoadingFaqs] = useState(false);
@@ -60,15 +62,26 @@ export default function KnowledgeBasePage() {
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!file || !docName.trim()) { showToast("error", "Error", "File and Document Name are required."); return; }
+    const tempErrors: typeof uploadErrors = {};
+    if (!file) tempErrors.file = "Please select a PDF document.";
+    if (!docName.trim()) tempErrors.docName = "Document title is required.";
+
+    if (Object.keys(tempErrors).length > 0) {
+      setUploadErrors(tempErrors);
+      showToast("error", "Validation Failed", "Please resolve all marked errors.");
+      return;
+    }
+
+    setUploadErrors({});
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("files", file);
+    formData.append("files", file!);
     formData.append("display_names", docName.trim());
     try {
       await adminService.uploadDocuments(formData);
       showToast("success", "Success", "PDF trained successfully!");
       setFile(null); setDocName("");
+      setUploadErrors({});
       (e.target as HTMLFormElement).reset();
       fetchDocuments();
     } catch (error: any) {
@@ -120,7 +133,17 @@ export default function KnowledgeBasePage() {
 
   const handleFAQSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!faqQuestion.trim() || !faqAnswer.trim()) return;
+    const tempErrors: typeof faqErrors = {};
+    if (!faqQuestion.trim()) tempErrors.question = "User Question is required.";
+    if (!faqAnswer.trim()) tempErrors.answer = "Target Agent Response is required.";
+
+    if (Object.keys(tempErrors).length > 0) {
+      setFaqErrors(tempErrors);
+      showToast("error", "Validation Failed", "Please resolve all marked errors.");
+      return;
+    }
+
+    setFaqErrors({});
     setIsSubmittingFaq(true);
     try {
       if (editingFaqId) {
@@ -132,6 +155,7 @@ export default function KnowledgeBasePage() {
         showToast("success", "FAQ Saved", "FAQ saved successfully!");
       }
       setFaqQuestion(""); setFaqAnswer("");
+      setFaqErrors({});
       fetchFaqs();
     } catch {
       showToast("error", "Failed", "Failed to process FAQ.");
@@ -201,24 +225,43 @@ export default function KnowledgeBasePage() {
           <div className="card" style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "28px" }}>
             {cardSection(<UploadCloud style={{ width: "20px", height: "20px" }} />, "Upload PDF Manuals", "Upload business handbooks, pricing guides, or service docs.")}
 
-            <form onSubmit={handleUpload} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <form onSubmit={handleUpload} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
                 {/* File Input */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted-fg)" }}>Select PDF Document</label>
                   <div style={{
-                    padding: "12px 16px", background: "var(--card-bg)", border: "1px dashed var(--card-border)",
-                    borderRadius: "12px", cursor: "pointer", transition: "border-color 0.15s",
+                    padding: "12px 16px", background: "var(--card-bg)",
+                    border: uploadErrors.file ? "1.5px solid #ef4444" : "1px dashed var(--card-border)",
+                    borderRadius: "12px", cursor: "pointer", transition: "all 0.15s",
                   }}>
                     <input
                       type="file" accept="application/pdf"
-                      onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
-                      required
+                      onChange={e => {
+                        setFile(e.target.files ? e.target.files[0] : null);
+                        if (uploadErrors.file) setUploadErrors(prev => ({ ...prev, file: "" }));
+                      }}
                       style={{ width: "100%", fontSize: "12px", color: "var(--muted-fg)", cursor: "pointer" }}
                     />
                   </div>
+                  {uploadErrors.file && (
+                    <span style={{ fontSize: "12px", fontWeight: 500, color: "#ef4444", marginTop: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <AlertCircle style={{ width: "13px", height: "13px" }} />
+                      {uploadErrors.file}
+                    </span>
+                  )}
                 </div>
-                <Input label="Document Identifier / Title" type="text" value={docName} onChange={e => setDocName(e.target.value)} placeholder="e.g. Q3 Pricing Guide" required />
+                <Input
+                  label="Document Identifier / Title"
+                  type="text"
+                  value={docName}
+                  onChange={e => {
+                    setDocName(e.target.value);
+                    if (uploadErrors.docName) setUploadErrors(prev => ({ ...prev, docName: "" }));
+                  }}
+                  placeholder="e.g. Q3 Pricing Guide"
+                  error={uploadErrors.docName}
+                />
               </div>
               <div>
                 <Button type="submit" isLoading={isUploading} icon={<Plus style={{ width: "15px", height: "15px" }} />}
@@ -274,12 +317,32 @@ export default function KnowledgeBasePage() {
           <div className="card" style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "24px" }}>
             {cardSection(<HelpCircle style={{ width: "20px", height: "20px" }} />, "Manage Training FAQs", "Train specific QA templates directly.", "#10b981", "rgba(16,185,129,0.1)", "rgba(16,185,129,0.15)")}
 
-            <form onSubmit={handleFAQSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "20px", background: "var(--muted-bg)", borderRadius: "14px", border: "1px solid var(--card-border)" }}>
-              <Input label="User Question Template" type="text" value={faqQuestion} onChange={e => setFaqQuestion(e.target.value)} placeholder="e.g. Do you offer refunds?" required />
-              <Textarea label="Target Agent Response" rows={3} value={faqAnswer} onChange={e => setFaqAnswer(e.target.value)} placeholder="e.g. Yes! We have a 14-day refund policy." required />
+            <form onSubmit={handleFAQSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "20px", background: "var(--muted-bg)", borderRadius: "14px", border: "1px solid var(--card-border)" }}>
+              <Input
+                label="User Question Template"
+                type="text"
+                value={faqQuestion}
+                onChange={e => {
+                  setFaqQuestion(e.target.value);
+                  if (faqErrors.question) setFaqErrors(prev => ({ ...prev, question: "" }));
+                }}
+                placeholder="e.g. Do you offer refunds?"
+                error={faqErrors.question}
+              />
+              <Textarea
+                label="Target Agent Response"
+                rows={3}
+                value={faqAnswer}
+                onChange={e => {
+                  setFaqAnswer(e.target.value);
+                  if (faqErrors.answer) setFaqErrors(prev => ({ ...prev, answer: "" }));
+                }}
+                placeholder="e.g. Yes! We have a 14-day refund policy."
+                error={faqErrors.answer}
+              />
               <div style={{ display: "flex", gap: "10px" }}>
                 {editingFaqId && (
-                  <Button type="button" variant="outline" onClick={() => { setEditingFaqId(null); setFaqQuestion(""); setFaqAnswer(""); }} style={{ flex: 1, padding: "10px", fontSize: "12px" } as React.CSSProperties}>
+                  <Button type="button" variant="outline" onClick={() => { setEditingFaqId(null); setFaqQuestion(""); setFaqAnswer(""); setFaqErrors({}); }} style={{ flex: 1, padding: "10px", fontSize: "12px" } as React.CSSProperties}>
                     Cancel
                   </Button>
                 )}

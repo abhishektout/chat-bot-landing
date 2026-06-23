@@ -40,6 +40,7 @@ export default function TeamManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "blocked">("all");
   const [copiedEmail, setCopiedEmail] = useState<string | number | null>(null);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; phone_number?: string }>({});
 
   const [formData, setFormData] = useState({ 
     name: "", 
@@ -159,7 +160,11 @@ export default function TeamManagementPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (errors[name as keyof typeof errors]) {
+      setErrors({ ...errors, [name]: "" });
+    }
   };
 
   const handleSaveAgent = async (e: React.FormEvent) => {
@@ -170,32 +175,36 @@ export default function TeamManagementPage() {
     const email = formData.email.trim();
     const phone = formData.phone_number.trim();
 
+    const tempErrors: typeof errors = {};
+
     if (!name) {
-      showToast("error", "Validation Failed", "Full Name is required.");
-      setIsSaving(false);
-      return;
-    }
-    if (name.length < 2) {
-      showToast("error", "Validation Failed", "Full Name must be at least 2 characters.");
-      setIsSaving(false);
-      return;
+      tempErrors.name = "Full Name is required.";
+    } else if (name.length < 2) {
+      tempErrors.name = "Full Name must be at least 2 characters.";
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      showToast("error", "Validation Failed", "Please enter a valid email address.");
-      setIsSaving(false);
-      return;
+    if (!email) {
+      tempErrors.email = "Email address is required.";
+    } else if (!emailRegex.test(email)) {
+      tempErrors.email = "Please enter a valid email address.";
     }
 
     if (phone) {
       const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
       if (!phoneRegex.test(phone)) {
-        showToast("error", "Validation Failed", "Please enter a valid phone number (minimum 7 digits).");
-        setIsSaving(false);
-        return;
+        tempErrors.phone_number = "Please enter a valid phone number (minimum 7 digits).";
       }
     }
+
+    if (Object.keys(tempErrors).length > 0) {
+      setErrors(tempErrors);
+      showToast("error", "Validation Failed", "Please resolve all marked errors.");
+      setIsSaving(false);
+      return;
+    }
+
+    setErrors({});
 
     const payload = {
       name,
@@ -216,6 +225,7 @@ export default function TeamManagementPage() {
         showToast("success", "Agent Created", "They will receive an email with their auto-generated password.");
       }
       setFormData({ name: "", email: "", phone_number: "", startTime: "09:00", endTime: "17:00", is_active: "true" });
+      setErrors({});
       fetchAgents();
       setIsFormOpen(false);
     } catch (err: any) {
@@ -243,6 +253,7 @@ export default function TeamManagementPage() {
   const cancelEdit = () => {
     setEditingId(null);
     setFormData({ name: "", email: "", phone_number: "", startTime: "09:00", endTime: "17:00", is_active: "true" });
+    setErrors({});
   };
 
   const handleDelete = (agentId: string | number) => {
@@ -740,7 +751,7 @@ export default function TeamManagementPage() {
         title={editingId ? "Modify Team Member" : "Register Team Member"}
         maxWidthClass="max-w-md"
       >
-        <form onSubmit={handleSaveAgent} style={{ display: "flex", flexDirection: "column", gap: "20px", paddingRight: "5px" }}>
+        <form onSubmit={handleSaveAgent} noValidate style={{ display: "flex", flexDirection: "column", gap: "20px", paddingRight: "5px" }}>
           <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
             {editingId 
               ? "Update this agent's account credentials, active shifts, and access settings."
@@ -754,7 +765,7 @@ export default function TeamManagementPage() {
             value={formData.name} 
             onChange={handleChange} 
             placeholder="e.g. John Doe" 
-            required 
+            error={errors.name}
           />
           <Input 
             label="Login Email Address" 
@@ -763,8 +774,8 @@ export default function TeamManagementPage() {
             value={formData.email} 
             onChange={handleChange} 
             placeholder="john@company.com" 
-            required 
             icon={<Mail style={{ width: "14px", height: "14px" }} />} 
+            error={errors.email}
           />
           <Input 
             label="Phone Number" 
@@ -773,6 +784,7 @@ export default function TeamManagementPage() {
             onChange={handleChange} 
             placeholder="+1 555-0100" 
             icon={<Phone style={{ width: "14px", height: "14px" }} />} 
+            error={errors.phone_number}
           />
 
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

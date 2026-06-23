@@ -86,7 +86,9 @@ export const superAdminService = {
 
   // Get all deleted/archived clients
   getDeletedClients: async () => {
-    const response = await superAdminClient.get("/superadmin/clients/deleted");
+    const response = await superAdminClient.get("/superadmin/clients", {
+      params: { deleted: true }
+    });
     return response.data;
   },
 
