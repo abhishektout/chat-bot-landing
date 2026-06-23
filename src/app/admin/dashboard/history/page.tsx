@@ -243,6 +243,11 @@ export default function ChatLogsPage() {
               sessions.map((session, idx) => {
                 const sId = session.id || session.session_id || "";
                 const isSelected = selectedSession && (selectedSession.id || selectedSession.session_id) === sId;
+                
+                // Determine if session was active in the last 5 minutes
+                const lastActiveTime = new Date(session.last_active || session.created_at || Date.now()).getTime();
+                const isActiveRecently = (Date.now() - lastActiveTime) < 5 * 60 * 1000;
+
                 return (
                   <div key={sId || idx} onClick={() => setSelectedSession(session)}
                     style={{
@@ -255,18 +260,33 @@ export default function ChatLogsPage() {
                     onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.borderColor = "var(--card-border)"; }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "var(--accent)" : "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {session.human_takeover
-                          ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
-                          : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {isActiveRecently && (
+                          <span className="relative flex h-2 w-2 flex-shrink-0" title="Active recently">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                        )}
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "var(--accent)" : "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {session.human_takeover
+                            ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
+                            : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
+                        </span>
+                      </div>
                       {session.human_takeover
                         ? <Badge variant="warning" style={{ fontSize: "9px", padding: "3px" } as React.CSSProperties}>Agent</Badge>
                         : <Badge variant="success" style={{ fontSize: "9px", padding: "3px 6px" } as React.CSSProperties}>AI</Badge>}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", fontSize: "10px", color: "var(--muted-fg)" }}>
-                      <Clock style={{ width: "10px", height: "10px" }} />
-                      {new Date(session.last_active || session.created_at || Date.now()).toLocaleTimeString()}
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", fontSize: "10px", color: "var(--muted-fg)", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                        <Clock style={{ width: "10px", height: "10px" }} />
+                        {new Date(session.last_active || session.created_at || Date.now()).toLocaleTimeString()}
+                      </div>
+                      {isSelected && (
+                        <span style={{ fontSize: "9px", fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "var(--accent)" }} /> Auditing
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
