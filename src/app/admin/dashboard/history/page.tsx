@@ -568,7 +568,7 @@ export default function ChatLogsPage() {
                             {isUser
                               ? "User"
                               : isAgent
-                              ? `Support Agent (${agentName})`
+                              ? agentName
                               : "Copilot AI"}
                           </span>
                           <div style={{
