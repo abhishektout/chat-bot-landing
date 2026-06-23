@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Users, MessageSquare, ArrowUpRight, RefreshCw, Calendar, Sparkles, TrendingUp } from "lucide-react";
+import { Users, MessageSquare, ArrowUpRight, RefreshCw, Calendar, Sparkles, TrendingUp, Bot, User } from "lucide-react";
 import { Card, Badge, Button, Skeleton } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
 
@@ -375,9 +375,13 @@ export default function DashboardOverviewPage() {
                       </td>
                       <td style={{ padding: "16px" }}>
                         {session.human_takeover ? (
-                          <Badge variant="warning" style={{ padding: "4px" }}>Live Agent</Badge>
+                          <Badge variant="warning" style={{ padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px" } as React.CSSProperties}>
+                            <User style={{ width: "11px", height: "11px" }} /> Live Agent
+                          </Badge>
                         ) : (
-                          <Badge variant="success" style={{ padding: "4px" }}>AI Autopilot</Badge>
+                          <Badge variant="success" style={{ padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px" } as React.CSSProperties}>
+                            <Bot style={{ width: "11px", height: "11px" }} /> AI Autopilot
+                          </Badge>
                         )}
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>

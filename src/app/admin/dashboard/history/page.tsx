@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, RefreshCw, Bot, User, Send, Zap, Sparkles, Clock } from "lucide-react";
+import { MessageSquare, RefreshCw, Bot, User, Send, Zap, Sparkles, Clock, Headphones } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Button, Badge } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
@@ -23,6 +23,50 @@ interface ChatMessage {
   text?: string;
 }
 
+const formatMessageText = (text: string) => {
+  if (!text) return "";
+  
+  const lines = text.split("\n");
+  const resultElements: React.ReactNode[] = [];
+
+  const parseInlineMarkdown = (str: string) => {
+    const parts = str.split(/\*\*([\s\S]*?)\*\*/g);
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        return <strong key={index} style={{ fontWeight: 700 }}>{part}</strong>;
+      }
+      return part;
+    });
+  };
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    const isBullet = trimmed.startsWith("* ") || trimmed.startsWith("- ") || /^\*\s+/.test(trimmed) || /^-\s+/.test(trimmed);
+    
+    if (isBullet) {
+      const content = trimmed.replace(/^\*\s+|^-\s+/, "");
+      resultElements.push(
+        <div key={index} style={{ display: "flex", gap: "8px", marginLeft: "12px", marginTop: "4px", marginBottom: "4px" }}>
+          <span style={{ color: "var(--accent)", flexShrink: 0 }}>•</span>
+          <span style={{ flex: 1 }}>{parseInlineMarkdown(content)}</span>
+        </div>
+      );
+    } else if (trimmed === "") {
+      if (index > 0 && index < lines.length - 1) {
+        resultElements.push(<div key={index} style={{ height: "8px" }} />);
+      }
+    } else {
+      resultElements.push(
+        <div key={index} style={{ marginBottom: "4px" }}>
+          {parseInlineMarkdown(line)}
+        </div>
+      );
+    }
+  });
+
+  return <div style={{ display: "flex", flexDirection: "column" }}>{resultElements}</div>;
+};
+
 export default function ChatLogsPage() {
   const { showToast } = useToast();
   const [sessions, setSessions] = useState<LiveSession[]>([]);
@@ -32,6 +76,7 @@ export default function ChatLogsPage() {
   const [isSending, setIsSending] = useState(false);
   const hasScrolledForSessionRef = useRef<string | number | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const prevChatsLengthRef = useRef<number>(0);
 
   const getLocalTakeoverStates = () => {
     try {
@@ -93,7 +138,18 @@ export default function ChatLogsPage() {
         return text.trim() !== "";
       });
 
-      setChats(validChats);
+      // Only update if chats actually changed (avoids resetting scroll position unnecessarily)
+      setChats(prev => {
+        const isSame = prev.length === validChats.length && 
+          prev.every((msg, idx) => {
+            const prevText = msg.message || msg.content || msg.text || "";
+            const nextText = validChats[idx].message || validChats[idx].content || validChats[idx].text || "";
+            const prevRole = msg.role || (msg as any).sender || "";
+            const nextRole = validChats[idx].role || (validChats[idx] as any).sender || "";
+            return prevRole === nextRole && prevText === nextText;
+          });
+        return isSame ? prev : validChats;
+      });
     } catch (error) {
       console.error("Error fetching chats:", error);
     }
@@ -135,7 +191,6 @@ export default function ChatLogsPage() {
 
   useEffect(() => {
     if (!chatContainerRef.current) return;
-    const container = chatContainerRef.current;
     const currentSessionId = selectedSession ? (selectedSession.id || selectedSession.session_id || null) : null;
 
     if (!currentSessionId) return;
@@ -144,22 +199,20 @@ export default function ChatLogsPage() {
 
     if (isNewSession && chats.length > 0) {
       hasScrolledForSessionRef.current = currentSessionId;
-      // Allow browser to calculate container elements height before scrolling
+      prevChatsLengthRef.current = chats.length;
       setTimeout(() => {
         if (chatContainerRef.current) {
           chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
-      }, 60);
-    } else if (!isNewSession) {
-      // Scroll down only if the user is already near the bottom (within 150px)
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 150;
-      if (isNearBottom) {
-        setTimeout(() => {
-          if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-          }
-        }, 60);
-      }
+      }, 100);
+    } else if (!isNewSession && chats.length > prevChatsLengthRef.current) {
+      prevChatsLengthRef.current = chats.length;
+      // When a new message actually arrives, always scroll to the bottom to show it
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 100);
     }
   }, [chats, selectedSession]);
 
@@ -273,9 +326,37 @@ export default function ChatLogsPage() {
                             : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
                         </span>
                       </div>
-                      {session.human_takeover
-                        ? <Badge variant="warning" style={{ fontSize: "9px", padding: "3px" } as React.CSSProperties}>Agent</Badge>
-                        : <Badge variant="success" style={{ fontSize: "9px", padding: "3px 6px" } as React.CSSProperties}>AI</Badge>}
+                      {session.human_takeover ? (
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: "rgba(16, 185, 129, 0.12)",
+                          color: "#10b981",
+                          border: "1px solid rgba(16, 185, 129, 0.2)",
+                          flexShrink: 0
+                        }} title="Agent Takeover">
+                          <User style={{ width: "10px", height: "10px" }} />
+                        </div>
+                      ) : (
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: "var(--accent-glow)",
+                          color: "var(--accent)",
+                          border: "1px solid var(--card-border)",
+                          flexShrink: 0
+                        }} title="AI Managed">
+                          <Bot style={{ width: "10px", height: "10px" }} />
+                        </div>
+                      )}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", fontSize: "10px", color: "var(--muted-fg)", justifyContent: "space-between" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -368,15 +449,15 @@ export default function ChatLogsPage() {
                       return (
                         <div key={`sys-${idx}`} style={{ alignSelf: "center", marginTop: "12px", marginBottom: "12px", maxWidth: "90%" }}>
                           <div style={{
-                            background: isHuman ? "rgba(37, 99, 235, 0.04)" : "rgba(100, 116, 139, 0.05)",
-                            color: isHuman ? "#1e40af" : "#475569",
+                            background: isHuman ? "var(--accent-glow)" : "var(--muted-bg)",
+                            color: isHuman ? "var(--accent)" : "var(--muted-fg)",
                             fontSize: "12px",
                             padding: "8px 20px",
                             borderRadius: "9999px",
                             fontWeight: 600,
                             textAlign: "center",
-                            border: isHuman ? "1px solid rgba(37, 99, 235, 0.15)" : "1px solid rgba(100, 116, 139, 0.15)",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                            border: isHuman ? "1px solid var(--accent)" : "1px solid var(--card-border)",
+                            boxShadow: "0 2px 6px var(--shadow)",
                             display: "flex",
                             alignItems: "center",
                             gap: "8px",
@@ -388,78 +469,126 @@ export default function ChatLogsPage() {
                       );
                     }
 
-                    let isUser = msg.role === "user";
-                    let isAgent = msg.role === "agent";
-                    let displayRole = msg.role || "unknown";
+                    let isUser = false;
+                    let isAgent = false;
+                    let isAI = false;
 
-                    // Robustly search all keys in the message object for sender/role metadata
-                    const keys = Object.keys(msg);
-                    for (let k of keys) {
-                      const lk = k.toLowerCase();
-                      const val = (msg as any)[k];
-
-                      if (["role", "sender", "type", "author", "source", "from", "sender_type"].includes(lk)) {
-                        const strVal = String(val).toLowerCase();
-                        if (["agent", "bot", "ai", "admin", "support", "assistant", "system"].some(r => strVal.includes(r))) {
-                          isAgent = true;
-                          displayRole = displayRole || strVal;
-                        } else if (["user", "customer", "visitor", "client", "human", "guest"].some(r => strVal.includes(r))) {
-                          isUser = true;
-                          displayRole = displayRole || strVal;
+                    const getSenderRole = () => {
+                      const keys = Object.keys(msg);
+                      for (let k of keys) {
+                        const lk = k.toLowerCase();
+                        if (["role", "sender", "type", "sender_type"].includes(lk)) {
+                          const val = String((msg as any)[k]).toLowerCase();
+                          if (val === "user" || val === "human" || val === "customer" || val === "visitor") {
+                            return "user";
+                          }
+                          if (val === "agent" || val === "support" || val === "admin") {
+                            return "agent";
+                          }
+                          if (val === "ai" || val === "bot" || val === "assistant" || val === "copilot") {
+                            return "ai";
+                          }
                         }
                       }
+                      return null;
+                    };
 
-                      if (["is_user", "from_user", "is_customer"].includes(lk) && (val === true || val === 1 || val === "1" || val === "true")) {
-                        isUser = true;
-                        displayRole = displayRole || "user";
-                      }
-                      if (["is_bot", "is_agent", "is_admin", "is_ai"].includes(lk) && (val === true || val === 1 || val === "1" || val === "true")) {
-                        isAgent = true;
-                        displayRole = displayRole || "bot";
-                      }
-                    }
-
-                    // Fallback to text content if absolutely no metadata is available
-                    if (!isUser && !isAgent) {
+                    const resolvedRole = getSenderRole() || msg.role || "user";
+                    if (resolvedRole === "user" || resolvedRole === "human") {
+                      isUser = true;
+                    } else if (resolvedRole === "agent" || resolvedRole === "support" || resolvedRole === "admin") {
+                      isAgent = true;
+                    } else if (resolvedRole === "ai" || resolvedRole === "bot" || resolvedRole === "assistant" || resolvedRole === "copilot") {
+                      isAI = true;
+                    } else {
                       const lowerText = text.toLowerCase();
-                      if (lowerText.includes("welcome to") || lowerText.includes("how may i help") || lowerText.includes("support agent")) {
-                        isAgent = true;
-                        displayRole = "bot";
+                      if (lowerText.includes("welcome to") || lowerText.includes("how may i help")) {
+                        isAI = true;
                       } else {
                         isUser = true;
-                        displayRole = "user";
                       }
                     }
 
+                    const getAgentDisplayName = () => {
+                      if ((msg as any).agent_name) return (msg as any).agent_name;
+                      if ((msg as any).sender_name) return (msg as any).sender_name;
+                      if ((msg as any).name) return (msg as any).name;
+
+                      const currentRole = typeof window !== "undefined" ? localStorage.getItem("saas_user_role") : null;
+                      const currentAgentName = typeof window !== "undefined" ? localStorage.getItem("saas_agent_name") : null;
+
+                      if (currentRole === "client_admin") {
+                        return "Organization Admin";
+                      }
+                      if (currentAgentName) {
+                        return currentAgentName;
+                      }
+                      return selectedSession?.agent_name || "Support Agent";
+                    };
+
+                    const agentName = getAgentDisplayName();
+
+                    const isOutgoing = isAgent || isAI;
                     return (
                       <div key={`msg-${idx}`} style={{
                         display: "flex", gap: "10px", maxWidth: "78%",
-                        marginLeft: isUser ? "auto" : "0px",
-                        marginRight: !isUser ? "auto" : "0px",
-                        flexDirection: isUser ? "row-reverse" : "row",
+                        marginLeft: isOutgoing ? "auto" : "0px",
+                        marginRight: !isOutgoing ? "auto" : "0px",
+                        flexDirection: isOutgoing ? "row-reverse" : "row",
                       }}>
                         <div style={{
                           width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          background: isUser ? "var(--accent)" : isAgent ? "#f59e0b" : "linear-gradient(135deg, var(--accent), var(--accent2))",
-                          color: "#fff", fontWeight: 800, fontSize: "10px",
+                          background: isUser 
+                            ? "var(--accent)" 
+                            : isAgent 
+                            ? "rgba(16, 185, 129, 0.15)" 
+                            : "var(--card-bg)",
+                          color: isUser 
+                            ? "#fff" 
+                            : isAgent 
+                            ? "#10b981" 
+                            : "var(--accent)",
+                          border: isUser 
+                            ? "none" 
+                            : isAgent 
+                            ? "1px solid rgba(16, 185, 129, 0.3)" 
+                            : "1px solid var(--card-border)",
+                          boxShadow: "0 2px 4px var(--shadow)",
+                          fontWeight: 800, fontSize: "10px",
                         }}>
-                          {isUser || isAgent ? <User style={{ width: "13px", height: "13px" }} /> : <Bot style={{ width: "13px", height: "13px" }} />}
+                          {isUser || isAgent ? (
+                            <User style={{ width: "13px", height: "13px" }} />
+                          ) : (
+                            <Bot style={{ width: "13px", height: "13px" }} />
+                          )}
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: isOutgoing ? "flex-end" : "flex-start" }}>
                           <span style={{ fontSize: "9px", fontWeight: 700, color: "var(--muted-fg)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                            {isUser ? "User" : isAgent ? "Support Agent" : "Copilot AI"}
+                            {isUser
+                              ? "User"
+                              : isAgent
+                              ? `Support Agent (${agentName})`
+                              : "Copilot AI"}
                           </span>
                           <div style={{
                             padding: "12px 16px", borderRadius: "14px", fontSize: "12.5px", fontWeight: 500, lineHeight: 1.6,
-                            borderTopRightRadius: isUser ? "4px" : "14px",
-                            borderTopLeftRadius: !isUser ? "4px" : "14px",
-                            background: isUser ? "var(--accent)" : isAgent ? "rgba(245,158,11,0.12)" : "var(--card-bg)",
-                            color: isUser ? "#fff" : isAgent ? "#b45309" : "var(--fg)",
-                            border: isUser ? "none" : isAgent ? "1px solid rgba(245,158,11,0.25)" : "1px solid var(--card-border)",
+                            borderTopRightRadius: isOutgoing ? "4px" : "14px",
+                            borderTopLeftRadius: !isOutgoing ? "4px" : "14px",
+                            background: isUser 
+                              ? "var(--accent)" 
+                              : isAgent 
+                              ? "rgba(16, 185, 129, 0.08)" 
+                              : "var(--muted-bg)",
+                            color: isUser ? "#fff" : "var(--fg)",
+                            border: isUser 
+                              ? "none" 
+                              : isAgent 
+                              ? "1px solid rgba(16, 185, 129, 0.25)" 
+                              : "1px solid var(--card-border)",
                             boxShadow: "0 2px 8px var(--shadow)",
                           }}>
-                            {text}
+                            {formatMessageText(text)}
                           </div>
                         </div>
                       </div>
