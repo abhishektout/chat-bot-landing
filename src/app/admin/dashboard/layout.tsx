@@ -36,9 +36,12 @@ interface TenantInfo {
   widget_position: string;
   widget_icon_url: string;
   api_key: string;
+  api_key_type?: string;
+  custom_gemini_key?: string;
   client_db_uri?: string;
   db_rules?: string;
   allowed_tables?: string;
+  subscription_plan?: string;
 }
 
 interface AdminDashboardContextType {

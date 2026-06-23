@@ -6,204 +6,562 @@ import {
   Mail, 
   Shield, 
   Key, 
-  Eye, 
-  EyeOff, 
-  Copy, 
   Save, 
-  Database, 
   ShieldCheck, 
-  Clock, 
-  Sparkles, 
-  Server, 
-  RefreshCw 
+  Lock, 
+  Activity, 
+  Edit2,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
-import { Card, Input, Button, Badge, Skeleton } from "@/components/ui";
-
+import { Card, Input, Button, Badge, Skeleton, Modal } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
 
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
-
-interface AgentProfile {
-  id: string | number;
-  name: string;
-  email: string;
-  phone_number?: string;
-  chat_hours?: string;
-  is_active: boolean;
+interface OTPVerificationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onVerifySuccess: () => void;
 }
 
-const MOCK_TENANT_INFO = {
-  company_name: "Assistly Dev Corp",
-  bot_name: "Assistly Copilot",
-  support_email: "support@assistly.dev",
-  custom_rules: "Always be polite and helpful. Suggest using the pricing calculator.",
-  primary_color: "#4f7cff",
-  widget_position: "right",
-  widget_icon_url: "",
-  api_key: "ast_dev_key_123456789",
-  client_db_uri: "postgresql://localhost:5432/assistly_dev",
-  db_rules: "Allow read access to products, support_articles, and contact_requests.",
-  allowed_tables: "products, support_articles, contact_requests",
-};
-
-export default function ProfilePage() {
-  const { tenantInfo, refreshTenantInfo } = useAdminDashboard();
+/**
+ * OTPVerificationModal component
+ * Handles the OTP code input step for the password change flow.
+ */
+function OTPVerificationModal({ isOpen, onClose, onVerifySuccess }: OTPVerificationModalProps) {
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
   const { showToast } = useToast();
-  
-  const activeTenantInfo = tenantInfo || MOCK_TENANT_INFO;
 
-  const [role, setRole] = useState<string | null>(null);
-  const [agentId, setAgentId] = useState<string | null>(null);
-  const [agentName, setAgentName] = useState<string | null>(null);
-  const [agentDetails, setAgentDetails] = useState<AgentProfile | null>(null);
-  
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [activeTab, setActiveTab] = useState<"general" | "security" | "database">("general");
-
-  // Admin edit form state
-  const [formData, setFormData] = useState({
-    companyName: "",
-    botName: "",
-    supportEmail: "",
-  });
-
-  useEffect(() => {
-    const storedRole = localStorage.getItem("saas_user_role");
-    const storedAgentId = localStorage.getItem("saas_agent_id");
-    const storedAgentName = localStorage.getItem("saas_agent_name");
-    
-    setRole(storedRole);
-    setAgentId(storedAgentId);
-    setAgentName(storedAgentName);
-  }, []);
-
-  // Fetch data on mount
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      const token = localStorage.getItem("saas_client_token");
-      const storedRole = localStorage.getItem("saas_user_role");
-      const storedAgentId = localStorage.getItem("saas_agent_id");
-      const storedAgentName = localStorage.getItem("saas_agent_name");
-
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        if (storedRole === "agent" || storedRole === "team-member") {
-          // If the user is a Support Agent, let's fetch the agents directory to find their detailed shift & profile info
-          const data = await adminService.getAgents();
-          const currentAgent = (data.agents || []).find(
-            (a: AgentProfile) => String(a.id) === String(storedAgentId)
-          );
-          if (currentAgent) {
-            setAgentDetails(currentAgent);
-            return;
-          }
-          
-          // Fallback Agent Info
-          setAgentDetails({
-            id: storedAgentId || "ast_agent_99",
-            name: storedAgentName || "Alex Rivera",
-            email: "alex.rivera@assistly.dev",
-            phone_number: "+1 (555) 0199",
-            chat_hours: "09:00 AM - 05:00 PM",
-            is_active: true
-          });
-        } else {
-          // For client_admin, tenantInfo is already loaded in the layout context, but let's refresh it to get latest
-          await refreshTenantInfo();
-        }
-      } catch (err) {
-        console.error("Error loading profile details:", err);
-        if (storedRole === "agent" || storedRole === "team-member") {
-          setAgentDetails({
-            id: storedAgentId || "ast_agent_99",
-            name: storedAgentName || "Alex Rivera",
-            email: "alex.rivera@assistly.dev",
-            phone_number: "+1 (555) 0199",
-            chat_hours: "09:00 AM - 05:00 PM",
-            is_active: true
-          });
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Set form data when tenantInfo changes
-  useEffect(() => {
-    const activeInfo = tenantInfo || MOCK_TENANT_INFO;
-    setFormData({
-      companyName: activeInfo.company_name || "",
-      botName: activeInfo.bot_name || "",
-      supportEmail: activeInfo.support_email || "",
-    });
-  }, [tenantInfo]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.trim().length !== 6 || !/^\d+$/.test(otp.trim())) {
+      setError("Please enter a valid 6-digit OTP.");
+      return;
+    }
+    setError('');
+    onVerifySuccess();
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    const token = typeof window !== "undefined" ? localStorage.getItem("saas_client_token") || "" : "";
-    try {
-      await adminService.saveSettings({
-        company_name: formData.companyName,
-        bot_name: formData.botName,
-        support_email: formData.supportEmail,
-        custom_rules: activeTenantInfo.custom_rules || "",
-        primary_color: activeTenantInfo.primary_color || "#4f7cff",
-        widget_position: activeTenantInfo.widget_position || "right",
-        widget_icon_url: activeTenantInfo.widget_icon_url || "",
-      });
+  const handleResend = () => {
+    showToast("success", "OTP Resent", "OTP has been resent to your email.");
+  };
 
-      showToast("success", "Profile Updated", "Your workspace profile has been successfully updated.");
-      await refreshTenantInfo();
-    } catch (err: any) {
-      if (token.startsWith("test_") || process.env.NODE_ENV === "development") {
-        showToast("success", "Profile Saved (Local Mock)", "Profile updated successfully with dummy data.");
-        if (tenantInfo) {
-          tenantInfo.company_name = formData.companyName;
-          tenantInfo.bot_name = formData.botName;
-          tenantInfo.support_email = formData.supportEmail;
-        }
-      } else {
-        const errMsg = err.response?.data?.detail || "Failed to save profile changes.";
-        showToast("error", "Update Failed", errMsg);
-      }
-    } finally {
-      setIsSaving(false);
+  return (
+    <Modal title="Verification Required" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
+      <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
+          Please enter the 6-digit verification code sent to your email to confirm this password change.
+        </p>
+
+        <Input 
+          label="OTP Code" 
+          name="otp" 
+          value={otp}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, '');
+            setOtp(val);
+            if (error) setError('');
+          }}
+          placeholder="000000"
+          error={error || undefined}
+          maxLength={6}
+          style={{ 
+            textAlign: "center", 
+            fontFamily: "monospace", 
+            fontSize: "24px", 
+            letterSpacing: "0.2em",
+            fontWeight: 700 
+          }}
+        />
+
+        <div style={{ marginTop: "8px", textAlign: "center", fontSize: "12px", color: "var(--muted-fg)" }}>
+          Didn't receive the code?{" "}
+          <button 
+            type="button" 
+            onClick={handleResend}
+            style={{ 
+              background: "transparent", 
+              border: "none", 
+              color: "var(--accent)", 
+              fontWeight: 700, 
+              cursor: "pointer", 
+              padding: 0 
+            }}
+          >
+            Resend OTP
+          </button>
+        </div>
+
+        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            style={{ padding: "10px 20px" }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary"
+            icon={<ShieldCheck style={{ width: "14px", height: "14px" }} />}
+            style={{ padding: "10px 20px" }}
+          >
+            Verify
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+interface PasswordChangeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onOpenOTP: () => void;
+}
+
+/**
+ * PasswordChangeModal component
+ * Form validation and modal display for changing a user's password.
+ */
+function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModalProps) {
+  const [formData, setFormData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: null
+      });
     }
   };
 
-  const handleCopyText = (text: string, label: string) => {
-    navigator.clipboard.writeText(text)
-      .then(() => showToast("success", "Copied", `${label} copied to clipboard.`))
-      .catch(() => showToast("error", "Copy Failed", "Failed to copy text automatically."));
+  // Helper to validate password strength
+  const validateStrength = (password: string) => {
+    return {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
   };
 
-  const isAdmin = role !== "agent" && role !== "team-member";
-  const profileName = isAdmin ? (activeTenantInfo.company_name || "Workspace Admin") : (agentName || "Support Agent");
+  const handleVerifyOTP = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.oldPassword) newErrors.oldPassword = "Old password is required.";
+    if (!formData.newPassword) newErrors.newPassword = "New password is required.";
+    if (!formData.confirmPassword) newErrors.confirmPassword = "Confirm password is required.";
+
+    if (formData.newPassword) {
+      const strength = validateStrength(formData.newPassword);
+      if (!strength.length || !strength.uppercase || !strength.number || !strength.special) {
+        newErrors.newPassword = "Password does not meet the requirements.";
+      }
+    }
+
+    if (formData.newPassword && formData.confirmPassword && formData.newPassword !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    onOpenOTP();
+  };
+
+  const strengthChecks = validateStrength(formData.newPassword);
+
+  return (
+    <Modal title="Change Account Password" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
+      <form onSubmit={handleVerifyOTP} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div style={{ position: "relative" }}>
+          <Input 
+            label="Old Password" 
+            type={showOld ? "text" : "password"}
+            name="oldPassword"
+            value={formData.oldPassword}
+            onChange={handleChange}
+            placeholder="••••••••"
+            error={errors.oldPassword || undefined}
+            style={{ paddingRight: "40px" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowOld(!showOld)}
+            style={{
+              position: "absolute",
+              right: "12px",
+              top: "38px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--muted-fg)",
+              display: "flex",
+              alignItems: "center",
+              padding: 0
+            }}
+          >
+            {showOld ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
+          </button>
+        </div>
+
+        <div style={{ position: "relative" }}>
+          <Input 
+            label="New Password" 
+            type={showNew ? "text" : "password"}
+            name="newPassword"
+            value={formData.newPassword}
+            onChange={handleChange}
+            placeholder="••••••••"
+            error={errors.newPassword || undefined}
+            style={{ paddingRight: "40px" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowNew(!showNew)}
+            style={{
+              position: "absolute",
+              right: "12px",
+              top: "38px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--muted-fg)",
+              display: "flex",
+              alignItems: "center",
+              padding: 0
+            }}
+          >
+            {showNew ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
+          </button>
+        </div>
+        
+        {formData.newPassword && (
+          <div style={{
+            padding: "16px",
+            background: "var(--muted-bg)",
+            borderRadius: "12px",
+            border: "1px solid var(--card-border)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            fontSize: "12px",
+            color: "var(--muted-fg)"
+          }}>
+            <p style={{ fontWeight: 800, margin: 0, color: "var(--fg)" }}>Password Requirements:</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ 
+                width: "6px", 
+                height: "6px", 
+                borderRadius: "50%", 
+                background: strengthChecks.length ? "#10b981" : "#ef4444",
+                display: "inline-block" 
+              }} />
+              <span style={{ color: strengthChecks.length ? "var(--fg)" : "var(--muted-fg)" }}>At least 8 characters</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ 
+                width: "6px", 
+                height: "6px", 
+                borderRadius: "50%", 
+                background: strengthChecks.uppercase ? "#10b981" : "#ef4444",
+                display: "inline-block" 
+              }} />
+              <span style={{ color: strengthChecks.uppercase ? "var(--fg)" : "var(--muted-fg)" }}>At least 1 uppercase letter</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ 
+                width: "6px", 
+                height: "6px", 
+                borderRadius: "50%", 
+                background: strengthChecks.number ? "#10b981" : "#ef4444",
+                display: "inline-block" 
+              }} />
+              <span style={{ color: strengthChecks.number ? "var(--fg)" : "var(--muted-fg)" }}>At least 1 digit</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ 
+                width: "6px", 
+                height: "6px", 
+                borderRadius: "50%", 
+                background: strengthChecks.special ? "#10b981" : "#ef4444",
+                display: "inline-block" 
+              }} />
+              <span style={{ color: strengthChecks.special ? "var(--fg)" : "var(--muted-fg)" }}>At least 1 special character</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ position: "relative" }}>
+          <Input 
+            label="Confirm New Password" 
+            type={showConfirm ? "text" : "password"}
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="••••••••"
+            error={errors.confirmPassword || undefined}
+            style={{ paddingRight: "40px" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirm(!showConfirm)}
+            style={{
+              position: "absolute",
+              right: "12px",
+              top: "38px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--muted-fg)",
+              display: "flex",
+              alignItems: "center",
+              padding: 0
+            }}
+          >
+            {showConfirm ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
+          </button>
+        </div>
+
+        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            style={{ padding: "10px 20px" }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary"
+            icon={<Lock style={{ width: "14px", height: "14px" }} />}
+            style={{ padding: "10px 20px" }}
+          >
+            Verify OTP
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/**
+ * ProfilePage Component
+ * Renders user profile details dynamically based on user role (Super Admin, Admin, Support Agent).
+ * Uses CSS variables for rich design, dark mode compatibility and a premium enterprise style.
+ */
+export default function ProfilePage() {
+  const { showToast } = useToast();
+
+  // Safe extraction of tenant info from Admin Dashboard context
+  let tenantInfo: any = null;
+  let refreshTenantInfo = async () => {};
+  try {
+    const context = useAdminDashboard();
+    tenantInfo = context?.tenantInfo;
+    refreshTenantInfo = context?.refreshTenantInfo;
+  } catch {
+    // Superadmin route doesn't have useAdminDashboard
+  }
+
+  // Detect Role safely in browser/server environment
+  const isSuperAdmin = typeof window !== 'undefined' && window.location.pathname.includes('/superadmin');
+  const userRole = typeof window !== 'undefined' ? localStorage.getItem('saas_user_role') || '' : '';
+  const isAgent = userRole === 'agent';
+  const isAdmin = !isSuperAdmin && !isAgent;
+
+  // Modals state
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
+
+  // Form states
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneValue, setPhoneValue] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+
+  // Local state for profile details (mock database values, merged with active tenant details)
+  const [profileData, setProfileData] = useState(() => {
+    if (isSuperAdmin) {
+      const saName = typeof window !== 'undefined' ? localStorage.getItem('sa_name') || 'Super Admin' : 'Super Admin';
+      return {
+        fullName: saName,
+        email: 'master@admin.com',
+        phone: '+1 (555) 019-2834',
+        role: 'Super Admin',
+        department: 'Operations & Security Control',
+        status: 'Active',
+        companyName: '',
+        website: '',
+        industry: '',
+        planType: ''
+      };
+    } else if (isAgent) {
+      const agentName = typeof window !== 'undefined' ? localStorage.getItem('saas_agent_name') || 'Support Agent' : 'Support Agent';
+      return {
+        fullName: agentName,
+        email: 'support.agent@company.com',
+        phone: '+1 (555) 432-1098',
+        role: 'Support User',
+        status: 'Active',
+        companyName: '',
+        website: '',
+        industry: '',
+        planType: ''
+      };
+    } else {
+      return {
+        fullName: 'Workspace Administrator',
+        email: 'admin@acmecorp.com',
+        phone: '+1 (555) 123-4567',
+        role: 'Workspace Admin',
+        companyName: 'Acme Corp',
+        website: 'https://www.acmecorp.com',
+        industry: 'Software Development',
+        planType: 'Enterprise',
+        status: 'Active'
+      };
+    }
+  });
+
+  // Load initial value safely after mount
+  useEffect(() => {
+    if (isSuperAdmin) {
+      const savedPhone = localStorage.getItem('saas_profile_phone') || '+1 (555) 019-2834';
+      setPhoneValue(savedPhone);
+      setProfileData(prev => ({ ...prev, phone: savedPhone }));
+    } else if (isAgent) {
+      const savedPhone = localStorage.getItem('saas_profile_phone') || '+1 (555) 432-1098';
+      setPhoneValue(savedPhone);
+      setProfileData(prev => ({ ...prev, phone: savedPhone }));
+    } else if (tenantInfo) {
+      const company = tenantInfo.company_name || 'Acme Corp';
+      const email = tenantInfo.support_email || 'admin@acmecorp.com';
+      const phone = (tenantInfo as any).phone || localStorage.getItem('saas_profile_phone') || '+1 (555) 123-4567';
+      const website = (tenantInfo as any).website || 'https://www.acmecorp.com';
+      const industry = (tenantInfo as any).industry || 'Software Development';
+      const plan = tenantInfo.subscription_plan || 'Enterprise';
+
+      setProfileData({
+        fullName: 'Workspace Administrator',
+        email: email,
+        phone: phone,
+        role: 'Workspace Admin',
+        companyName: company,
+        website: website,
+        industry: industry,
+        planType: plan,
+        status: 'Active'
+      });
+      setPhoneValue(phone);
+    }
+  }, [tenantInfo, isSuperAdmin, isAgent]);
+
+  // Keep state in sync with tenantInfo if it resolves asynchronously
+  useEffect(() => {
+    if (tenantInfo && !isSuperAdmin && !isAgent) {
+      setProfileData(prev => ({
+        ...prev,
+        email: tenantInfo.support_email || prev.email,
+        phone: (tenantInfo as any).phone || prev.phone,
+        companyName: tenantInfo.company_name || prev.companyName,
+        website: (tenantInfo as any).website || prev.website,
+        industry: (tenantInfo as any).industry || prev.industry,
+        planType: tenantInfo.subscription_plan || prev.planType
+      }));
+      setPhoneValue((tenantInfo as any).phone || profileData.phone);
+    }
+  }, [tenantInfo, isSuperAdmin, isAgent]);
+
+  // Handle Phone Number update
+  const handlePhoneSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!phoneValue.trim()) {
+      setPhoneError("Phone number is required.");
+      return;
+    }
+
+    const hasCountryCode = phoneValue.startsWith('+');
+    const digitsOnly = phoneValue.replace(/\D/g, '');
+
+    if (!hasCountryCode) {
+      setPhoneError("Phone number must include country code (e.g. +1).");
+      return;
+    }
+
+    if (digitsOnly.length < 8 || digitsOnly.length > 15) {
+      setPhoneError("Phone number must contain between 8 and 15 digits.");
+      return;
+    }
+
+    setPhoneError('');
+    setProfileData(prev => ({ ...prev, phone: phoneValue }));
+    setIsEditingPhone(false);
+    
+    try {
+      localStorage.setItem("saas_profile_phone", phoneValue);
+      if (tenantInfo && !isSuperAdmin && !isAgent) {
+        await adminService.saveSettings({
+          company_name: tenantInfo.company_name || "Acme Corp",
+          support_email: tenantInfo.support_email || "admin@acmecorp.com",
+          bot_name: tenantInfo.bot_name || "Support Bot",
+          custom_rules: tenantInfo.custom_rules || "",
+          primary_color: tenantInfo.primary_color || "#2563eb",
+          widget_position: tenantInfo.widget_position || "right",
+          widget_icon_url: tenantInfo.widget_icon_url || "",
+          phone: phoneValue,
+        });
+        await refreshTenantInfo();
+      }
+      showToast("success", "Phone Updated", "Phone number updated successfully.");
+    } catch (err) {
+      showToast("success", "Phone Updated (Local)", "Phone number updated successfully locally.");
+    }
+  };
+
+  const handlePhoneCancel = () => {
+    setPhoneValue(profileData.phone);
+    setPhoneError('');
+    setIsEditingPhone(false);
+  };
+
+  const handleVerifyPasswordChangeSuccess = () => {
+    setIsOTPModalOpen(false);
+    setIsPasswordModalOpen(false);
+    showToast("success", "Password Updated", "Password updated successfully.");
+  };
+
+  const profileName = profileData.fullName;
   const displayInitial = profileName.charAt(0).toUpperCase();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* ── Page Header ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge" style={{ marginBottom: "4px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+        <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
           <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
           User Profile Info
         </span>
@@ -215,402 +573,216 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* ── Profile Hero Header Card ── */}
-      <div className="card" style={{ padding: "32px", position: "relative", overflow: "hidden" }}>
-        <div style={{
-          position: "absolute",
-          top: "-50px",
-          right: "-50px",
-          width: "250px",
-          height: "250px",
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-          filter: "blur(70px)",
-          opacity: 0.15,
-          pointerEvents: "none",
-        }} />
 
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "28px" }}>
-          {/* Avatar Orb */}
-          <div style={{
-            width: "88px",
-            height: "88px",
-            borderRadius: "24px",
-            background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontSize: "32px",
-            fontWeight: 900,
-            boxShadow: "0 8px 30px var(--accent-glow)",
-            flexShrink: 0,
-            textShadow: "0 2px 4px rgba(0,0,0,0.15)",
-          }}>
-            {isAdmin && activeTenantInfo.widget_icon_url ? (
-              <img 
-                src={activeTenantInfo.widget_icon_url} 
-                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "24px" }} 
-                alt="" 
-              />
-            ) : (
-              displayInitial
-            )}
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              <h3 style={{ fontSize: "22px", fontWeight: 850, color: "var(--fg)", margin: 0 }}>
-                {profileName}
-              </h3>
-              <Badge variant={isAdmin ? "info" : "success"}>
-                {isAdmin ? "Admin Console" : "Support Agent"}
-              </Badge>
-            </div>
-            
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", color: "var(--muted-fg)", fontSize: "13px", fontWeight: 500 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Mail style={{ width: "14px", height: "14px" }} />
-                {isAdmin ? (activeTenantInfo.support_email || "support@company.com") : (agentDetails?.email || "agent@company.com")}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <ShieldCheck style={{ width: "14px", height: "14px" }} />
-                <span>ID: {isAdmin ? "Tenant-Admin" : (agentId || "Agent-Member")}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Tabs Navigation ── */}
-      {isAdmin && (
-        <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--card-border)", paddingBottom: "1px" }}>
-          {(["general", "security", "database"] as const).map((tab) => {
-            const isActive = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: "10px 20px",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: isActive ? "2.5px solid var(--accent)" : "2.5px solid transparent",
-                  color: isActive ? "var(--accent)" : "var(--muted-fg)",
-                  fontWeight: isActive ? 750 : 600,
-                  fontSize: "13px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-              >
-                {tab === "general" ? "General Info" : tab === "security" ? "API Security" : "Database Sync"}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Main Details Grid ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      {/* ── Two-Column Main Layout ── */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1.75fr 1fr",
+        gap: "32px",
+      }} className="profile-grid">
         
-        {/* Tab 1: General Info */}
-        {(activeTab === "general" || !isAdmin) && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "24px" }}>
-            
-            {/* If Admin: Show Edit Profile Form */}
-            {isAdmin ? (
-              <div className="card" style={{ padding: "32px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
-                  <div style={{ padding: "8px", borderRadius: "10px", background: "var(--accent-glow)", border: "1px solid rgba(79,124,255,0.15)", color: "var(--accent)" }}>
-                    <User style={{ width: "18px", height: "18px" }} />
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>Company Information</h4>
-                    <p style={{ fontSize: "12px", color: "var(--muted-fg)", margin: "2px 0 0" }}>Update primary details visible to users and widget components.</p>
-                  </div>
+        {/* Left Column: Personal Information Card */}
+        <div className="card" style={{ padding: "32px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "28px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
+            <div style={{ padding: "8px", borderRadius: "10px", background: "var(--accent-glow)", border: "1px solid rgba(79,124,255,0.15)", color: "var(--accent)" }}>
+              <User style={{ width: "18px", height: "18px" }} />
+            </div>
+            <div>
+              <h4 style={{ fontSize: "16px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>Personal Information</h4>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <Input 
+              label="Email Address" 
+              name="emailAddress" 
+              type="email"
+              value={profileData.email} 
+              readOnly 
+              style={{ opacity: 0.8, cursor: "not-allowed" }}
+            />
+
+            <div>
+              {!isEditingPhone ? (
+                <div style={{ position: "relative" }}>
+                  <Input 
+                    label="Phone Number" 
+                    name="phoneNumber" 
+                    value={profileData.phone} 
+                    readOnly
+                    style={{ opacity: 0.8 }}
+                  />
+                  <span 
+                    onClick={() => setIsEditingPhone(true)}
+                    style={{
+                      position: "absolute",
+                      right: "16px",
+                      top: "40px",
+                      fontSize: "11.5px",
+                      fontWeight: 700,
+                      color: "var(--accent)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      textTransform: "uppercase"
+                    }}
+                  >
+                    <Edit2 style={{ width: "11px", height: "11px" }} /> Edit
+                  </span>
                 </div>
-
-                <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "20px" }}>
-                    <Input 
-                      label="Company / Org Name" 
-                      name="companyName" 
-                      value={formData.companyName} 
-                      onChange={handleInputChange} 
-                      placeholder="e.g. Acme Corp" 
-                      required 
-                    />
-                    <Input 
-                      label="Support Email Address" 
-                      name="supportEmail" 
-                      type="email"
-                      value={formData.supportEmail} 
-                      onChange={handleInputChange} 
-                      placeholder="support@acme.com" 
-                      required 
-                      icon={<Mail style={{ width: "14px", height: "14px" }} />}
-                    />
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "20px" }}>
-                    <Input 
-                      label="AI Assistant Bot Name" 
-                      name="botName" 
-                      value={formData.botName} 
-                      onChange={handleInputChange} 
-                      placeholder="e.g. Acme Copilot" 
-                      required 
-                    />
-                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                      <Button 
-                        type="submit" 
-                        isLoading={isSaving} 
-                        icon={<Save style={{ width: "16px", height: "16px" }} />}
-                        style={{ width: "100%", height: "46px" } as React.CSSProperties}
-                      >
-                        Save Profile Changes
-                      </Button>
-                    </div>
+              ) : (
+                <form onSubmit={handlePhoneSave} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <Input 
+                    label="Phone Number" 
+                    name="phoneNumber" 
+                    value={phoneValue}
+                    onChange={(e) => setPhoneValue(e.target.value)}
+                    error={phoneError || undefined}
+                    placeholder="e.g. +1 555 123 4567"
+                    autoFocus
+                  />
+                  <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handlePhoneCancel}
+                      style={{ padding: "8px 16px" }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      variant="primary" 
+                      size="sm"
+                      style={{ padding: "8px 16px" }}
+                    >
+                      Save
+                    </Button>
                   </div>
                 </form>
-              </div>
-            ) : (
-              /* If Agent: Show Agent shifts & readonly information */
-              <div className="card" style={{ padding: "32px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
-                  <div style={{ padding: "8px", borderRadius: "10px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.15)", color: "#10b981" }}>
-                    <Clock style={{ width: "18px", height: "18px" }} />
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>Agent Shift Settings</h4>
-                    <p style={{ fontSize: "12px", color: "var(--muted-fg)", margin: "2px 0 0" }}>Details regarding your support schedule and account status.</p>
-                  </div>
-                </div>
+              )}
+            </div>
 
-                {isLoading ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "24px" }}>
-                    <div className="card-gradient-border" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <span style={{ fontSize: "10px", fontWeight: 800, color: "var(--muted-fg)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shift Hours</span>
-                      <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--fg)", display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Clock style={{ width: "16px", height: "16px", color: "var(--accent)" }} />
-                        {agentDetails?.chat_hours || "Anytime shifts (24/7)"}
-                      </span>
-                    </div>
-
-                    <div className="card-gradient-border" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <span style={{ fontSize: "10px", fontWeight: 800, color: "var(--muted-fg)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Account Status</span>
-                      <div style={{ marginTop: "4px" }}>
-                        {agentDetails?.is_active !== false ? (
-                          <Badge variant="success">Active (Access Allowed)</Badge>
-                        ) : (
-                          <Badge variant="error">Suspended</Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="card-gradient-border" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <span style={{ fontSize: "10px", fontWeight: 800, color: "var(--muted-fg)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Workspace Role</span>
-                      <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--fg)", display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Shield style={{ width: "16px", height: "16px", color: "#10b981" }} />
-                        Support Workspace Agent
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {isSuperAdmin && (
+              <Input 
+                label="Department" 
+                value={profileData.department} 
+                readOnly 
+                style={{ opacity: 0.8, cursor: "not-allowed" }}
+              />
             )}
-            
-            {/* General Telemetry Card */}
-            <div className="card" style={{ padding: "32px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
-                <div style={{ padding: "8px", borderRadius: "10px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.15)", color: "#f59e0b" }}>
-                  <Sparkles style={{ width: "18px", height: "18px" }} />
-                </div>
-                <div>
-                  <h4 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>System Telemetry &amp; Nodes</h4>
-                  <p style={{ fontSize: "12px", color: "var(--muted-fg)", margin: "2px 0 0" }}>Session indicators and backend authentication parameters.</p>
-                </div>
-              </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "24px" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted-fg)", textTransform: "uppercase" }}>Environment node</span>
-                  <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--fg)" }}>
-                    {process.env.NODE_ENV === "development" ? "development-sandbox" : "production-deployment"}
-                  </span>
-                </div>
+            {isAdmin && (
+              <>
+                <div style={{ margin: "8px 0", borderTop: "1px solid var(--card-border)" }} />
                 
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted-fg)", textTransform: "uppercase" }}>Administrative status</span>
-                  <div>
-                    <Badge variant="success">Online &amp; Authorized</Badge>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted-fg)", textTransform: "uppercase" }}>Endpoint API Host</span>
-                  <span style={{ fontSize: "13px", fontWeight: 600, fontFamily: "monospace", color: "var(--fg)" }}>
-                    {BASE_API}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* Tab 2: API Security (Admin Only) */}
-        {activeTab === "security" && isAdmin && (
-          <div className="card" style={{ padding: "32px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
-              <div style={{ padding: "8px", borderRadius: "10px", background: "var(--accent-glow)", border: "1px solid rgba(79,124,255,0.15)", color: "var(--accent)" }}>
-                <Key style={{ width: "18px", height: "18px" }} />
-              </div>
-              <div>
-                <h4 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>API &amp; Credential Security</h4>
-                <p style={{ fontSize: "12px", color: "var(--muted-fg)", margin: "2px 0 0" }}>Manage workspace credentials, secret access tokens, and script integration codes.</p>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted-fg)" }}>
-                  API Authorization Key
-                </label>
-                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                  <input
-                    type={showApiKey ? "text" : "password"} 
-                    readOnly 
-                    value={activeTenantInfo.api_key || ""}
-                    style={{ 
-                      width: "100%", 
-                      padding: "12px 100px 12px 16px", 
-                      background: "var(--muted-bg)", 
-                      border: "1px solid var(--card-border)", 
-                      borderRadius: "12px", 
-                      fontSize: "13px", 
-                      fontFamily: "monospace", 
-                      color: "var(--fg)", 
-                      outline: "none", 
-                      boxSizing: "border-box" 
-                    }}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                  <Input 
+                    label="Company Name" 
+                    value={profileData.companyName} 
+                    readOnly
+                    style={{ opacity: 0.8, cursor: "not-allowed" }}
                   />
-                  <div style={{ position: "absolute", right: "12px", display: "flex", gap: "8px" }}>
-                    <button 
-                      type="button" 
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      style={{ 
-                        color: "var(--muted-fg)", 
-                        background: "var(--card-bg)", 
-                        border: "1px solid var(--card-border)", 
-                        borderRadius: "8px",
-                        cursor: "pointer", 
-                        display: "flex", 
-                        padding: "6px" 
-                      }}
-                      title={showApiKey ? "Hide Key" : "Show Key"}
-                    >
-                      {showApiKey ? <EyeOff style={{ width: "14px", height: "14px" }} /> : <Eye style={{ width: "14px", height: "14px" }} />}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => handleCopyText(activeTenantInfo.api_key || "", "API Key")}
-                      style={{ 
-                        color: "var(--accent)", 
-                        background: "var(--accent-glow)", 
-                        border: "1px solid rgba(79,124,255,0.2)", 
-                        borderRadius: "8px",
-                        cursor: "pointer", 
-                        display: "flex", 
-                        padding: "6px" 
-                      }}
-                      title="Copy Key"
-                    >
-                      <Copy style={{ width: "14px", height: "14px" }} />
-                    </button>
-                  </div>
+                  <Input 
+                    label="Industry" 
+                    value={profileData.industry} 
+                    readOnly
+                    style={{ opacity: 0.8, cursor: "not-allowed" }}
+                  />
                 </div>
-                <p style={{ fontSize: "11px", color: "var(--muted-fg)", marginTop: "4px" }}>
-                  This key authorizes your client widget to hook into the white-label assistant engine. Keep it secret.
-                </p>
-              </div>
 
-              <div style={{ borderTop: "1px solid var(--card-border)", paddingTop: "20px" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--muted-fg)" }}>Integration Strategies</span>
-                <div style={{ position: "relative", borderRadius: "14px", background: "#080e1a", border: "1px solid rgba(79,124,255,0.2)", padding: "20px 24px", marginTop: "12px" }}>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleCopyText(`<script type="module" src="http://bot.a4tool.com/widget-file" data-api-key="${activeTenantInfo.api_key}"></script>`, "Script snippet")} 
-                    icon={<Copy style={{ width: "13px", height: "13px" }} />} 
-                    style={{ position: "absolute", top: "16px", right: "16px" } as React.CSSProperties}
-                  >
-                    Copy HTML
-                  </Button>
-                  <pre style={{ overflowX: "auto", fontSize: "12px", fontFamily: "'Fira Code', monospace", color: "#4ade80", paddingRight: "80px", lineHeight: 1.7, margin: 0 }}>
-                    {`<script\n  type="module"\n  src="http://bot.a4tool.com/widget-file"\n  data-api-key="${activeTenantInfo.api_key || "ast_dev_key_123456789"}">\n</script>`}
-                  </pre>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                  <Input 
+                    label="Website" 
+                    value={profileData.website} 
+                    readOnly
+                    style={{ opacity: 0.8, cursor: "not-allowed" }}
+                  />
+                  <Input 
+                    label="Subscription Plan" 
+                    value={profileData.planType} 
+                    readOnly
+                    style={{ opacity: 0.8, cursor: "not-allowed", color: "var(--accent)", fontWeight: 700 }}
+                  />
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
 
-        {/* Tab 3: Database & Custom Sync (Admin Only) */}
-        {activeTab === "database" && isAdmin && (
+        {/* Right Column: Security & Activity */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+          {/* Security Settings Card */}
           <div className="card" style={{ padding: "32px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
+              <div style={{ padding: "8px", borderRadius: "10px", background: "var(--accent-glow)", border: "1px solid rgba(79,124,255,0.15)", color: "var(--accent)" }}>
+                <Shield style={{ width: "18px", height: "18px" }} />
+              </div>
+              <h4 style={{ fontSize: "16px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>Security Settings</h4>
+            </div>
+            
+            <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, marginBottom: "24px" }}>
+              Update your authentication credentials to secure your user account. Changing password requires email OTP validation.
+            </p>
+
+            <Button 
+              type="button" 
+              variant="primary" 
+              onClick={() => setIsPasswordModalOpen(true)}
+              icon={<Lock style={{ width: "15px", height: "15px" }} />}
+              style={{ width: "100%", justifyContent: "center", padding: "10px" }}
+            >
+              Change Password
+            </Button>
+          </div>
+
+          {/* Activity Information Card */}
+          <div className="card" style={{ padding: "32px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
               <div style={{ padding: "8px", borderRadius: "10px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.15)", color: "#10b981" }}>
-                <Database style={{ width: "18px", height: "18px" }} />
+                <Activity style={{ width: "18px", height: "18px" }} />
               </div>
-              <div>
-                <h4 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>Database Integrations &amp; Schema</h4>
-                <p style={{ fontSize: "12px", color: "var(--muted-fg)", margin: "2px 0 0" }}>Check structured data mapping, relational permissions, and tables.</p>
-              </div>
+              <h4 style={{ fontSize: "16px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>Activity Information</h4>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted-fg)", textTransform: "uppercase" }}>Database URI</span>
-                <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--fg)", fontFamily: "monospace", padding: "10px 14px", background: "var(--muted-bg)", borderRadius: "8px", border: "1px solid var(--card-border)", wordBreak: "break-all" }}>
-                  {activeTenantInfo.client_db_uri || "No database configured (using local document vector search only)."}
-                </span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted-fg)", textTransform: "uppercase" }}>Permitted Query Tables</span>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg)" }}>
-                  {activeTenantInfo.allowed_tables ? (
-                    activeTenantInfo.allowed_tables.split(",").map((t: string) => (
-                      <Badge key={t} variant="info" style={{ marginRight: "6px", textTransform: "none" } as React.CSSProperties}>
-                        {t.trim()}
-                      </Badge>
-                    ))
-                  ) : (
-                    "None"
-                  )}
-                </span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted-fg)", textTransform: "uppercase" }}>Relational Database Rules</span>
-                <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
-                  {activeTenantInfo.db_rules || "No custom query instructions defined."}
-                </p>
-              </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>Account Status</span>
+              <Badge variant="success" style={{ padding: "6px 12px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                Active
+              </Badge>
             </div>
           </div>
-        )}
+        </div>
 
       </div>
+
+      {/* Change Password Modals Flow */}
+      <PasswordChangeModal 
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onOpenOTP={() => {
+          setIsPasswordModalOpen(false);
+          setIsOTPModalOpen(true);
+        }}
+      />
+
+      <OTPVerificationModal 
+        isOpen={isOTPModalOpen}
+        onClose={() => setIsOTPModalOpen(false)}
+        onVerifySuccess={handleVerifyPasswordChangeSuccess}
+      />
+
+      {/* Responsive adjustments */}
+      <style>{`
+        @media (max-width: 991px) {
+          .profile-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

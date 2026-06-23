@@ -12,7 +12,6 @@ import { authService } from "@/services/auth.service";
 type Role = "super-admin" | "admin" | "team-member";
 type AdminMethod = "otp" | "password";
 
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
 
 const ROLE_INFO = {
   "super-admin": {
@@ -177,8 +176,8 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp.trim()) {
-      setErrors({ otp: "Verification code is required." });
+    if (!otp.trim() || otp.length !== 6) {
+      setErrors({ otp: "Please enter the complete 6-digit verification code." });
       return;
     }
 
@@ -227,9 +226,11 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      showToast("error", "Email Required", "Please enter your work email address to receive password reset link.");
-      setErrors({ email: "Email is required to reset password." });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!email.trim() || !emailRegex.test(email)) {
+      showToast("error", "Invalid Email", "Please enter a valid work email address to receive password reset link.");
+      setErrors({ email: "Valid email is required to reset password." });
       return;
     }
 

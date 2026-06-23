@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Trash2, RotateCcw, RefreshCw, Archive, AlertTriangle, Building } from "lucide-react";
 import { useToast } from "@/components/Toast";
-import { Card, Badge, Button, Loader, Skeleton } from "@/components/ui";
+import { Card, Badge, Button, Loader, Skeleton, ConfirmModal } from "@/components/ui";
 import { superAdminService } from "@/services/superadmin.service";
 
 interface DeletedClient {
@@ -17,6 +17,18 @@ export default function DeletedAccountsPage() {
   const { showToast } = useToast();
   const [deletedClients, setDeletedClients] = useState<DeletedClient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const fetchDeletedClients = async () => {
     setIsLoading(true);
@@ -35,15 +47,22 @@ export default function DeletedAccountsPage() {
     fetchDeletedClients();
   }, []);
 
-  const handleRecover = async (clientId: string | number) => {
-    if (!window.confirm("Recover this client account? It will become active again.")) return;
-    try {
-      await superAdminService.recoverClient(clientId);
-      showToast("success", "Account Restored", "Client workspace recovered successfully.");
-      fetchDeletedClients();
-    } catch (e) {
-      showToast("error", "Error", "Error recovering account.");
-    }
+  const handleRecover = (clientId: string | number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Recover Client Account",
+      message: "Are you sure you want to recover this client account? It will become active again.",
+      confirmText: "Recover",
+      onConfirm: async () => {
+        try {
+          await superAdminService.recoverClient(clientId);
+          showToast("success", "Account Restored", "Client workspace recovered successfully.");
+          fetchDeletedClients();
+        } catch (e) {
+          showToast("error", "Error", "Error recovering account.");
+        }
+      },
+    });
   };
 
   return (
@@ -219,6 +238,15 @@ export default function DeletedAccountsPage() {
           </table>
         </div>
       </Card>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+      />
     </div>
   );
 }

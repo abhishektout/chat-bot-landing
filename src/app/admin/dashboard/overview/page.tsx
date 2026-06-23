@@ -12,6 +12,8 @@ interface Session {
   created_at?: string;
   human_takeover?: boolean;
   agent_name?: string;
+  user_name?: string;
+  last_active?: string;
 }
 
 export default function DashboardOverviewPage() {
@@ -23,7 +25,12 @@ export default function DashboardOverviewPage() {
     setIsLoading(true);
     try {
       const statsData = await adminService.getDashboardStats();
-      setStats(statsData.data || statsData || { total_sessions: 0, total_messages: 0 });
+      const sessionsVal = statsData?.sessions ?? statsData?.total_sessions ?? statsData?.data?.sessions ?? statsData?.data?.total_sessions ?? 0;
+      const messagesVal = statsData?.messages ?? statsData?.total_messages ?? statsData?.data?.messages ?? statsData?.data?.total_messages ?? 0;
+      setStats({
+        total_sessions: sessionsVal,
+        total_messages: messagesVal,
+      });
 
       const sessionsData = await adminService.getLiveSessions();
       let sessionsList: Session[] = [];
@@ -34,9 +41,32 @@ export default function DashboardOverviewPage() {
       } else if (Array.isArray(sessionsData)) {
         sessionsList = sessionsData;
       }
-      setLiveSessions(sessionsList);
+
+      // Apply persistent takeover state from localStorage
+      const getLocalTakeoverStates = () => {
+        if (typeof window === "undefined") return {};
+        try {
+          const stored = localStorage.getItem("saas_takeover_states");
+          return stored ? JSON.parse(stored) : {};
+        } catch {
+          return {};
+        }
+      };
+
+      const localStates = getLocalTakeoverStates();
+      const mapped = sessionsList.map((s: Session) => {
+        const sId = s.id || s.session_id || "";
+        const localTakeover = localStates[sId];
+        return {
+          ...s,
+          human_takeover: typeof localTakeover === "boolean" ? localTakeover : !!s.human_takeover,
+          agent_name: s.agent_name || (localTakeover ? localStorage.getItem("saas_agent_name") || "Human Support" : "")
+        };
+      });
+
+      setLiveSessions(mapped);
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.warn("Error fetching dashboard data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -48,32 +78,33 @@ export default function DashboardOverviewPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      {/* ── Page Header ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge" style={{ marginBottom: "4px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
-          Workspace Overview
-        </span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Performance{" "}
-          <span className="gradient-text">Analytics</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Real-time telemetry and automation performance details.
-        </p>
-      </div>
+      {/* ── Header & Actions ── */}
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: "20px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+          <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
+            Workspace Overview
+          </span>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Performance{" "}
+            <span className="gradient-text">Analytics</span>
+          </h2>
+          <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
+            Real-time telemetry and automation performance details.
+          </p>
+        </div>
 
-      {/* ── Top Actions ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-        <Button
-          variant="outline"
-          onClick={fetchDashboardData}
-          isLoading={isLoading}
-          icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
-          style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
-        >
-          Sync Telemetry
-        </Button>
+        <div style={{ display: "flex", alignItems: "center" ,alignSelf: "center"}}>
+          <Button
+            variant="outline"
+            onClick={fetchDashboardData}
+            isLoading={isLoading}
+            icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
+            style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
+          >
+            Sync Telemetry
+          </Button>
+        </div>
       </div>
 
       {/* ── KPI Stats Grid ── */}
@@ -318,7 +349,9 @@ export default function DashboardOverviewPage() {
                       <td style={{ padding: "16px 24px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                           <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                            {session.human_takeover ? "Support Handover" : "Anonymous Session"}
+                            {session.human_takeover 
+                              ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
+                              : (session.user_name || "Anonymous Session")}
                           </span>
                           <span style={{ fontSize: "10px", color: "var(--muted-fg)", fontFamily: "monospace" }}>
                             {session.id || session.session_id || "Unknown"}
@@ -328,18 +361,18 @@ export default function DashboardOverviewPage() {
                       <td style={{ padding: "16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--muted-fg)", fontWeight: 500 }}>
                           <Calendar style={{ width: "13px", height: "13px" }} />
-                          {new Date(session.created_at || Date.now()).toLocaleString()}
+                          {new Date(session.last_active || session.created_at || Date.now()).toLocaleString()}
                         </div>
                       </td>
                       <td style={{ padding: "16px" }}>
                         {session.human_takeover ? (
-                          <Badge variant="warning">Live Agent</Badge>
+                          <Badge variant="warning" style={{ padding:"4px"}}>Live Agent</Badge>
                         ) : (
-                          <Badge variant="success">AI Autopilot</Badge>
+                          <Badge variant="success" style={{ padding:"4px"}}>AI Autopilot</Badge>
                         )}
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                        <Link href="/admin/dashboard/history" style={{
+                        <Link href={`/admin/dashboard/history?session=${session.id || session.session_id}`} style={{
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",

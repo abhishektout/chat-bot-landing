@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import axios from "axios";
 
 const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
 
@@ -11,18 +12,48 @@ interface Message {
   isStreaming?: boolean;
 }
 
+const getSessionId = () => {
+  if (typeof window === "undefined") return "sess_static";
+  try {
+    let id = localStorage.getItem("widget_session_id");
+    if (!id) {
+      id = "sess_" + Math.random().toString(36).substring(2, 11);
+      localStorage.setItem("widget_session_id", id);
+    }
+    return id;
+  } catch (e) {
+    return "sess_" + Math.random().toString(36).substring(2, 11);
+  }
+};
+
+const getInitialMessages = (sId: string) => {
+  if (typeof window === "undefined") return [{ text: "Hello! How can I help you today?", sender: "ai" as const }];
+  try {
+    const stored = localStorage.getItem(`widget_messages_${sId}`);
+    if (stored) return JSON.parse(stored);
+  } catch (e) {}
+  return [{ text: "Hello! How can I help you today?", sender: "ai" as const }];
+};
+
+const getInitialLastMsgId = (sId: string) => {
+  if (typeof window === "undefined") return 0;
+  try {
+    const stored = localStorage.getItem(`widget_lastMsgId_${sId}`);
+    if (stored) return parseInt(stored, 10);
+  } catch (e) {}
+  return 0;
+};
+
 function ChatWidgetContent() {
   const searchParams = useSearchParams();
-  const apiKey = searchParams.get("apiKey");
+  const apiKey = searchParams.get("apiKey") || searchParams.get("key");
   const isInline = searchParams.get("inline") === "true";
 
   const [isOpen, setIsOpen] = useState(isInline);
   const [isMaximized, setIsMaximized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { text: "Hello! How can I help you today?", sender: "ai" },
-  ]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isHumanTakeover, setIsHumanTakeover] = useState(false);
   const [typingText, setTypingText] = useState("Establishing secure connection...");
   const [isListening, setIsListening] = useState(false);
   const [botConfig, setBotConfig] = useState({
@@ -33,10 +64,26 @@ function ChatWidgetContent() {
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const sessionId = useRef("sess_" + Math.random().toString(36).substring(2, 11));
+  
+  // Hydration-safe states and refs
+  const [isMounted, setIsMounted] = useState(false);
+  const sessionId = useRef<string>("sess_static");
+  const [messages, setMessages] = useState<Message[]>([
+    { text: "Hello! How can I help you today?", sender: "ai" },
+  ]);
+  const lastMsgId = useRef<number>(0);
+  
   const recognitionRef = useRef<any>(null);
   const thoughtInterval = useRef<any>(null);
-  const lastMsgId = useRef(0);
+
+  // Mount effect to safely access localStorage on client-side only
+  useEffect(() => {
+    setIsMounted(true);
+    const sId = getSessionId();
+    sessionId.current = sId;
+    setMessages(getInitialMessages(sId));
+    lastMsgId.current = getInitialLastMsgId(sId);
+  }, []);
 
   const MAX_CHARS = 1000;
   const remainingChars = MAX_CHARS - inputValue.length;
@@ -45,24 +92,22 @@ function ChatWidgetContent() {
     const fetchConfig = async () => {
       if (!apiKey) return;
       try {
-        const res = await fetch(`${BASE_API}/widget/config`, {
+        const res = await axios.get(`${BASE_API}/widget/config`, {
           headers: { "X-API-Key": apiKey },
         });
-        if (res.ok) {
-          const data = await res.json();
-          setBotConfig({
-            name: data.bot_name || "Support Bot",
-            color: data.primary_color || "#2563eb",
-            position: data.widget_position || "right",
-            iconUrl: data.widget_icon_url || "",
-          });
+        const data = res.data;
+        setBotConfig({
+          name: data.bot_name || "Support Bot",
+          color: data.primary_color || "#2563eb",
+          position: data.widget_position || "right",
+          iconUrl: data.widget_icon_url || "",
+        });
 
-          if (!isInline) {
-            window.parent.postMessage(
-              { type: "SAAS_WIDGET_POSITION", position: data.widget_position || "right" },
-              "*"
-            );
-          }
+        if (!isInline) {
+          window.parent.postMessage(
+            { type: "SAAS_WIDGET_POSITION", position: data.widget_position || "right" },
+            "*"
+          );
         }
       } catch (err) {
         console.warn("Could not fetch widget config", err);
@@ -74,6 +119,14 @@ function ChatWidgetContent() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    if (!isMounted || sessionId.current === "sess_static") return;
+    try {
+      const messagesToSave = messages.filter((m) => !m.isStreaming);
+      localStorage.setItem(`widget_messages_${sessionId.current}`, JSON.stringify(messagesToSave));
+    } catch (e) {}
+  }, [messages, isMounted]);
 
   useEffect(() => {
     if (!isInline) {
@@ -126,51 +179,58 @@ function ChatWidgetContent() {
   }, []);
 
   useEffect(() => {
-    if (!apiKey || !isOpen) return;
+    if (!isMounted || !apiKey || !isOpen || sessionId.current === "sess_static") return;
 
     const pollAgentMessages = async () => {
       try {
-        const res = await fetch(`${BASE_API}/widget/agent-messages/${sessionId.current}?last_msg_id=${lastMsgId.current}`, {
+        const res = await axios.get(`${BASE_API}/widget/agent-messages/${sessionId.current}?last_msg_id=${lastMsgId.current}`, {
           headers: { "X-API-Key": apiKey },
         });
-        if (res.ok) {
-          const data = await res.json();
-          let newMsgs = [];
-          if (data && data.messages && Array.isArray(data.messages)) newMsgs = data.messages;
-          else if (data && data.chats && Array.isArray(data.chats)) newMsgs = data.chats;
-          else if (data && data.data && Array.isArray(data.data)) newMsgs = data.data;
-          else if (Array.isArray(data)) newMsgs = data;
+        const data = res.data;
+        if (data && typeof data.human_takeover === "boolean") {
+          setIsHumanTakeover(data.human_takeover);
+        } else if (data && typeof data.takeover === "boolean") {
+          setIsHumanTakeover(data.takeover);
+        }
+        
+        let newMsgs = [];
+        if (data && data.messages && Array.isArray(data.messages)) newMsgs = data.messages;
+        else if (data && data.chats && Array.isArray(data.chats)) newMsgs = data.chats;
+        else if (data && data.data && Array.isArray(data.data)) newMsgs = data.data;
+        else if (Array.isArray(data)) newMsgs = data;
 
-          if (newMsgs.length > 0) {
-            let maxId = lastMsgId.current;
-            const parsedMessages = newMsgs.map((msg: any) => {
-              if (msg.id && typeof msg.id === "number" && msg.id > maxId) maxId = msg.id;
+        if (newMsgs.length > 0) {
+          let maxId = lastMsgId.current;
+          const parsedMessages = newMsgs.map((msg: any) => {
+            if (msg.id && typeof msg.id === "number" && msg.id > maxId) maxId = msg.id;
 
-              const rawText = msg.message || msg.content || msg.text || "";
-              let formattedHTML = rawText.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
+            const rawText = msg.message || msg.content || msg.text || "";
+            let formattedHTML = rawText.replace(/\r\n/g, "\n").replace(/\n/g, "<br>");
 
-              formattedHTML = formattedHTML.replace(/(https?:\/\/[^\s<]+)/g, function (url: string) {
-                let lastChar = url.slice(-1);
-                let punctuation = [".", ",", "!", "?", ";", ":"];
-                if (punctuation.includes(lastChar)) {
-                  let cleanUrl = url.slice(0, -1);
-                  return `<a href="${cleanUrl}" target="_blank" style="color: #0056b3; text-decoration: underline; font-weight: 600;">${cleanUrl}</a>${lastChar}`;
-                }
-                return `<a href="${url}" target="_blank" style="color: #0056b3; text-decoration: underline; font-weight: 600;">${url}</a>`;
-              });
-
-              return {
-                text: formattedHTML,
-                sender: "ai",
-                isAgent: true,
-              };
+            formattedHTML = formattedHTML.replace(/(https?:\/\/[^\s<]+)/g, function (url: string) {
+              let lastChar = url.slice(-1);
+              let punctuation = [".", ",", "!", "?", ";", ":"];
+              if (punctuation.includes(lastChar)) {
+                let cleanUrl = url.slice(0, -1);
+                return `<a href="${cleanUrl}" target="_blank" style="color: #0056b3; text-decoration: underline; font-weight: 600;">${cleanUrl}</a>${lastChar}`;
+              }
+              return `<a href="${url}" target="_blank" style="color: #0056b3; text-decoration: underline; font-weight: 600;">${url}</a>`;
             });
 
-            if (maxId === lastMsgId.current) maxId += newMsgs.length;
-            lastMsgId.current = maxId;
+            return {
+              text: formattedHTML,
+              sender: "ai",
+              isAgent: true,
+            };
+          });
 
-            setMessages((prev) => [...prev, ...parsedMessages]);
-          }
+          if (maxId === lastMsgId.current) maxId += newMsgs.length;
+          lastMsgId.current = maxId;
+          try {
+            localStorage.setItem(`widget_lastMsgId_${sessionId.current}`, lastMsgId.current.toString());
+          } catch (e) {}
+
+          setMessages((prev) => [...prev, ...parsedMessages]);
         }
       } catch (err) {
         // silently ignore polling errors
@@ -179,7 +239,7 @@ function ChatWidgetContent() {
 
     const intervalId = setInterval(pollAgentMessages, 3000);
     return () => clearInterval(intervalId);
-  }, [apiKey, isOpen]);
+  }, [apiKey, isOpen, isMounted]);
 
   const toggleListen = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -199,6 +259,26 @@ function ChatWidgetContent() {
     setMessages((prev) => [...prev, { text: userText, sender: "user" }]);
     setIsTyping(true);
 
+    const formData = new FormData();
+    formData.append("question", userText);
+    formData.append("session_id", sessionId.current);
+    formData.append("user_name", "Web Visitor");
+
+    if (isHumanTakeover) {
+      try {
+        await fetch(`${BASE_API}/ask_question`, {
+          method: "POST",
+          headers: { "X-API-Key": apiKey },
+          body: formData,
+        });
+      } catch (err) {
+        console.error("Failed to send message", err);
+      } finally {
+        setIsTyping(false);
+      }
+      return;
+    }
+
     const thoughts = [
       "Establishing secure connection...",
       "Analyzing semantic intent...",
@@ -214,12 +294,11 @@ function ChatWidgetContent() {
       }
     }, 1800);
 
-    const formData = new FormData();
-    formData.append("question", userText);
-    formData.append("session_id", sessionId.current);
-    formData.append("user_name", "Web Visitor");
+
 
     try {
+      // NOTE: We use browser-native fetch here instead of Axios because Axios does not support
+      // reading standard browser ReadableStream chunks directly without custom adapters.
       const response = await fetch(`${BASE_API}/ask_question`, {
         method: "POST",
         headers: { "X-API-Key": apiKey },
@@ -244,7 +323,13 @@ function ChatWidgetContent() {
           if (done) {
             setMessages((prev) => {
               const newArr = [...prev];
-              newArr[newArr.length - 1].isStreaming = false;
+              const lastMsg = newArr[newArr.length - 1];
+              if (lastMsg) {
+                lastMsg.isStreaming = false;
+                if (!lastMsg.text || !lastMsg.text.trim()) {
+                  lastMsg.text = "<em style='color: #ef4444;'>The AI generated an empty response. Please verify that AI control is fully restored on the server.</em>";
+                }
+              }
               return newArr;
             });
             break;
@@ -403,40 +488,64 @@ function ChatWidgetContent() {
 
       {/* Messages */}
       <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-4 bg-slate-50">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`p-3 rounded-2xl max-w-[85%] leading-relaxed text-[14.5px] break-words ${
-              msg.sender === "user"
-                ? "self-end text-white rounded-br-sm shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
-                : "self-start text-slate-800 rounded-bl-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] border"
-            }`}
-            style={
-              msg.sender === "user"
-                ? { backgroundColor: botConfig.color }
-                : { backgroundColor: lightColor, borderColor: borderDark }
-            }
-          >
-            {msg.sender === "ai" ? (
-              <div className="flex items-start gap-2">
-                <div className="flex-1" dangerouslySetInnerHTML={{ __html: msg.text }} />
-                {!msg.isStreaming && (
-                  <button
-                    onClick={() => handlePlayAudio(msg.text)}
-                    className="text-slate-500 hover:text-slate-700 p-1 mt-0.5 shrink-0 bg-transparent border-0 cursor-pointer"
-                    title="Read aloud"
-                  >
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-                      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                    </svg>
-                  </button>
-                )}
+        {messages.map((msg, idx) => {
+          const isSystem = msg.sender === "ai" && 
+            (msg.text.includes("A human agent has joined") || msg.text.includes("The AI has resumed"));
+
+          if (isSystem) {
+            const isHuman = msg.text.includes("joined");
+            return (
+              <div key={idx} className="flex justify-center my-2 w-full">
+                <span 
+                  className="text-[12px] font-semibold px-5 py-2 rounded-full shadow-sm border flex items-center gap-2"
+                  style={{
+                    backgroundColor: isHuman ? "rgba(37, 99, 235, 0.04)" : "rgba(100, 116, 139, 0.05)",
+                    color: isHuman ? "#1e40af" : "#475569",
+                    borderColor: isHuman ? "rgba(37, 99, 235, 0.15)" : "rgba(100, 116, 139, 0.15)",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.02)"
+                  }}
+                >
+                  {msg.text.replace(/<[^>]+>/g, '')}
+                </span>
               </div>
-            ) : (
-              msg.text
-            )}
-          </div>
-        ))}
+            );
+          }
+
+          return (
+            <div
+              key={idx}
+              className={`p-3 rounded-2xl max-w-[85%] leading-relaxed text-[14.5px] break-words ${
+                msg.sender === "user"
+                  ? "self-end text-white rounded-br-sm shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+                  : "self-start text-slate-800 rounded-bl-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] border"
+              }`}
+              style={
+                msg.sender === "user"
+                  ? { backgroundColor: botConfig.color }
+                  : { backgroundColor: lightColor, borderColor: borderDark }
+              }
+            >
+              {msg.sender === "ai" ? (
+                <div className="flex items-start gap-2">
+                  <div className="flex-1" dangerouslySetInnerHTML={{ __html: msg.text }} />
+                  {!msg.isStreaming && (
+                    <button
+                      onClick={() => handlePlayAudio(msg.text)}
+                      className="text-slate-500 hover:text-slate-700 p-1 mt-0.5 shrink-0 bg-transparent border-0 cursor-pointer"
+                      title="Read aloud"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                msg.text
+              )}
+            </div>
+          );
+        })}
 
         {isTyping && (
           <div

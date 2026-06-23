@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Building, UserPlus, RefreshCw, Pencil, Trash2, Key, HelpCircle, Shield, Check, Info, Settings, Eye, AlertTriangle, Sparkles } from "lucide-react";
 import { useToast } from "@/components/Toast";
-import { Card, Input, Select, Textarea, Button, Badge, Alert, Modal, Skeleton } from "@/components/ui";
+import { Card, Input, Select, Textarea, Button, Badge, Alert, Modal, Skeleton, ConfirmModal } from "@/components/ui";
 import { superAdminService } from "@/services/superadmin.service";
 
 interface Client {
@@ -37,6 +37,18 @@ export default function ManageClientsPage() {
   // Edit states for details
   const [showEditModal, setShowEditModal] = useState(false);
   const [editDetails, setEditDetails] = useState<Partial<Client>>({});
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const fetchClients = async () => {
     setIsLoading(true);
@@ -122,15 +134,22 @@ export default function ManageClientsPage() {
     }
   };
 
-  const handleDelete = async (clientId: string | number) => {
-    if (!window.confirm("Archive this client account? It will be suspended and moved to archive.")) return;
-    try {
-      await superAdminService.deleteClient(clientId);
-      showToast("success", "Archived", "Client account archived successfully.");
-      fetchClients();
-    } catch (e) {
-      showToast("error", "Error", "Failed to delete account.");
-    }
+  const handleDelete = (clientId: string | number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Archive Client Account",
+      message: "Are you sure you want to archive this client account? It will be suspended and moved to the archive section.",
+      confirmText: "Archive",
+      onConfirm: async () => {
+        try {
+          await superAdminService.deleteClient(clientId);
+          showToast("success", "Archived", "Client account archived successfully.");
+          fetchClients();
+        } catch (e) {
+          showToast("error", "Error", "Failed to delete account.");
+        }
+      },
+    });
   };
 
   const openEditModal = (client: Client) => {
@@ -453,13 +472,13 @@ export default function ManageClientsPage() {
             <Button
               variant="outline"
               onClick={() => setShowEditModal(false)}
-              style={{ fontSize: "12px", padding: "8px 16px" }}
+              style={{ fontSize: "12px", padding: "10px 20px" }}
             >
               Cancel
             </Button>
             <Button
               onClick={handleUpdateDetails}
-              style={{ fontSize: "12px", padding: "8px 16px" }}
+              style={{ fontSize: "12px", padding: "10px 20px" }}
             >
               Save Configuration
             </Button>
@@ -525,6 +544,15 @@ export default function ManageClientsPage() {
           />
         </form>
       </Modal>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+      />
     </div>
   );
 }

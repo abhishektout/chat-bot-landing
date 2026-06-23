@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Palette, Eye, EyeOff, Copy, Save, Mail, Bot, Globe } from "lucide-react";
+import { Settings, Palette, Eye, EyeOff, Copy, Save, Mail, Bot, Globe, Key, ShieldCheck } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
 import { Card, Input, Select, Textarea, Button } from "@/components/ui";
@@ -12,11 +12,13 @@ export default function BotSettingsPage() {
   const { showToast } = useToast();
   const [embedMethod, setEmbedMethod] = useState("script");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showCustomGeminiKey, setShowCustomGeminiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     companyName: "", botName: "", supportEmail: "",
     customRules: "", primaryColor: "#2563eb",
     widgetPosition: "right", widgetIconUrl: "", apiKey: "",
+    apiKeyType: "ours", customGeminiKey: "",
   });
 
   useEffect(() => {
@@ -30,6 +32,8 @@ export default function BotSettingsPage() {
         widgetPosition: tenantInfo.widget_position || "right",
         widgetIconUrl: tenantInfo.widget_icon_url || "",
         apiKey: tenantInfo.api_key || "",
+        apiKeyType: tenantInfo.api_key_type || "ours",
+        customGeminiKey: tenantInfo.custom_gemini_key || "",
       });
     }
   }, [tenantInfo]);
@@ -50,6 +54,8 @@ export default function BotSettingsPage() {
         primary_color: formData.primaryColor,
         widget_position: formData.widgetPosition,
         widget_icon_url: formData.widgetIconUrl,
+        api_key_type: formData.apiKeyType,
+        custom_gemini_key: formData.customGeminiKey,
       });
 
       showToast("success", "Settings Saved", "Your workspace configuration has been updated.");
@@ -62,10 +68,12 @@ export default function BotSettingsPage() {
     }
   };
 
+  const activeKey = formData.apiKeyType === 'client' && formData.customGeminiKey ? formData.customGeminiKey : formData.apiKey;
+
   const handleCopyCode = () => {
     const code = embedMethod === "script"
-      ? `<script\n  type="module"\n  src="http://bot.a4tool.com/widget-file"\n  data-api-key="${formData.apiKey}">\n</script>`
-      : `<iframe\n  src="http://bot.a4tool.com/widget-window?apiKey=${formData.apiKey}"\n  width="400" height="600" frameborder="0">\n</iframe>`;
+      ? `<script\n  type="module"\n  src="https://bot.a4tool.com/widget-file"\n  data-api-key="${activeKey}">\n</script>`
+      : `<iframe\n  allow="clipboard-write"\n  style="border: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background-color: #0000;"\n  src="https://bot.a4tool.com/chatbot?key=${activeKey}">\n</iframe>`;
     navigator.clipboard.writeText(code)
       .then(() => showToast("success", "Copied", "Embed code copied to clipboard."))
       .catch(() => showToast("error", "Copy Failed", "Could not copy code automatically."));
@@ -86,8 +94,8 @@ export default function BotSettingsPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Header */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge"><Settings style={{ width: "12px", height: "12px" }} />Workspace Configuration</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+        <span className="badge" style={{ width: "fit-content" }}><Settings style={{ width: "12px", height: "12px" }} />Workspace Configuration</span>
         <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
           Bot &amp; Widget <span className="gradient-text">Settings</span>
         </h2>
@@ -106,18 +114,73 @@ export default function BotSettingsPage() {
             <Input label="Support Email" name="supportEmail" value={formData.supportEmail} onChange={handleChange} placeholder="e.g. support@acme.com" icon={<Mail style={{ width: "14px", height: "14px" }} />} />
           </div>
           <Textarea label="System Instructions / Personality Prompt" name="customRules" value={formData.customRules} onChange={handleChange} placeholder="Define custom rules. E.g: Keep responses polite and brief." rows={5} />
+
+          {/* Gemini API Key Allocation */}
+          <div style={{
+            marginTop: "28px",
+            padding: "24px",
+            background: "rgba(255, 255, 255, 0.02)",
+            border: "1px solid var(--card-border)",
+            borderRadius: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--fg)", fontWeight: 800, fontSize: "14px", letterSpacing: "-0.01em" }}>
+              <Key style={{ width: "16px", height: "16px", color: "var(--accent)" }} />
+              Gemini API Key Allocation
+            </div>
+            
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px", color: "var(--fg)", fontWeight: 600 }}>
+                <input type="radio" name="apiKeyType" value="ours" checked={formData.apiKeyType === 'ours'} onChange={handleChange} 
+                  style={{ accentColor: "var(--accent)", width: "16px", height: "16px" }} />
+                Use Platform's Default Key
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px", color: "var(--fg)", fontWeight: 600 }}>
+                <input type="radio" name="apiKeyType" value="client" checked={formData.apiKeyType === 'client'} onChange={handleChange}
+                  style={{ accentColor: "var(--accent)", width: "16px", height: "16px" }} />
+                Use My Own Gemini Key
+              </label>
+            </div>
+
+            {formData.apiKeyType === 'client' && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px", animation: "fadeIn 0.3s ease" }}>
+                <label style={{ fontSize: "12px", fontWeight: 700, color: "var(--fg)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Your Custom Gemini API Key *</label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <input
+                    type={showCustomGeminiKey ? "text" : "password"}
+                    name="customGeminiKey"
+                    value={formData.customGeminiKey}
+                    onChange={handleChange}
+                    placeholder="AIzaSy..."
+                    required
+                    style={{ width: "100%", padding: "11px 44px 11px 14px", background: "var(--muted-bg)", border: "1px solid var(--card-border)", borderRadius: "10px", fontSize: "14px", color: "var(--fg)", outline: "none", boxSizing: "border-box" }}
+                  />
+                  <button type="button" onClick={() => setShowCustomGeminiKey(!showCustomGeminiKey)}
+                    style={{ position: "absolute", right: "14px", color: "var(--muted-fg)", background: "none", border: "none", cursor: "pointer", display: "flex", padding: 0 }}>
+                    {showCustomGeminiKey ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
+                  </button>
+                </div>
+                <span style={{ fontSize: "11px", color: "#10b981", display: "flex", alignItems: "center", gap: "6px", fontWeight: 600 }}>
+                  <ShieldCheck style={{ width: "14px", height: "14px" }} />
+                  This key will be securely stored and used exclusively for your workspace.
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Card 2: Design & Embedding */}
         <div className="card" style={{ padding: "32px" }}>
           {sectionHeader(<Palette style={{ width: "20px", height: "20px" }} />, "Design & Embedding", "Design custom UI colors and extract integration snippet.", "#10b981", "rgba(16,185,129,0.1)", "rgba(16,185,129,0.15)")}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "28px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "20px", marginBottom: "28px" }}>
             {/* API Key */}
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               <label style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted-fg)" }}>API Authorization Key</label>
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <input
-                  type={showApiKey ? "text" : "password"} readOnly value={formData.apiKey}
+                  type={showApiKey ? "text" : "password"} readOnly value={activeKey}
                   style={{ width: "100%", padding: "12px 44px 12px 16px", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "12px", fontSize: "13px", fontFamily: "monospace", color: "var(--fg)", outline: "none", boxSizing: "border-box" }}
                 />
                 <button type="button" onClick={() => setShowApiKey(!showApiKey)}
@@ -159,11 +222,11 @@ export default function BotSettingsPage() {
               </p>
             </div>
             <div style={{ position: "relative", borderRadius: "14px", background: "#080e1a", border: "1px solid rgba(79,124,255,0.2)", padding: "20px 24px" }}>
-              <Button type="button" variant="primary" size="sm" onClick={handleCopyCode} icon={<Copy style={{ width: "13px", height: "13px" }} />} style={{ position: "absolute", top: "16px", right: "16px" } as React.CSSProperties}>Copy</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleCopyCode} icon={<Copy style={{ width: "13px", height: "13px" }} />} style={{ position: "absolute", top: "16px", right: "16px",padding: "10px 15px" } as React.CSSProperties}>Copy</Button>
               <pre style={{ overflowX: "auto", fontSize: "13px", fontFamily: "'Fira Code', monospace", color: "#4ade80", paddingRight: "80px", lineHeight: 1.7, margin: 0 }}>
                 {embedMethod === "script"
-                  ? `<script\n  type="module"\n  src="http://bot.a4tool.com/widget-file"\n  data-api-key="${formData.apiKey || "YOUR_API_KEY_HERE"}">\n</script>`
-                  : `<iframe\n  src="http://bot.a4tool.com/widget-window?apiKey=${formData.apiKey || "YOUR_API_KEY_HERE"}"\n  width="400" height="600" frameborder="0">\n</iframe>`}
+                  ? `<script\n  type="module"\n  src="https://bot.a4tool.com/widget-file"\n  data-api-key="${activeKey || "YOUR_API_KEY_HERE"}">\n</script>`
+                  : `<iframe\n  allow="clipboard-write"\n  style="border: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background-color: #0000;"\n  src="https://bot.a4tool.com/chatbot?key=${activeKey || "YOUR_API_KEY_HERE"}">\n</iframe>`}
               </pre>
             </div>
           </div>
@@ -171,7 +234,7 @@ export default function BotSettingsPage() {
 
         {/* Submit */}
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button type="submit" isLoading={isSaving} icon={<Save style={{ width: "16px", height: "16px" }} />} style={{ minWidth: "220px", padding: "14px 28px", fontSize: "14px" } as React.CSSProperties}>
+          <Button type="submit" isLoading={isSaving} icon={<Save style={{ width: "16px", height: "16px" }} />} style={{ minWidth: "220px", padding: "10px 20px", fontSize: "14px" } as React.CSSProperties}>
             Save All Configurations
           </Button>
         </div>

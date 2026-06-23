@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { BookOpen, FileText, Trash2, RefreshCw, UploadCloud, Plus, HelpCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/Toast";
-import { Input, Textarea, Button } from "@/components/ui";
+import { Input, Textarea, Button, ConfirmModal } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
+import StoredQAList, { FaqItem } from "@/components/StoredQAList";
 
 interface DocumentItem { id: string | number; name?: string; display_name?: string; }
-interface FaqItem { id: string | number; question: string; answer: string; }
 
 export default function KnowledgeBasePage() {
   const { showToast } = useToast();
@@ -20,22 +20,39 @@ export default function KnowledgeBasePage() {
   const [faqQuestion, setFaqQuestion] = useState("");
   const [faqAnswer, setFaqAnswer] = useState("");
   const [isSubmittingFaq, setIsSubmittingFaq] = useState(false);
+  const [editingFaqId, setEditingFaqId] = useState<string | number | null>(null);
+  const [isLoadingFaqs, setIsLoadingFaqs] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const fetchDocuments = async () => {
     try {
       const data = await adminService.getUploadedDocuments();
-      setDocuments(data.documents || []);
+      setDocuments(Array.isArray(data) ? data : (data.documents || data.data || []));
     } catch (e) {
       console.error(e);
     }
   };
 
   const fetchFaqs = async () => {
+    setIsLoadingFaqs(true);
     try {
       const data = await adminService.getFaqs();
-      setFaqs(data.faqs || []);
+      setFaqs(Array.isArray(data) ? data : (data.faqs || data.data || []));
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsLoadingFaqs(false);
     }
   };
 
@@ -62,29 +79,43 @@ export default function KnowledgeBasePage() {
     }
   };
 
-  const handleDeleteAll = async () => {
-    if (!window.confirm("Delete all trained knowledge? This cannot be undone.")) return;
-    setIsDeleting(true);
-    try {
-      await adminService.deleteVectors();
-      showToast("success", "Deleted", "All knowledge deleted successfully.");
-      fetchDocuments();
-    } catch {
-      showToast("error", "Delete Failed", "Failed to delete knowledge.");
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDeleteAll = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Wipe Knowledge Base",
+      message: "Are you sure you want to delete all trained knowledge vectors? This action cannot be undone.",
+      confirmText: "Wipe Workspace",
+      onConfirm: async () => {
+        setIsDeleting(true);
+        try {
+          await adminService.deleteVectors();
+          showToast("success", "Deleted", "All knowledge deleted successfully.");
+          fetchDocuments();
+        } catch {
+          showToast("error", "Delete Failed", "Failed to delete knowledge.");
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
   };
 
-  const handleDeleteDoc = async (docId: string | number) => {
-    if (!window.confirm("Delete this document?")) return;
-    try {
-      await adminService.deleteDocument(docId);
-      showToast("success", "Deleted", "Document deleted.");
-      fetchDocuments();
-    } catch {
-      showToast("error", "Error", "Error deleting document.");
-    }
+  const handleDeleteDoc = (docId: string | number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Document Vector",
+      message: "Are you sure you want to delete this document from the agent's knowledge memory?",
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          await adminService.deleteDocument(docId);
+          showToast("success", "Deleted", "Document deleted.");
+          fetchDocuments();
+        } catch {
+          showToast("error", "Error", "Error deleting document.");
+        }
+      },
+    });
   };
 
   const handleFAQSubmit = async (e: React.FormEvent) => {
@@ -92,26 +123,50 @@ export default function KnowledgeBasePage() {
     if (!faqQuestion.trim() || !faqAnswer.trim()) return;
     setIsSubmittingFaq(true);
     try {
-      await adminService.addFaq(faqQuestion.trim(), faqAnswer.trim());
-      showToast("success", "FAQ Saved", "FAQ saved successfully!");
+      if (editingFaqId) {
+        await adminService.updateFaq(editingFaqId, faqQuestion.trim(), faqAnswer.trim());
+        showToast("success", "FAQ Updated", "FAQ updated successfully!");
+        setEditingFaqId(null);
+      } else {
+        await adminService.addFaq(faqQuestion.trim(), faqAnswer.trim());
+        showToast("success", "FAQ Saved", "FAQ saved successfully!");
+      }
       setFaqQuestion(""); setFaqAnswer("");
       fetchFaqs();
     } catch {
-      showToast("error", "Failed", "Failed to save FAQ.");
+      showToast("error", "Failed", "Failed to process FAQ.");
     } finally {
       setIsSubmittingFaq(false);
     }
   };
 
-  const handleDeleteFAQ = async (faqId: string | number) => {
-    if (!window.confirm("Delete this FAQ?")) return;
-    try {
-      await adminService.deleteFaq(faqId);
-      showToast("success", "Deleted", "FAQ deleted.");
-      fetchFaqs();
-    } catch {
-      showToast("error", "Error", "Error deleting FAQ.");
-    }
+  const handleDeleteFAQ = (faqId: string | number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete FAQ Template",
+      message: "Are you sure you want to delete this FAQ template? The agent will no longer respond with this vector.",
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          await adminService.deleteFaq(faqId);
+          showToast("success", "Deleted", "FAQ deleted.");
+          if (editingFaqId === faqId) {
+            setEditingFaqId(null);
+            setFaqQuestion("");
+            setFaqAnswer("");
+          }
+          fetchFaqs();
+        } catch {
+          showToast("error", "Error", "Error deleting FAQ.");
+        }
+      },
+    });
+  };
+
+  const handleEditFAQ = (faq: FaqItem) => {
+    setFaqQuestion(faq.question);
+    setFaqAnswer(faq.answer);
+    setEditingFaqId(faq.id);
   };
 
   const cardSection = (icon: React.ReactNode, title: string, desc: string, color = "var(--accent)", bg = "var(--accent-glow)", border = "rgba(79,124,255,0.15)") => (
@@ -127,8 +182,8 @@ export default function KnowledgeBasePage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Header */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge"><BookOpen style={{ width: "12px", height: "12px" }} />Intelligence Center</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+        <span className="badge" style={{ width: "fit-content" }}><BookOpen style={{ width: "12px", height: "12px" }} />Intelligence Center</span>
         <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
           Knowledge <span className="gradient-text">Base</span>
         </h2>
@@ -137,8 +192,8 @@ export default function KnowledgeBasePage() {
         </p>
       </div>
 
-      {/* Main Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "24px" }}>
+      {/* Main Grid Wrapper */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         <style>{`@media (min-width: 1024px) { .knowledge-grid { grid-template-columns: 1fr 380px !important; } }`}</style>
         <div className="knowledge-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: "24px" }}>
 
@@ -167,7 +222,7 @@ export default function KnowledgeBasePage() {
               </div>
               <div>
                 <Button type="submit" isLoading={isUploading} icon={<Plus style={{ width: "15px", height: "15px" }} />}
-                  style={{ padding: "12px 24px", fontSize: "13px" } as React.CSSProperties}>
+                  style={{ padding: "10px 20px", fontSize: "13px" } as React.CSSProperties}>
                   Train Model Vector
                 </Button>
               </div>
@@ -180,7 +235,7 @@ export default function KnowledgeBasePage() {
                   Trained Vector Corpus ({documents.length})
                 </h4>
                 <Button variant="outline" size="sm" onClick={fetchDocuments} icon={<RefreshCw style={{ width: "12px", height: "12px" }} />}
-                  style={{ fontSize: "10px", padding: "7px 14px" } as React.CSSProperties}>
+                  style={{ fontSize: "10px", padding: "10px 14px" } as React.CSSProperties}>
                   Refresh
                 </Button>
               </div>
@@ -212,61 +267,49 @@ export default function KnowledgeBasePage() {
                 )}
               </div>
 
-              {documents.length > 0 && (
-                <button type="button" disabled={isDeleting} onClick={handleDeleteAll}
-                  style={{
-                    marginTop: "16px", display: "inline-flex", alignItems: "center", gap: "8px",
-                    padding: "9px 18px", borderRadius: "10px", fontSize: "12px", fontWeight: 700,
-                    color: "#ef4444", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)",
-                    cursor: "pointer", transition: "all 0.15s",
-                  }}>
-                  <AlertTriangle style={{ width: "13px", height: "13px" }} />
-                  {isDeleting ? "Wiping Database..." : "Clear Workspace Knowledge"}
-                </button>
-              )}
             </div>
           </div>
 
-          {/* FAQs Card */}
+          {/* Manage Training FAQs Card */}
           <div className="card" style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "24px" }}>
             {cardSection(<HelpCircle style={{ width: "20px", height: "20px" }} />, "Manage Training FAQs", "Train specific QA templates directly.", "#10b981", "rgba(16,185,129,0.1)", "rgba(16,185,129,0.15)")}
 
             <form onSubmit={handleFAQSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px", padding: "20px", background: "var(--muted-bg)", borderRadius: "14px", border: "1px solid var(--card-border)" }}>
               <Input label="User Question Template" type="text" value={faqQuestion} onChange={e => setFaqQuestion(e.target.value)} placeholder="e.g. Do you offer refunds?" required />
               <Textarea label="Target Agent Response" rows={3} value={faqAnswer} onChange={e => setFaqAnswer(e.target.value)} placeholder="e.g. Yes! We have a 14-day refund policy." required />
-              <Button type="submit" isLoading={isSubmittingFaq} style={{ width: "100%", padding: "11px", fontSize: "12px", background: "linear-gradient(135deg, #10b981, #059669)" } as React.CSSProperties}>
-                Add QA Vector
-              </Button>
-            </form>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <h4 style={{ fontSize: "11px", fontWeight: 800, color: "var(--fg)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Active FAQ Prompts ({faqs.length})
-              </h4>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "320px", overflowY: "auto" }}>
-                {faqs.length === 0 ? (
-                  <div style={{ padding: "24px", border: "1px dashed var(--card-border)", borderRadius: "12px", textAlign: "center", fontSize: "12px", color: "var(--muted-fg)", fontStyle: "italic" }}>
-                    No FAQs registered yet.
-                  </div>
-                ) : (
-                  faqs.map((faq, idx) => (
-                    <div key={idx} style={{ background: "var(--card-bg)", padding: "14px 16px", border: "1px solid var(--card-border)", borderRadius: "12px", position: "relative" }}>
-                      <button type="button" onClick={() => handleDeleteFAQ(faq.id)}
-                        style={{ position: "absolute", top: "12px", right: "12px", padding: "6px", borderRadius: "7px", color: "var(--muted-fg)", background: "transparent", border: "none", cursor: "pointer", display: "flex", transition: "all 0.15s" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#ef4444"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,0.08)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "var(--muted-fg)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}>
-                        <Trash2 style={{ width: "13px", height: "13px" }} />
-                      </button>
-                      <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--fg)", paddingRight: "28px", marginBottom: "4px" }}>Q: {faq.question}</div>
-                      <div style={{ fontSize: "11.5px", color: "var(--muted-fg)", fontWeight: 500, paddingRight: "28px", lineHeight: 1.6 }}>A: {faq.answer}</div>
-                    </div>
-                  ))
+              <div style={{ display: "flex", gap: "10px" }}>
+                {editingFaqId && (
+                  <Button type="button" variant="outline" onClick={() => { setEditingFaqId(null); setFaqQuestion(""); setFaqAnswer(""); }} style={{ flex: 1, padding: "10px", fontSize: "12px" } as React.CSSProperties}>
+                    Cancel
+                  </Button>
                 )}
+                <Button type="submit" isLoading={isSubmittingFaq} style={{ flex: 1, padding: "10px", fontSize: "12px", background: editingFaqId ? "linear-gradient(135deg, #3b82f6, #2563eb)" : "linear-gradient(135deg, #10b981, #059669)" } as React.CSSProperties}>
+                  {editingFaqId ? "Update QA Vector" : "Add QA Vector"}
+                </Button>
               </div>
-            </div>
+            </form>
           </div>
+
         </div>
+
+        {/* Stored Q&A Records Card */}
+        <StoredQAList
+          faqs={faqs}
+          isLoading={isLoadingFaqs}
+          onEdit={handleEditFAQ}
+          onDelete={handleDeleteFAQ}
+          onRefresh={fetchFaqs}
+        />
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+      />
     </div>
   );
 }

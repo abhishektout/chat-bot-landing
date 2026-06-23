@@ -27,7 +27,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizes = {
-      sm: "px-3.5 py-1.5 text-xs",
+      sm: "p-[10px] text-xs",
       md: "px-5 py-2.5 text-sm",
       lg: "px-7 py-3.5 text-base",
     };
@@ -388,7 +388,8 @@ export const Modal = ({ isOpen, onClose, title, children, footer, maxWidthClass 
   return (
     <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div
-        className={`card-gradient-border bg-[var(--card-bg)] rounded-3xl w-full ${maxWidthClass} max-h-[90vh] overflow-y-auto p-8 shadow-2xl flex flex-col gap-6 animate-in zoom-in-95 duration-200`}
+        className={`card-gradient-border bg-[var(--card-bg)] rounded-3xl w-full ${maxWidthClass} max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col gap-6 animate-in zoom-in-95 duration-200`}
+        style={{ padding: "28px" }}
       >
         {/* Header */}
         <div className="flex justify-between items-center pb-4 border-b border-[var(--card-border)]">
@@ -416,3 +417,80 @@ export const Modal = ({ isOpen, onClose, title, children, footer, maxWidthClass 
     </div>
   );
 };
+
+// ==========================================
+// 10. CONFIRM MODAL COMPONENT
+// ==========================================
+export interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+}
+
+export const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "Delete",
+}: ConfirmModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-[var(--card-bg)] rounded-3xl w-full max-w-[360px] p-7 shadow-2xl border border-[var(--card-border)] flex flex-col items-center text-center relative animate-in zoom-in-95 duration-300"
+        style={{padding: "28px", gap:"10px" }}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-[var(--muted-fg)] hover:text-[var(--fg)] p-1.5 hover:bg-[var(--muted-bg)] rounded-lg transition-all cursor-pointer"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Warning Badge */}
+        <div className="w-14 h-14 rounded-2xl bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center mt-2 text-red-500 border border-red-500/20">
+          <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
+        </div>
+
+        {/* Title */}
+        <h3 className="text-xl font-extrabold text-[var(--fg)] mt-4 tracking-tight">
+          {title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-[var(--muted-fg)] text-[14px] leading-relaxed mt-2 px-2">
+          {message}
+        </p>
+
+        {/* Buttons */}
+        <div className="flex gap-3 w-full mt-6">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="flex-1"
+            style={{ padding: "10px" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className="flex-1"
+            style={{ padding: "10px" }}
+          >
+            {confirmText}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+

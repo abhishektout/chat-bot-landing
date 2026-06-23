@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Database, Link2, Key, Shield, Check, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
-import { Card, Textarea, Button, Badge } from "@/components/ui";
+import { Card, Textarea, Button, Badge, ConfirmModal } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
 
 export default function DatabaseAuthPage() {
@@ -17,6 +17,18 @@ export default function DatabaseAuthPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [availableTables, setAvailableTables] = useState<string[]>([]);
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     if (tenantInfo?.client_db_uri) {
@@ -24,7 +36,14 @@ export default function DatabaseAuthPage() {
       setDbRules(tenantInfo.db_rules || "");
       let parsedTables: string[] = [];
       try {
-        if (tenantInfo.allowed_tables) parsedTables = JSON.parse(tenantInfo.allowed_tables);
+        if (tenantInfo.allowed_tables) {
+          const trimmed = tenantInfo.allowed_tables.trim();
+          if (trimmed.startsWith("[")) {
+            parsedTables = JSON.parse(trimmed);
+          } else {
+            parsedTables = trimmed.split(",").map(t => t.trim()).filter(Boolean);
+          }
+        }
       } catch { }
       if (parsedTables.length > 0) {
         setAvailableTables(parsedTables);
@@ -55,17 +74,24 @@ export default function DatabaseAuthPage() {
     }
   };
 
-  const handleDisconnect = async () => {
-    if (!window.confirm("Disconnect database? This removes your bot's access to live data.")) return;
-    try {
-      await adminService.dbDisconnect();
-      showToast("success", "Disconnected", "Database disconnected successfully.");
-      setIsConnected(false); setDbUri(""); setDbRules("");
-      setAvailableTables([]); setSelectedTables([]);
-      await refreshTenantInfo();
-    } catch {
-      showToast("error", "Error", "Server error disconnecting database.");
-    }
+  const handleDisconnect = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Disconnect Database",
+      message: "Are you sure you want to disconnect the database? This removes your bot's access to live data.",
+      confirmText: "Disconnect",
+      onConfirm: async () => {
+        try {
+          await adminService.dbDisconnect();
+          showToast("success", "Disconnected", "Database disconnected successfully.");
+          setIsConnected(false); setDbUri(""); setDbRules("");
+          setAvailableTables([]); setSelectedTables([]);
+          await refreshTenantInfo();
+        } catch {
+          showToast("error", "Error", "Server error disconnecting database.");
+        }
+      },
+    });
   };
 
   const handleSaveConfig = async () => {
@@ -89,8 +115,8 @@ export default function DatabaseAuthPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Header */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge"><Database style={{ width: "12px", height: "12px" }} />Relational Syncer</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+        <span className="badge" style={{ width: "fit-content" }}><Database style={{ width: "12px", height: "12px" }} />Relational Syncer</span>
         <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
           Database <span className="gradient-text">Connectivity</span>
         </h2>
@@ -247,6 +273,14 @@ export default function DatabaseAuthPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+      />
     </div>
   );
 }
