@@ -160,31 +160,32 @@ export default function ManageClientsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      {/* ── Page Header ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
-          Platform Master Console
-        </span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Manage <span className="gradient-text">Clients</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Provision new organization tenants, control subscription tiers, and configure default branding rules.
-        </p>
-      </div>
+      {/* ── Page Header & Action Bar ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "20px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: "280px" }}>
+          <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
+            Platform Master Console
+          </span>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Manage <span className="gradient-text">Clients</span>
+          </h2>
+          <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
+            Provision new organization tenants, control subscription tiers, and configure default branding rules.
+          </p>
+        </div>
 
-      {/* ── Action Bar ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-        <Button
-          variant="outline"
-          onClick={fetchClients}
-          isLoading={isLoading}
-          icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
-          style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
-        >
-          Sync Tenants
-        </Button>
+        <div style={{ display: "flex", alignItems: "center", paddingBottom: "4px" }}>
+          <Button
+            variant="outline"
+            onClick={fetchClients}
+            isLoading={isLoading}
+            icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
+            style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
+          >
+            Sync Tenants
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
