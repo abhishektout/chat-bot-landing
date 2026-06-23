@@ -34,7 +34,7 @@ const codeLines = [
 
 export default function EnterpriseSection() {
   return (
-    <section id="enterprise" style={{ position: "relative", overflow: "hidden", padding: "50px 0", background: "rgba(79,124,255,0.02)" }}>
+    <section id="enterprise" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.18 }} />
       <div style={{ position: "absolute", top: "50%", left: 0, transform: "translateY(-50%)", width: "450px", height: "450px", background: "rgba(79,124,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", top: "50%", right: 0, transform: "translateY(-50%)", width: "400px", height: "400px", background: "rgba(0,212,255,0.04)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
