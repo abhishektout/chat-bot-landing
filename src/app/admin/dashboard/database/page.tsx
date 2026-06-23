@@ -27,7 +27,7 @@ export default function DatabaseAuthPage() {
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   useEffect(() => {
@@ -116,13 +116,13 @@ export default function DatabaseAuthPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Header */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
-        <span className="badge" style={{ width: "fit-content" }}><Database style={{ width: "12px", height: "12px" }} />Relational Syncer</span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Database <span className="gradient-text">Connectivity</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Integrate SQL database parameters to empower the AI agent with real-time record reading capabilities.
-        </p>
+        <span className="badge" style={{ width: "fit-content" }}>
+
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Database <span className="gradient-text">Connectivity</span>
+          </h2>
+        </span>
+
       </div>
 
       {/* Security Alert */}

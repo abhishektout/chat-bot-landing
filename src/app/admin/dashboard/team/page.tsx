@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Users, 
-  UserPlus, 
-  Pencil, 
-  Trash2, 
-  Mail, 
-  Phone, 
-  Clock, 
-  RefreshCw, 
-  X, 
-  ShieldAlert, 
-  Search, 
+import {
+  Users,
+  UserPlus,
+  Pencil,
+  Trash2,
+  Mail,
+  Phone,
+  Clock,
+  RefreshCw,
+  X,
+  ShieldAlert,
+  Search,
   Copy,
   Plus
 } from "lucide-react";
@@ -35,19 +35,19 @@ export default function TeamManagementPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
-  
+
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "blocked">("all");
   const [copiedEmail, setCopiedEmail] = useState<string | number | null>(null);
 
-  const [formData, setFormData] = useState({ 
-    name: "", 
-    email: "", 
-    phone_number: "", 
-    startTime: "09:00", 
-    endTime: "17:00", 
-    is_active: "true" 
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone_number: "",
+    startTime: "09:00",
+    endTime: "17:00",
+    is_active: "true"
   });
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -60,7 +60,7 @@ export default function TeamManagementPage() {
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const fetchAgents = async () => {
@@ -73,8 +73,8 @@ export default function TeamManagementPage() {
     }
   };
 
-  useEffect(() => { 
-    fetchAgents(); 
+  useEffect(() => {
+    fetchAgents();
   }, []);
 
   // Time conversion: 24h -> 12h format
@@ -229,13 +229,13 @@ export default function TeamManagementPage() {
   const handleEdit = (agent: Agent) => {
     let start = "09:00", end = "17:00";
     if (agent.chat_hours?.includes(" - ")) [start, end] = agent.chat_hours.split(" - ");
-    setFormData({ 
-      name: agent.name || "", 
-      email: agent.email || "", 
-      phone_number: agent.phone_number || "", 
-      startTime: start, 
-      endTime: end, 
-      is_active: agent.is_active ? "true" : "false" 
+    setFormData({
+      name: agent.name || "",
+      email: agent.email || "",
+      phone_number: agent.phone_number || "",
+      startTime: start,
+      endTime: end,
+      is_active: agent.is_active ? "true" : "false"
     });
     setEditingId(agent.id);
   };
@@ -266,12 +266,12 @@ export default function TeamManagementPage() {
   // Roster Filter logic
   const filteredAgents = agents.filter(agent => {
     const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = 
+    const matchesSearch =
       agent.name.toLowerCase().includes(query) ||
       agent.email.toLowerCase().includes(query) ||
       (agent.phone_number && agent.phone_number.toLowerCase().includes(query));
 
-    const matchesStatus = 
+    const matchesStatus =
       filterStatus === "all" ||
       (filterStatus === "active" && agent.is_active) ||
       (filterStatus === "blocked" && !agent.is_active);
@@ -284,15 +284,11 @@ export default function TeamManagementPage() {
       {/* Page Header */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
         <span className="badge" style={{ width: "fit-content" }}>
-          <Users style={{ width: "12px", height: "12px" }} />
-          Identity Directory
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Team <span className="gradient-text">Management</span>
+          </h2>
         </span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Team <span className="gradient-text">Management</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Provision customer support agents to handle real-time manual takeover inquiries.
-        </p>
+
       </div>
 
       {/* Stats Dashboard */}
@@ -474,10 +470,10 @@ export default function TeamManagementPage() {
               Showing {filteredAgents.length} of {agents.length} members
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={fetchAgents} 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchAgents}
             icon={<RefreshCw style={{ width: "13px", height: "13px" }} />}
             style={{ fontSize: "11px", padding: "8px 16px" } as React.CSSProperties}
           >
@@ -492,20 +488,20 @@ export default function TeamManagementPage() {
                 {["Team Member", "Contact Details", "Duty Shift", "Presence", "Account Status", "Actions"].map((h, i) => {
                   const widths = ["26%", "26%", "20%", "14%", "10%", "4%"];
                   return (
-                    <th 
-                      key={h} 
-                      style={{ 
-                        width: widths[i], 
-                        padding: "16px 20px", 
-                        paddingLeft: i === 0 ? "24px" : "20px", 
-                        paddingRight: i === 5 ? "24px" : "20px", 
-                        fontSize: "11px", 
-                        fontWeight: 750, 
-                        textTransform: "uppercase", 
-                        letterSpacing: "0.08em", 
-                        color: "var(--muted-fg)", 
-                        textAlign: i === 5 ? "right" : "left", 
-                        whiteSpace: "nowrap" 
+                    <th
+                      key={h}
+                      style={{
+                        width: widths[i],
+                        padding: "16px 20px",
+                        paddingLeft: i === 0 ? "24px" : "20px",
+                        paddingRight: i === 5 ? "24px" : "20px",
+                        fontSize: "11px",
+                        fontWeight: 750,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        color: "var(--muted-fg)",
+                        textAlign: i === 5 ? "right" : "left",
+                        whiteSpace: "nowrap"
                       }}
                     >
                       {h}
@@ -533,10 +529,10 @@ export default function TeamManagementPage() {
                 filteredAgents.map(agent => {
                   const isDuty = agent.is_active && isShiftActive(agent.chat_hours);
                   return (
-                    <tr 
-                      key={agent.id} 
-                      style={{ 
-                        borderBottom: "1px solid var(--card-border)", 
+                    <tr
+                      key={agent.id}
+                      style={{
+                        borderBottom: "1px solid var(--card-border)",
                         transition: "background 0.2s ease",
                         cursor: "default"
                       }}
@@ -576,14 +572,14 @@ export default function TeamManagementPage() {
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                             <span style={{ fontSize: "13px", color: "var(--fg)", fontWeight: 500 }}>{agent.email}</span>
-                            <button 
+                            <button
                               onClick={() => handleCopyEmail(agent.email, agent.id)}
-                              style={{ 
-                                background: "transparent", 
-                                border: "none", 
-                                color: copiedEmail === agent.id ? "#10b981" : "var(--muted-fg)", 
-                                cursor: "pointer", 
-                                display: "flex", 
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: copiedEmail === agent.id ? "#10b981" : "var(--muted-fg)",
+                                cursor: "pointer",
+                                display: "flex",
                                 padding: "4px",
                                 borderRadius: "4px",
                                 transition: "color 0.15s"
@@ -592,7 +588,7 @@ export default function TeamManagementPage() {
                               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                               title="Copy email address"
                             >
-                              {copiedEmail === agent.id 
+                              {copiedEmail === agent.id
                                 ? <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", color: "#10b981" }}>Copied</span>
                                 : <Copy style={{ width: "12px", height: "12px" }} />
                               }
@@ -668,20 +664,20 @@ export default function TeamManagementPage() {
                       {/* Actions */}
                       <td style={{ padding: "16px 20px", paddingRight: "24px", textAlign: "right" }}>
                         <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                          <button 
+                          <button
                             onClick={() => {
                               handleEdit(agent);
                               setIsFormOpen(true);
                             }}
-                            style={{ 
-                              padding: "8px", 
-                              borderRadius: "10px", 
-                              background: "var(--accent-glow)", 
-                              border: "1px solid rgba(79, 124, 255, 0.15)", 
-                              color: "var(--accent)", 
-                              cursor: "pointer", 
-                              display: "flex", 
-                              transition: "all 0.15s ease" 
+                            style={{
+                              padding: "8px",
+                              borderRadius: "10px",
+                              background: "var(--accent-glow)",
+                              border: "1px solid rgba(79, 124, 255, 0.15)",
+                              color: "var(--accent)",
+                              cursor: "pointer",
+                              display: "flex",
+                              transition: "all 0.15s ease"
                             }}
                             onMouseEnter={e => {
                               e.currentTarget.style.transform = "translateY(-1px)";
@@ -695,17 +691,17 @@ export default function TeamManagementPage() {
                           >
                             <Pencil style={{ width: "14px", height: "14px" }} />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDelete(agent.id)}
-                            style={{ 
-                              padding: "8px", 
-                              borderRadius: "10px", 
-                              background: "rgba(239,68,68,0.08)", 
-                              border: "1px solid rgba(239,68,68,0.15)", 
-                              color: "#ef4444", 
-                              cursor: "pointer", 
-                              display: "flex", 
-                              transition: "all 0.15s ease" 
+                            style={{
+                              padding: "8px",
+                              borderRadius: "10px",
+                              background: "rgba(239,68,68,0.08)",
+                              border: "1px solid rgba(239,68,68,0.15)",
+                              color: "#ef4444",
+                              cursor: "pointer",
+                              display: "flex",
+                              transition: "all 0.15s ease"
                             }}
                             onMouseEnter={e => {
                               e.currentTarget.style.transform = "translateY(-1px)";
@@ -742,56 +738,56 @@ export default function TeamManagementPage() {
       >
         <form onSubmit={handleSaveAgent} style={{ display: "flex", flexDirection: "column", gap: "20px", paddingRight: "5px" }}>
           <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
-            {editingId 
+            {editingId
               ? "Update this agent's account credentials, active shifts, and access settings."
               : "Register a support agent account. They will receive credentials to access manual takeover chats."
             }
           </p>
 
-          <Input 
-            label="Full Name" 
-            name="name" 
-            value={formData.name} 
-            onChange={handleChange} 
-            placeholder="e.g. John Doe" 
-            required 
+          <Input
+            label="Full Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="e.g. John Doe"
+            required
           />
-          <Input 
-            label="Login Email Address" 
-            type="email" 
-            name="email" 
-            value={formData.email} 
-            onChange={handleChange} 
-            placeholder="john@company.com" 
-            required 
-            icon={<Mail style={{ width: "14px", height: "14px" }} />} 
+          <Input
+            label="Login Email Address"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="john@company.com"
+            required
+            icon={<Mail style={{ width: "14px", height: "14px" }} />}
           />
-          <Input 
-            label="Phone Number" 
-            name="phone_number" 
-            value={formData.phone_number} 
-            onChange={handleChange} 
-            placeholder="+1 555-0100" 
-            icon={<Phone style={{ width: "14px", height: "14px" }} />} 
+          <Input
+            label="Phone Number"
+            name="phone_number"
+            value={formData.phone_number}
+            onChange={handleChange}
+            placeholder="+1 555-0100"
+            icon={<Phone style={{ width: "14px", height: "14px" }} />}
           />
 
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <label style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fg)" }}>Active Shifts</label>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <input 
-                type="time" 
-                name="startTime" 
-                value={formData.startTime} 
+              <input
+                type="time"
+                name="startTime"
+                value={formData.startTime}
                 onChange={handleChange}
-                style={{ flex: 1, padding: "11px 14px", background: "var(--muted-bg)", border: "1px solid var(--card-border)", borderRadius: "10px", fontSize: "14px", color: "var(--fg)", outline: "none" }} 
+                style={{ flex: 1, padding: "11px 14px", background: "var(--muted-bg)", border: "1px solid var(--card-border)", borderRadius: "10px", fontSize: "14px", color: "var(--fg)", outline: "none" }}
               />
               <span style={{ color: "var(--muted-fg)", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", flexShrink: 0 }}>to</span>
-              <input 
-                type="time" 
-                name="endTime" 
-                value={formData.endTime} 
+              <input
+                type="time"
+                name="endTime"
+                value={formData.endTime}
                 onChange={handleChange}
-                style={{ flex: 1, padding: "11px 14px", background: "var(--muted-bg)", border: "1px solid var(--card-border)", borderRadius: "10px", fontSize: "14px", color: "var(--fg)", outline: "none" }} 
+                style={{ flex: 1, padding: "11px 14px", background: "var(--muted-bg)", border: "1px solid var(--card-border)", borderRadius: "10px", fontSize: "14px", color: "var(--fg)", outline: "none" }}
               />
             </div>
           </div>
@@ -802,9 +798,9 @@ export default function TeamManagementPage() {
           </Select>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => {
                 cancelEdit();
                 setIsFormOpen(false);
@@ -813,8 +809,8 @@ export default function TeamManagementPage() {
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               isLoading={isSaving}
               style={{ padding: "10px 20px" }}
             >
