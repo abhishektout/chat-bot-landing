@@ -170,7 +170,7 @@ export default function ChatLogsPage() {
       if (!sId) return;
       await adminService.takeoverSession(sId);
       const isNowHuman = !selectedSession.human_takeover;
-      
+
       // Update localStorage persistent state
       const localStates = getLocalTakeoverStates();
       localStates[sId] = isNowHuman;
@@ -178,7 +178,7 @@ export default function ChatLogsPage() {
 
       showToast("success", isNowHuman ? "Takeover Activated" : "AI Restored", isNowHuman ? "You have taken over this chat." : "AI has resumed control.");
       setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman } : null);
-      
+
       // Optimistically update sessions list
       setSessions(prev => prev.map(s => (s.id || s.session_id) === sId ? { ...s, human_takeover: isNowHuman, agent_name: localStorage.getItem("saas_agent_name") || "Human Support" } : s));
 
@@ -215,17 +215,16 @@ export default function ChatLogsPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px", height: "calc(100vh - 140px)" }}>
       {/* Header */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0, alignItems: "flex-start" }}>
-        <span className="badge" style={{ width: "fit-content" }}><MessageSquare style={{ width: "12px", height: "12px" }} />Workspace Conversations</span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Live Chat <span className="gradient-text">Stream Logs</span>
-        </h2>
-        <p style={{ fontSize: "13px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Monitor conversations, analyze AI responses, and takeover active sessions when needed.
-        </p>
+        <span className="badge" style={{ width: "fit-content" }}>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Live Chat <span className="gradient-text">Stream Logs</span>
+          </h2>
+        </span>
+
       </div>
 
       {/* Main Panel */}
-      <div style={{ display: "flex", gap: "10px", flex: 1, minHeight: 0, overflow: "hidden", paddingTop:"10px" }}>
+      <div style={{ display: "flex", gap: "10px", flex: 1, minHeight: 0, overflow: "hidden", paddingTop: "10px" }}>
         {/* Session Sidebar */}
         <div className="card" style={{
           width: "340px", flexShrink: 0, padding: "16px",
@@ -257,12 +256,12 @@ export default function ChatLogsPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "var(--accent)" : "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {session.human_takeover 
+                        {session.human_takeover
                           ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
                           : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
                       </span>
                       {session.human_takeover
-                        ? <Badge variant="warning" style={{ fontSize: "9px" , padding: "3px" } as React.CSSProperties}>Agent</Badge>
+                        ? <Badge variant="warning" style={{ fontSize: "9px", padding: "3px" } as React.CSSProperties}>Agent</Badge>
                         : <Badge variant="success" style={{ fontSize: "9px", padding: "3px 6px" } as React.CSSProperties}>AI</Badge>}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", fontSize: "10px", color: "var(--muted-fg)" }}>
@@ -300,12 +299,12 @@ export default function ChatLogsPage() {
               }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                    Auditing: {selectedSession.human_takeover 
+                    Auditing: {selectedSession.human_takeover
                       ? `${selectedSession.agent_name || localStorage.getItem("saas_agent_name") || "Human Support"} (${selectedSession.id || selectedSession.session_id})`
                       : (selectedSession.user_name ? `${selectedSession.user_name} (${selectedSession.id || selectedSession.session_id})` : (selectedSession.id || selectedSession.session_id))}
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px" , padding: "4px"} as React.CSSProperties}>
+                    <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px", padding: "4px" } as React.CSSProperties}>
                       {selectedSession.human_takeover ? "Handed Over" : "AI Automated"}
                     </Badge>
                     {selectedSession.human_takeover && (
@@ -378,7 +377,7 @@ export default function ChatLogsPage() {
                     for (let k of keys) {
                       const lk = k.toLowerCase();
                       const val = (msg as any)[k];
-                      
+
                       if (["role", "sender", "type", "author", "source", "from", "sender_type"].includes(lk)) {
                         const strVal = String(val).toLowerCase();
                         if (["agent", "bot", "ai", "admin", "support", "assistant", "system"].some(r => strVal.includes(r))) {
@@ -389,7 +388,7 @@ export default function ChatLogsPage() {
                           displayRole = displayRole || strVal;
                         }
                       }
-                      
+
                       if (["is_user", "from_user", "is_customer"].includes(lk) && (val === true || val === 1 || val === "1" || val === "true")) {
                         isUser = true;
                         displayRole = displayRole || "user";

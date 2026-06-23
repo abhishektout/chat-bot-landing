@@ -82,19 +82,15 @@ export default function DashboardOverviewPage() {
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: "20px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
           <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
-            Workspace Overview
+            {/* <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} /> */}
+            <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+              Performance{" "}
+              <span className="gradient-text">Analytics</span>
+            </h2>
           </span>
-          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-            Performance{" "}
-            <span className="gradient-text">Analytics</span>
-          </h2>
-          <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-            Real-time telemetry and automation performance details.
-          </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center" ,alignSelf: "center"}}>
+        <div style={{ display: "flex", alignItems: "center", alignSelf: "center" }}>
           <Button
             variant="outline"
             onClick={fetchDashboardData}
@@ -349,7 +345,7 @@ export default function DashboardOverviewPage() {
                       <td style={{ padding: "16px 24px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                           <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                            {session.human_takeover 
+                            {session.human_takeover
                               ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
                               : (session.user_name || "Anonymous Session")}
                           </span>
@@ -366,9 +362,9 @@ export default function DashboardOverviewPage() {
                       </td>
                       <td style={{ padding: "16px" }}>
                         {session.human_takeover ? (
-                          <Badge variant="warning" style={{ padding:"4px"}}>Live Agent</Badge>
+                          <Badge variant="warning" style={{ padding: "4px" }}>Live Agent</Badge>
                         ) : (
-                          <Badge variant="success" style={{ padding:"4px"}}>AI Autopilot</Badge>
+                          <Badge variant="success" style={{ padding: "4px" }}>AI Autopilot</Badge>
                         )}
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
