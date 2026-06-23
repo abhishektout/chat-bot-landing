@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Database, Link2, Key, Shield, Check, Trash2 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
-import { Card, Textarea, Button, Badge } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { Card, Textarea, Button, Badge, ConfirmModal } from "@/components/ui";
+import { adminService } from "@/services/admin.service";
 
 export default function DatabaseAuthPage() {
   const { tenantInfo, refreshTenantInfo } = useAdminDashboard();
@@ -18,6 +17,18 @@ export default function DatabaseAuthPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [availableTables, setAvailableTables] = useState<string[]>([]);
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     if (tenantInfo?.client_db_uri) {
@@ -25,7 +36,14 @@ export default function DatabaseAuthPage() {
       setDbRules(tenantInfo.db_rules || "");
       let parsedTables: string[] = [];
       try {
-        if (tenantInfo.allowed_tables) parsedTables = JSON.parse(tenantInfo.allowed_tables);
+        if (tenantInfo.allowed_tables) {
+          const trimmed = tenantInfo.allowed_tables.trim();
+          if (trimmed.startsWith("[")) {
+            parsedTables = JSON.parse(trimmed);
+          } else {
+            parsedTables = trimmed.split(",").map(t => t.trim()).filter(Boolean);
+          }
+        }
       } catch { }
       if (parsedTables.length > 0) {
         setAvailableTables(parsedTables);
@@ -40,66 +58,48 @@ export default function DatabaseAuthPage() {
     if (!dbUri.trim()) { showToast("error", "Validation Error", "Please enter a Database URI."); return; }
     setIsConnecting(true);
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const formData = new URLSearchParams();
-      formData.append("db_uri", dbUri.trim());
-      const res = await fetch(`${BASE_API}/admin/db-connect`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.tables) setAvailableTables(data.tables);
-        else {
-          showToast("success", "Connected", "Database connected! Tables fetched successfully.");
-          setAvailableTables(["users", "orders", "products", "customers", "transactions"]);
-        }
-        setIsConnected(true);
-        await refreshTenantInfo();
-      } else {
-        const err = await res.json();
-        showToast("error", "Connection Failed", err.detail || "Failed to connect to database.");
+      const data = await adminService.dbConnect(dbUri.trim());
+      if (data.tables) setAvailableTables(data.tables);
+      else {
+        showToast("success", "Connected", "Database connected! Tables fetched successfully.");
+        setAvailableTables(["users", "orders", "products", "customers", "transactions"]);
       }
-    } catch {
-      showToast("error", "Error", "Server error while connecting.");
+      setIsConnected(true);
+      await refreshTenantInfo();
+    } catch (error: any) {
+      const errMsg = error.response?.data?.detail || "Failed to connect to database.";
+      showToast("error", "Connection Failed", errMsg);
     } finally {
       setIsConnecting(false);
     }
   };
 
-  const handleDisconnect = async () => {
-    if (!window.confirm("Disconnect database? This removes your bot's access to live data.")) return;
-    try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/db-disconnect`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        showToast("success", "Disconnected", "Database disconnected successfully.");
-        setIsConnected(false); setDbUri(""); setDbRules("");
-        setAvailableTables([]); setSelectedTables([]);
-        await refreshTenantInfo();
-      }
-    } catch {
-      showToast("error", "Error", "Server error disconnecting database.");
-    }
+  const handleDisconnect = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Disconnect Database",
+      message: "Are you sure you want to disconnect the database? This removes your bot's access to live data.",
+      confirmText: "Disconnect",
+      onConfirm: async () => {
+        try {
+          await adminService.dbDisconnect();
+          showToast("success", "Disconnected", "Database disconnected successfully.");
+          setIsConnected(false); setDbUri(""); setDbRules("");
+          setAvailableTables([]); setSelectedTables([]);
+          await refreshTenantInfo();
+        } catch {
+          showToast("error", "Error", "Server error disconnecting database.");
+        }
+      },
+    });
   };
 
   const handleSaveConfig = async () => {
     setIsSaving(true);
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const formData = new URLSearchParams();
-      formData.append("allowed_tables", JSON.stringify(selectedTables));
-      formData.append("db_rules", dbRules);
-      const res = await fetch(`${BASE_API}/admin/db-save-config`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData,
-      });
-      if (res.ok) { showToast("success", "Configuration Saved", "Database workspace rules updated."); await refreshTenantInfo(); }
-      else showToast("error", "Save Failed", "Failed to save configuration.");
+      await adminService.dbSaveConfig(JSON.stringify(selectedTables), dbRules);
+      showToast("success", "Configuration Saved", "Database workspace rules updated.");
+      await refreshTenantInfo();
     } catch {
       showToast("error", "Error", "Server error saving database rules.");
     } finally {
@@ -115,8 +115,8 @@ export default function DatabaseAuthPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Header */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge"><Database style={{ width: "12px", height: "12px" }} />Relational Syncer</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+        <span className="badge" style={{ width: "fit-content" }}><Database style={{ width: "12px", height: "12px" }} />Relational Syncer</span>
         <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
           Database <span className="gradient-text">Connectivity</span>
         </h2>
@@ -273,6 +273,14 @@ export default function DatabaseAuthPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+      />
     </div>
   );
 }

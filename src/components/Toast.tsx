@@ -60,7 +60,7 @@ function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 55000);
+    }, 5000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
@@ -118,7 +118,7 @@ function ToastItem({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
       <button
         aria-label="Close notification"
         onClick={onClose}
-        className="flex-shrink-0 text-[var(--muted-fg)] hover:text-[var(--fg)] p-1 hover:bg-[var(--muted-bg)] rounded-lg transition-all"
+        className="cursor-pointer flex-shrink-0 text-[var(--muted-fg)] hover:text-[var(--fg)] p-1 hover:bg-[var(--muted-bg)] rounded-lg transition-all"
       >
         <X className="w-3.5 h-3.5" />
       </button>

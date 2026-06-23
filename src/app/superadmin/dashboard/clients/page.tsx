@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Building, UserPlus, RefreshCw, Pencil, Trash2, Key, HelpCircle, Shield, Check, Info, Settings, Eye, AlertTriangle } from "lucide-react";
+import { Building, UserPlus, RefreshCw, Pencil, Trash2, Key, HelpCircle, Shield, Check, Info, Settings, Eye, AlertTriangle, Sparkles } from "lucide-react";
 import { useToast } from "@/components/Toast";
-import { Card, Input, Select, Textarea, Button, Badge, Alert, Modal } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { Card, Input, Select, Textarea, Button, Badge, Alert, Modal, Skeleton, ConfirmModal } from "@/components/ui";
+import { superAdminService } from "@/services/superadmin.service";
 
 interface Client {
   id: string | number;
@@ -25,6 +24,7 @@ export default function ManageClientsPage() {
   const { showToast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | number | null>(null);
 
   // Form states
@@ -37,19 +37,29 @@ export default function ManageClientsPage() {
   // Edit states for details
   const [showEditModal, setShowEditModal] = useState(false);
   const [editDetails, setEditDetails] = useState<Partial<Client>>({});
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const fetchClients = async () => {
+    setIsLoading(true);
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data.clients || []);
-      }
+      const data = await superAdminService.getClients();
+      setClients(data.clients || []);
     } catch (e) {
       console.error(e);
+      showToast("error", "Sync Error", "Failed to retrieve tenants list.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -65,38 +75,25 @@ export default function ManageClientsPage() {
     }
 
     setIsSaving(true);
-    const payload = new URLSearchParams();
-    payload.append("company_name", companyName.trim());
-    payload.append("bot_name", botName.trim());
-    payload.append("support_email", supportEmail.trim());
-    payload.append("subscription_plan", subscriptionPlan);
-    payload.append("is_active", String(isActive));
-
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload,
+      await superAdminService.createClient({
+        company_name: companyName.trim(),
+        bot_name: botName.trim(),
+        support_email: supportEmail.trim(),
+        subscription_plan: subscriptionPlan,
+        is_active: String(isActive),
       });
 
-      if (res.ok) {
-        showToast("success", "Tenant Onboarded", "Client created successfully! Verification details emailed.");
-        setCompanyName("");
-        setBotName("");
-        setSupportEmail("");
-        setSubscriptionPlan("free");
-        setIsActive(true);
-        fetchClients();
-      } else {
-        const err = await res.json();
-        showToast("error", "Process Failed", err.detail || "Failed to create client.");
-      }
-    } catch (error) {
-      showToast("error", "Error", "Server error creating client.");
+      showToast("success", "Tenant Onboarded", "Client created successfully! Verification details emailed.");
+      setCompanyName("");
+      setBotName("");
+      setSupportEmail("");
+      setSubscriptionPlan("free");
+      setIsActive(true);
+      fetchClients();
+    } catch (error: any) {
+      const errMsg = error.response?.data?.detail || "Failed to create client.";
+      showToast("error", "Process Failed", errMsg);
     } finally {
       setIsSaving(false);
     }
@@ -104,19 +101,9 @@ export default function ManageClientsPage() {
 
   const handleToggleStatus = async (clientId: string | number, currentStatus: boolean) => {
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients/${clientId}/status`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ is_active: String(!currentStatus) }),
-      });
-      if (res.ok) {
-        showToast("success", "Status Updated", "Client status toggled successfully.");
-        fetchClients();
-      }
+      await superAdminService.toggleClientStatus(clientId, !currentStatus);
+      showToast("success", "Status Updated", "Client status toggled successfully.");
+      fetchClients();
     } catch (error) {
       showToast("error", "Error", "Failed to toggle status.");
     }
@@ -127,54 +114,42 @@ export default function ManageClientsPage() {
     if (!editingId) return;
 
     try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const payload = new URLSearchParams();
-      payload.append("company_name", editDetails.company_name || "");
-      payload.append("bot_name", editDetails.bot_name || "");
-      payload.append("support_email", editDetails.support_email || "");
-      payload.append("subscription_plan", editDetails.subscription_plan || "free");
-      payload.append("custom_rules", editDetails.custom_rules || "");
-      payload.append("primary_color", editDetails.primary_color || "#2563eb");
-      payload.append("widget_position", editDetails.widget_position || "right");
-      payload.append("widget_icon_url", editDetails.widget_icon_url || "");
-
-      const res = await fetch(`${BASE_API}/superadmin/clients/${editingId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload,
+      await superAdminService.updateClientDetails(editingId, {
+        company_name: editDetails.company_name || "",
+        bot_name: editDetails.bot_name || "",
+        support_email: editDetails.support_email || "",
+        subscription_plan: editDetails.subscription_plan || "free",
+        custom_rules: editDetails.custom_rules || "",
+        primary_color: editDetails.primary_color || "#2563eb",
+        widget_position: editDetails.widget_position || "right",
+        widget_icon_url: editDetails.widget_icon_url || "",
       });
 
-      if (res.ok) {
-        showToast("success", "Configuration Saved", "Client information updated successfully.");
-        setShowEditModal(false);
-        setEditingId(null);
-        fetchClients();
-      } else {
-        showToast("error", "Update Failed", "Failed to save client details.");
-      }
+      showToast("success", "Configuration Saved", "Client information updated successfully.");
+      setShowEditModal(false);
+      setEditingId(null);
+      fetchClients();
     } catch (e) {
       showToast("error", "Error", "Server error during details update.");
     }
   };
 
-  const handleDelete = async (clientId: string | number) => {
-    if (!window.confirm("Archive this client account? It will be suspended and moved to archive.")) return;
-    try {
-      const token = localStorage.getItem("saas_superadmin_token");
-      const res = await fetch(`${BASE_API}/superadmin/clients/${clientId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        showToast("success", "Archived", "Client account archived successfully.");
-        fetchClients();
-      }
-    } catch (e) {
-      showToast("error", "Error", "Failed to delete account.");
-    }
+  const handleDelete = (clientId: string | number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Archive Client Account",
+      message: "Are you sure you want to archive this client account? It will be suspended and moved to the archive section.",
+      confirmText: "Archive",
+      onConfirm: async () => {
+        try {
+          await superAdminService.deleteClient(clientId);
+          showToast("success", "Archived", "Client account archived successfully.");
+          fetchClients();
+        } catch (e) {
+          showToast("error", "Error", "Failed to delete account.");
+        }
+      },
+    });
   };
 
   const openEditModal = (client: Client) => {
@@ -184,192 +159,305 @@ export default function ManageClientsPage() {
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <Building className="w-4 h-4 text-[var(--accent)]" />
-          <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--accent)]">
-            Platform Master Console
-          </span>
-        </div>
-        <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[var(--fg)]">
+    <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+      {/* ── Page Header ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
+          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
+          Platform Master Console
+        </span>
+        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
           Manage <span className="gradient-text">Clients</span>
         </h2>
-        <p className="text-sm text-[var(--muted-fg)] font-medium">
+        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
           Provision new organization tenants, control subscription tiers, and configure default branding rules.
         </p>
       </div>
 
+      {/* ── Action Bar ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+        <Button
+          variant="outline"
+          onClick={fetchClients}
+          isLoading={isLoading}
+          icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
+          style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
+        >
+          Sync Tenants
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Onboard Client Form */}
-        <Card className="p-8 lg:col-span-1 space-y-6 flex flex-col justify-between">
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[var(--accent-glow)] text-[var(--accent)]">
-                <UserPlus className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-[var(--fg)]">Provision Tenant</h3>
-                <p className="text-xs text-[var(--muted-fg)] font-medium mt-0.5">
-                  Launch a new company workspace.
-                </p>
-              </div>
+        <Card className="card" style={{ padding: "28px", display: "flex", flexDirection: "column", gap: "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative" }}>
+            {/* Decorative element */}
+            <div style={{
+              position: "absolute",
+              top: "-15px",
+              right: "-15px",
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              background: "var(--accent-glow)",
+              filter: "blur(20px)",
+              pointerEvents: "none",
+            }} />
+            <div style={{
+              padding: "10px",
+              borderRadius: "12px",
+              background: "var(--accent-glow)",
+              border: "1px solid rgba(79,124,255,0.15)",
+              color: "var(--accent)",
+              display: "flex",
+            }}>
+              <UserPlus style={{ width: "18px", height: "18px" }} />
             </div>
-
-            <form onSubmit={handleCreate} className="space-y-5">
-              <Input
-                label="Company Name"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="e.g. Acme Corp"
-                required
-              />
-              <Input
-                label="Bot Identifier Name"
-                value={botName}
-                onChange={(e) => setBotName(e.target.value)}
-                placeholder="e.g. Acme Assistant"
-                required
-              />
-              <Input
-                label="Super User Email"
-                type="email"
-                value={supportEmail}
-                onChange={(e) => setSupportEmail(e.target.value)}
-                placeholder="admin@acme.com"
-                required
-              />
-              <Select
-                label="Subscription Tier"
-                value={subscriptionPlan}
-                onChange={(e) => setSubscriptionPlan(e.target.value)}
-              >
-                <option value="free">Free Starter Plan</option>
-                <option value="premium">Premium Pro Plan</option>
-                <option value="enterprise">Enterprise Scaling Plan</option>
-              </Select>
-
-              <Select
-                label="Access Status"
-                value={String(isActive)}
-                onChange={(e) => setIsActive(e.target.value === "true")}
-              >
-                <option value="true">Active / Verified</option>
-                <option value="false">Deactivated / Suspended</option>
-              </Select>
-
-              <Button
-                type="submit"
-                isLoading={isSaving}
-                className="w-full text-xs py-3.5 mt-2"
-              >
-                Onboard Account
-              </Button>
-            </form>
+            <div>
+              <h3 style={{ fontSize: "16px", fontWeight: 800, color: "var(--fg)" }}>Provision Tenant</h3>
+              <p style={{ fontSize: "11px", color: "var(--muted-fg)", fontWeight: 500, marginTop: "2px" }}>
+                Launch a new company workspace.
+              </p>
+            </div>
           </div>
+
+          <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <Input
+              label="Company Name"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="e.g. Acme Corp"
+              required
+            />
+            <Input
+              label="Bot Identifier Name"
+              value={botName}
+              onChange={(e) => setBotName(e.target.value)}
+              placeholder="e.g. Acme Assistant"
+              required
+            />
+            <Input
+              label="Super User Email"
+              type="email"
+              value={supportEmail}
+              onChange={(e) => setSupportEmail(e.target.value)}
+              placeholder="admin@acme.com"
+              required
+            />
+            <Select
+              label="Subscription Tier"
+              value={subscriptionPlan}
+              onChange={(e) => setSubscriptionPlan(e.target.value)}
+            >
+              <option value="free">Free Starter Plan</option>
+              <option value="premium">Premium Pro Plan</option>
+              <option value="enterprise">Enterprise Scaling Plan</option>
+            </Select>
+
+            <Select
+              label="Access Status"
+              value={String(isActive)}
+              onChange={(e) => setIsActive(e.target.value === "true")}
+            >
+              <option value="true">Active / Verified</option>
+              <option value="false">Deactivated / Suspended</option>
+            </Select>
+
+            <Button
+              type="submit"
+              isLoading={isSaving}
+              style={{ fontSize: "13px", padding: "12px", width: "100%", marginTop: "8px" }}
+            >
+              Onboard Account
+            </Button>
+          </form>
         </Card>
 
         {/* Tenants Table Grid */}
-        <Card className="p-0 lg:col-span-2 overflow-hidden flex flex-col justify-between">
-          <div>
-            <div className="p-6 border-b border-[var(--card-border)] flex items-center justify-between bg-[var(--muted-bg)]/20">
-              <h3 className="text-base font-bold text-[var(--fg)]">
+        <Card className="card" style={{ padding: 0, overflow: "hidden", gridColumn: "span 2" } as React.CSSProperties}>
+          <div style={{
+            padding: "20px 24px",
+            borderBottom: "1px solid var(--card-border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "var(--muted-bg)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ position: "relative", display: "inline-flex", width: "8px", height: "8px" }}>
+                <span style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "50%",
+                  background: "var(--accent)",
+                  opacity: 0.6,
+                  animation: "pulseGlow 1.5s ease-in-out infinite",
+                }} />
+                <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+              </span>
+              <h3 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)" }}>
                 Active Business Tenants
               </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchClients}
-                icon={<RefreshCw className="w-3.5 h-3.5" />}
-                className="text-[10px] py-1.5 px-3"
-              >
-                Refresh List
-              </Button>
             </div>
+            <Badge variant="info" style={{ fontSize: "9px" } as React.CSSProperties}>
+              {clients.length} Total
+            </Badge>
+          </div>
 
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[var(--muted-bg)] border-b border-[var(--card-border)] text-[var(--muted-fg)] text-[10px] tracking-widest uppercase font-bold">
-                    <th className="p-4 pl-6">Business / Bot</th>
-                    <th className="p-4">Super User</th>
-                    <th className="p-4">Workspace API Key</th>
-                    <th className="p-4">Tier Plan</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 pr-6 text-right">Actions</th>
+          <div style={{ overflowX: "auto", width: "100%" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{
+                  background: "var(--muted-bg)",
+                  borderBottom: "1px solid var(--card-border)",
+                }}>
+                  {["Business / Bot", "Super User", "API Key", "Tier Plan", "Status", "Actions"].map((h, i) => (
+                    <th key={h} style={{
+                      padding: "14px 16px",
+                      paddingLeft: i === 0 ? "24px" : "16px",
+                      paddingRight: i === 5 ? "24px" : "16px",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      color: "var(--muted-fg)",
+                      textAlign: i === 5 ? "right" : "left",
+                    }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <tr key={idx} style={{ borderBottom: "1px solid var(--card-border)" }}>
+                      <td style={{ padding: "16px 24px" }}><Skeleton className="h-5 w-40" /></td>
+                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-32" /></td>
+                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-24" /></td>
+                      <td style={{ padding: "16px" }}><Skeleton className="h-5 w-16" /></td>
+                      <td style={{ padding: "16px" }}><Skeleton className="h-5 w-16" /></td>
+                      <td style={{ padding: "16px 24px", textAlign: "right" }}><Skeleton className="h-8 w-16 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : clients.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: "60px 24px", textAlign: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", color: "var(--muted-fg)" }}>
+                        <div style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "12px",
+                          background: "var(--muted-bg)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}>
+                          <Building style={{ width: "22px", height: "22px", opacity: 0.5 }} />
+                        </div>
+                        <div>
+                          <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)", marginBottom: "4px" }}>No Business Tenants</p>
+                          <p style={{ fontSize: "12px", maxWidth: "320px", lineHeight: 1.6 }}>
+                            Provision your first organization workspace using the panel on the left.
+                          </p>
+                        </div>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {clients.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-12 text-center">
-                        <div className="flex flex-col items-center justify-center gap-3 text-[var(--muted-fg)]">
-                          <Building className="w-6 h-6 opacity-60" />
-                          <span className="text-xs font-semibold">No business tenants active</span>
+                ) : (
+                  clients.map((client) => (
+                    <tr
+                      key={client.id}
+                      style={{
+                        borderBottom: "1px solid var(--card-border)",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "var(--muted-bg)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
+                    >
+                      <td style={{ padding: "16px 24px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
+                            {client.company_name}
+                          </span>
+                          <span style={{ fontSize: "10px", color: "var(--muted-fg)" }}>
+                            Bot: {client.bot_name}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "16px", fontSize: "12.5px", color: "var(--muted-fg)", fontWeight: 500 }}>
+                        {client.support_email}
+                      </td>
+                      <td style={{ padding: "16px", fontFamily: "monospace", fontSize: "12px", color: "var(--accent)", fontWeight: 600 }}>
+                        {client.api_key ? `${client.api_key.substring(0, 10)}...` : "None"}
+                      </td>
+                      <td style={{ padding: "16px" }}>
+                        <Badge variant="neutral" style={{ fontSize: "9px", padding: "3px 8px" }}>
+                          {client.subscription_plan}
+                        </Badge>
+                      </td>
+                      <td style={{ padding: "16px" }}>
+                        <button
+                          onClick={() => handleToggleStatus(client.id, client.is_active)}
+                          style={{ border: "none", background: "none", padding: 0, cursor: "pointer" }}
+                        >
+                          <Badge
+                            variant={client.is_active ? "success" : "error"}
+                            style={{ fontSize: "9px", padding: "3px 8px", cursor: "pointer" }}
+                          >
+                            {client.is_active ? "Active" : "Suspended"}
+                          </Badge>
+                        </button>
+                      </td>
+                      <td style={{ padding: "16px 24px", textAlign: "right" }}>
+                        <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(client)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "var(--accent)",
+                              cursor: "pointer",
+                              padding: "6px",
+                              borderRadius: "8px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--accent-glow)")}
+                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                            title="Edit"
+                          >
+                            <Pencil style={{ width: "15px", height: "15px" }} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(client.id)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#ef4444",
+                              cursor: "pointer",
+                              padding: "6px",
+                              borderRadius: "8px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.1)")}
+                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                            title="Archive"
+                          >
+                            <Trash2 style={{ width: "15px", height: "15px" }} />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  ) : (
-                    clients.map((client) => (
-                      <tr
-                        key={client.id}
-                        className="border-b border-[var(--card-border)] hover:bg-[var(--muted-bg)]/20 transition-all text-xs"
-                      >
-                        <td className="p-4 pl-6">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-bold text-[var(--fg)]">{client.company_name}</span>
-                            <span className="text-[10px] text-[var(--muted-fg)]">Bot: {client.bot_name}</span>
-                          </div>
-                        </td>
-                        <td className="p-4 font-medium text-[var(--muted-fg)]">
-                          {client.support_email}
-                        </td>
-                        <td className="p-4 font-mono text-[var(--accent)] font-semibold">
-                          {client.api_key ? `${client.api_key.substring(0, 10)}...` : "None"}
-                        </td>
-                        <td className="p-4">
-                          <Badge variant="neutral" className="text-[9px] py-0.5 px-2">
-                            {client.subscription_plan}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <button
-                            onClick={() => handleToggleStatus(client.id, client.is_active)}
-                            className="border-0 bg-transparent p-0 cursor-pointer outline-none"
-                          >
-                            <Badge
-                              variant={client.is_active ? "success" : "error"}
-                              className="text-[9px] py-0.5 px-2 font-bold cursor-pointer"
-                            >
-                              {client.is_active ? "Active" : "Suspended"}
-                            </Badge>
-                          </button>
-                        </td>
-                        <td className="p-4 pr-6 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(client)}
-                              className="text-[var(--accent)] hover:bg-[var(--accent-glow)] p-2 rounded-xl transition-all cursor-pointer border-0 bg-transparent"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(client.id)}
-                              className="text-red-500 hover:bg-red-500/10 p-2 rounded-xl transition-all cursor-pointer border-0 bg-transparent"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>
@@ -384,21 +472,21 @@ export default function ManageClientsPage() {
             <Button
               variant="outline"
               onClick={() => setShowEditModal(false)}
-              className="text-xs py-2.5 px-5"
+              style={{ fontSize: "12px", padding: "10px 20px" }}
             >
               Cancel
             </Button>
             <Button
               onClick={handleUpdateDetails}
-              className="text-xs py-2.5 px-5"
+              style={{ fontSize: "12px", padding: "10px 20px" }}
             >
               Save Configuration
             </Button>
           </>
         }
       >
-        <form onSubmit={handleUpdateDetails} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <form onSubmit={handleUpdateDetails} style={{ display: "flex", flexDirection: "column", gap: "16px", marginTop: "10px" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Company Name"
               value={editDetails.company_name || ""}
@@ -456,6 +544,15 @@ export default function ManageClientsPage() {
           />
         </form>
       </Modal>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+      />
     </div>
   );
 }

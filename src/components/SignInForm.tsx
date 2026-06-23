@@ -7,11 +7,11 @@ import SubpageLayout from "@/components/layouts/SubpageLayout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
+import { authService } from "@/services/auth.service";
 
 type Role = "super-admin" | "admin" | "team-member";
 type AdminMethod = "otp" | "password";
 
-import { authService } from "@/services/authService";
 
 const ROLE_INFO = {
   "super-admin": {
@@ -109,20 +109,18 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
     try {
       if (role === "super-admin") {
         // Step 1: Login Super Admin
-        const loginResponse = await authService.loginSuperAdmin(email.trim(), password);
-        const loginData = await loginResponse.json();
+        const loginData = await authService.superadminLogin(email.trim(), password);
 
-        if (!loginResponse.ok || loginData.status !== "success") {
+        if (loginData.status !== "success") {
           showToast("error", "Access Denied", loginData.message || "Invalid Super Admin credentials.");
           setIsLoading(false);
           return;
         }
 
         // Step 2: Request OTP
-        const otpResponse = await authService.sendSuperAdminOtp(email.trim(), password);
-        const otpData = await otpResponse.json();
+        const otpData = await authService.sendSuperAdminOtp(email.trim(), password);
 
-        if (otpResponse.ok && otpData.status === "success") {
+        if (otpData.status === "success") {
           showToast("success", "OTP Sent", "A secure verification code has been sent to your email.");
           setStep(2);
         } else {
@@ -131,10 +129,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
       } else if (role === "admin") {
         if (adminLoginMethod === "otp") {
           // Request OTP for Client Admin
-          const res = await authService.sendClientOtp(email.trim());
-          const data = await res.json();
+          const data = await authService.sendClientOtp(email.trim());
 
-          if (res.ok && data.status === "success") {
+          if (data.status === "success") {
             showToast("success", "OTP Sent", "Please check your email for the verification code.");
             setStep(2);
           } else {
@@ -142,25 +139,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
           }
         } else {
           // Password Login for Admin
-          let res = await authService.loginClientPassword(email.trim(), password);
-          let data;
-          try {
-            data = await res.json();
-          } catch (e) {
-            data = null;
-          }
+          const data = await authService.loginClientWithPassword(email.trim(), password);
 
-          if (!res.ok) {
-            // Try x-www-form-urlencoded format
-            res = await authService.loginClientPasswordUrlEncoded(email.trim(), password);
-            try {
-              data = await res.json();
-            } catch (e) {
-              data = null;
-            }
-          }
-
-          if (res.ok && data && (data.status === "success" || data.access_token)) {
+          if (data && (data.status === "success" || data.access_token)) {
             localStorage.setItem("saas_client_token", data.access_token);
             localStorage.setItem("saas_user_role", "client_admin");
             showToast("success", "Welcome Back", "Successfully logged into Admin dashboard.");
@@ -171,10 +152,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
         }
       } else if (role === "team-member") {
         // Direct Password login for Agents
-        const res = await authService.loginAgent(email.trim(), password);
-        const data = await res.json();
+        const data = await authService.loginAgent(email.trim(), password);
 
-        if (res.ok && data.status === "success") {
+        if (data.status === "success") {
           localStorage.setItem("saas_client_token", data.access_token);
           localStorage.setItem("saas_user_role", data.role || "agent");
           localStorage.setItem("saas_agent_id", data.agent_id);
@@ -186,8 +166,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
           showToast("error", "Authentication Failed", data.message || "Incorrect email or password.");
         }
       }
-    } catch (err) {
-      showToast("error", "Connection Error", "Could not connect to the remote authentication server.");
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || "Could not connect to the remote authentication server.";
+      showToast("error", "Connection Error", errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -204,10 +185,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
     try {
       if (role === "super-admin") {
-        const res = await authService.verifySuperAdminOtp(email.trim(), otp.trim());
-        const data = await res.json();
+        const data = await authService.verifySuperAdminOtp(email.trim(), otp.trim());
 
-        if (res.ok && data.status === "success") {
+        if (data.status === "success") {
           localStorage.setItem("sa_token", data.access_token);
           localStorage.setItem("saas_superadmin_token", data.access_token);
           if (data.name) localStorage.setItem("sa_name", data.name);
@@ -218,10 +198,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
           showToast("error", "Verification Failed", data.message || "Incorrect verification code.");
         }
       } else if (role === "admin") {
-        const res = await authService.verifyClientOtp(email.trim(), otp.trim());
-        const data = await res.json();
+        const data = await authService.verifyClientOtp(email.trim(), otp.trim());
 
-        if (res.ok && data.status === "success") {
+        if (data.status === "success") {
           localStorage.setItem("saas_client_token", data.access_token);
           localStorage.setItem("saas_user_role", "client_admin");
 
@@ -231,8 +210,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
           showToast("error", "Verification Failed", data.message || "Invalid OTP code.");
         }
       }
-    } catch (err) {
-      showToast("error", "Connection Error", "Server connection timed out.");
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || "Server connection timed out.";
+      showToast("error", "Connection Error", errMsg);
     } finally {
       setIsLoading(false);
     }

@@ -4,8 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, RefreshCw, Bot, User, Send, Zap, Sparkles, Clock } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { Button, Badge } from "@/components/ui";
-
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+import { adminService } from "@/services/admin.service";
 
 interface LiveSession {
   id?: string;
@@ -13,6 +12,8 @@ interface LiveSession {
   created_at?: string;
   human_takeover?: boolean;
   agent_name?: string;
+  user_name?: string;
+  last_active?: string;
 }
 
 interface ChatMessage {
@@ -29,40 +30,102 @@ export default function ChatLogsPage() {
   const [chats, setChats] = useState<ChatMessage[]>([]);
   const [replyText, setReplyText] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const hasScrolledForSessionRef = useRef<string | number | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const getLocalTakeoverStates = () => {
+    try {
+      return JSON.parse(localStorage.getItem("saas_takeover_states") || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  };
 
   const fetchSessions = async () => {
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/live-sessions`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { const data = await res.json(); setSessions(data.sessions || data || []); }
-    } catch (error) { console.warn("Error fetching sessions:", error); }
+      const data = await adminService.getLiveSessions();
+      let sessionsList: LiveSession[] = [];
+      if (data?.sessions && Array.isArray(data.sessions)) {
+        sessionsList = data.sessions;
+      } else if (data?.data && Array.isArray(data.data)) {
+        sessionsList = data.data;
+      } else if (Array.isArray(data)) {
+        sessionsList = data;
+      }
+
+      // Sort sessions by the most recent active time
+      sessionsList.sort((a, b) => {
+        const timeA = new Date(a.last_active || a.created_at || 0).getTime();
+        const timeB = new Date(b.last_active || b.created_at || 0).getTime();
+        return timeB - timeA;
+      });
+
+      // Apply persistent takeover state from localStorage
+      const localStates = getLocalTakeoverStates();
+      sessionsList = sessionsList.map(s => {
+        const sId = s.id || s.session_id;
+        if (sId && localStates[sId] !== undefined) {
+          return { ...s, human_takeover: localStates[sId] };
+        }
+        return s;
+      });
+
+      setSessions(sessionsList);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
   };
 
   const fetchChats = async (sessionId: string) => {
     if (!sessionId) return;
     try {
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/sessions/${sessionId}/chats`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const data = await res.json();
-        let chatsData: ChatMessage[] = [];
-        if (data?.chats && Array.isArray(data.chats)) chatsData = data.chats;
-        else if (data?.messages && Array.isArray(data.messages)) chatsData = data.messages;
-        else if (data?.history && Array.isArray(data.history)) chatsData = data.history;
-        else if (data?.data && Array.isArray(data.data)) chatsData = data.data;
-        else if (Array.isArray(data)) chatsData = data;
-        setChats(chatsData);
-      }
-    } catch (error) { console.warn("Error fetching chats:", error); }
+      const data = await adminService.getSessionChats(sessionId);
+      let chatsData: ChatMessage[] = [];
+      if (data?.chats && Array.isArray(data.chats)) chatsData = data.chats;
+      else if (data?.messages && Array.isArray(data.messages)) chatsData = data.messages;
+      else if (data?.history && Array.isArray(data.history)) chatsData = data.history;
+      else if (data?.data && Array.isArray(data.data)) chatsData = data.data;
+      else if (Array.isArray(data)) chatsData = data;
+
+      // Filter out empty messages
+      const validChats = chatsData.filter(msg => {
+        const text = msg.message || msg.content || msg.text || "";
+        return text.trim() !== "";
+      });
+
+      setChats(validChats);
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+    }
   };
 
-  useEffect(() => { fetchSessions(); }, []);
+  useEffect(() => {
+    fetchSessions();
+    const interval = setInterval(() => {
+      fetchSessions();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessions.length > 0 && !selectedSession) {
+      const params = new URLSearchParams(window.location.search);
+      const sessionParam = params.get("session") || params.get("sessionId");
+      if (sessionParam) {
+        const found = sessions.find(s => (s.id || s.session_id) === sessionParam);
+        if (found) {
+          setSelectedSession(found);
+        }
+      }
+    }
+  }, [sessions, selectedSession]);
 
   useEffect(() => {
     if (selectedSession) {
       const sId = selectedSession.id || selectedSession.session_id;
       if (sId) {
+        setChats([]); // Clear chats immediately to prevent visual flash of previous session
+        hasScrolledForSessionRef.current = null; // Reset scroll tracker for new session
         fetchChats(sId);
         const interval = setInterval(() => fetchChats(sId), 3000);
         return () => clearInterval(interval);
@@ -71,23 +134,65 @@ export default function ChatLogsPage() {
   }, [selectedSession]);
 
   useEffect(() => {
-    if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-  }, [chats]);
+    if (!chatContainerRef.current) return;
+    const container = chatContainerRef.current;
+    const currentSessionId = selectedSession ? (selectedSession.id || selectedSession.session_id || null) : null;
+
+    if (!currentSessionId) return;
+
+    const isNewSession = currentSessionId !== hasScrolledForSessionRef.current;
+
+    if (isNewSession && chats.length > 0) {
+      hasScrolledForSessionRef.current = currentSessionId;
+      // Allow browser to calculate container elements height before scrolling
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 60);
+    } else if (!isNewSession) {
+      // Scroll down only if the user is already near the bottom (within 150px)
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 150;
+      if (isNearBottom) {
+        setTimeout(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        }, 60);
+      }
+    }
+  }, [chats, selectedSession]);
 
   const handleTakeover = async () => {
     if (!selectedSession) return;
     try {
       const sId = selectedSession.id || selectedSession.session_id;
       if (!sId) return;
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/sessions/${sId}/takeover`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const isNowHuman = !selectedSession.human_takeover;
-        showToast("success", isNowHuman ? "Takeover Activated" : "AI Restored", isNowHuman ? "You have taken over this chat." : "AI has resumed control.");
-        setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman } : null);
-        fetchSessions();
+      await adminService.takeoverSession(sId);
+      const isNowHuman = !selectedSession.human_takeover;
+      
+      // Update localStorage persistent state
+      const localStates = getLocalTakeoverStates();
+      localStates[sId] = isNowHuman;
+      localStorage.setItem("saas_takeover_states", JSON.stringify(localStates));
+
+      showToast("success", isNowHuman ? "Takeover Activated" : "AI Restored", isNowHuman ? "You have taken over this chat." : "AI has resumed control.");
+      setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman } : null);
+      
+      // Optimistically update sessions list
+      setSessions(prev => prev.map(s => (s.id || s.session_id) === sId ? { ...s, human_takeover: isNowHuman, agent_name: localStorage.getItem("saas_agent_name") || "Human Support" } : s));
+
+      // Send a system takeover/resume notification message to the conversation
+      const notificationMsg = isNowHuman ? "👤 A human agent has joined the chat." : "🤖 The AI has resumed control of the chat.";
+      try {
+        await adminService.sendChatMessage(sId, notificationMsg);
+        fetchChats(sId);
+      } catch (err) {
+        console.error("Failed to send takeover notification:", err);
       }
-    } catch { showToast("error", "Error", "Failed to toggle takeover."); }
+    } catch {
+      showToast("error", "Error", "Failed to toggle takeover.");
+    }
   };
 
   const handleSendReply = async () => {
@@ -96,24 +201,22 @@ export default function ChatLogsPage() {
     try {
       const sId = selectedSession.id || selectedSession.session_id;
       if (!sId) return;
-      const token = localStorage.getItem("saas_client_token");
-      const res = await fetch(`${BASE_API}/admin/sessions/${sId}/send`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: replyText.trim() }),
-      });
-      if (res.ok) { setReplyText(""); fetchChats(sId); }
-      else showToast("error", "Error", "Failed to send message.");
-    } catch { showToast("error", "Error", "Error sending message."); }
-    finally { setIsSending(false); }
+      await adminService.sendChatMessage(sId, replyText.trim());
+      setReplyText("");
+      fetchChats(sId);
+    } catch {
+      showToast("error", "Error", "Error sending message.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px", height: "calc(85vh - 60px)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", height: "calc(100vh - 140px)" }}>
       {/* Header */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0 }}>
-        <span className="badge"><MessageSquare style={{ width: "12px", height: "12px" }} />Workspace Conversations</span>
-        <h2 style={{ fontSize: "clamp(24px,3.5vw,36px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0, alignItems: "flex-start" }}>
+        <span className="badge" style={{ width: "fit-content" }}><MessageSquare style={{ width: "12px", height: "12px" }} />Workspace Conversations</span>
+        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
           Live Chat <span className="gradient-text">Stream Logs</span>
         </h2>
         <p style={{ fontSize: "13px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
@@ -122,10 +225,10 @@ export default function ChatLogsPage() {
       </div>
 
       {/* Main Panel */}
-      <div style={{ display: "flex", gap: "20px", flex: 1, minHeight: 0, overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: "10px", flex: 1, minHeight: 0, overflow: "hidden", paddingTop:"10px" }}>
         {/* Session Sidebar */}
         <div className="card" style={{
-          width: "280px", flexShrink: 0, padding: "16px",
+          width: "340px", flexShrink: 0, padding: "16px",
           display: "flex", flexDirection: "column", gap: "12px", overflow: "hidden",
         }}>
           <Button variant="outline" onClick={fetchSessions} icon={<RefreshCw style={{ width: "13px", height: "13px" }} />}
@@ -154,15 +257,17 @@ export default function ChatLogsPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
                       <span style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "var(--accent)" : "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {session.human_takeover ? "Support Handover" : `Session: ${sId.substring(0, 10)}`}
+                        {session.human_takeover 
+                          ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
+                          : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
                       </span>
                       {session.human_takeover
-                        ? <Badge variant="warning" style={{ fontSize: "9px" } as React.CSSProperties}>Agent</Badge>
-                        : <Badge variant="success" style={{ fontSize: "9px" } as React.CSSProperties}>AI</Badge>}
+                        ? <Badge variant="warning" style={{ fontSize: "9px" , padding: "3px" } as React.CSSProperties}>Agent</Badge>
+                        : <Badge variant="success" style={{ fontSize: "9px", padding: "3px 6px" } as React.CSSProperties}>AI</Badge>}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", fontSize: "10px", color: "var(--muted-fg)" }}>
                       <Clock style={{ width: "10px", height: "10px" }} />
-                      {new Date(session.created_at || Date.now()).toLocaleTimeString()}
+                      {new Date(session.last_active || session.created_at || Date.now()).toLocaleTimeString()}
                     </div>
                   </div>
                 );
@@ -195,10 +300,12 @@ export default function ChatLogsPage() {
               }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                    Auditing {selectedSession.id || selectedSession.session_id}
+                    Auditing: {selectedSession.human_takeover 
+                      ? `${selectedSession.agent_name || localStorage.getItem("saas_agent_name") || "Human Support"} (${selectedSession.id || selectedSession.session_id})`
+                      : (selectedSession.user_name ? `${selectedSession.user_name} (${selectedSession.id || selectedSession.session_id})` : (selectedSession.id || selectedSession.session_id))}
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px" } as React.CSSProperties}>
+                    <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px" , padding: "4px"} as React.CSSProperties}>
                       {selectedSession.human_takeover ? "Handed Over" : "AI Automated"}
                     </Badge>
                     {selectedSession.human_takeover && (
@@ -213,7 +320,7 @@ export default function ChatLogsPage() {
                   variant={selectedSession.human_takeover ? "outline" : "danger"}
                   onClick={handleTakeover}
                   icon={<Zap style={{ width: "14px", height: "14px" }} />}
-                  style={{ fontSize: "12px", padding: "9px 18px" } as React.CSSProperties}
+                  style={{ fontSize: "12px", padding: "10px 20px" } as React.CSSProperties}
                 >
                   {selectedSession.human_takeover ? "Return Control to AI" : "Take Over Stream"}
                 </Button>
@@ -231,12 +338,85 @@ export default function ChatLogsPage() {
                   </div>
                 ) : (
                   chats.map((msg, idx) => {
-                    const isUser = msg.role === "user";
-                    const isAgent = msg.role === "agent";
+                    const text = msg.message || msg.content || msg.text || "";
+                    if (!text.trim()) return null;
+
+                    const plainText = text.replace(/<[^>]+>/g, "").trim();
+                    const isSystem = /joined the chat|resumed control|joined the conversation|took over the conversation|left the conversation/i.test(plainText);
+
+                    if (isSystem) {
+                      const isHuman = plainText.includes("joined");
+                      return (
+                        <div key={`sys-${idx}`} style={{ alignSelf: "center", marginTop: "12px", marginBottom: "12px", maxWidth: "90%" }}>
+                          <div style={{
+                            background: isHuman ? "rgba(37, 99, 235, 0.04)" : "rgba(100, 116, 139, 0.05)",
+                            color: isHuman ? "#1e40af" : "#475569",
+                            fontSize: "12px",
+                            padding: "8px 20px",
+                            borderRadius: "9999px",
+                            fontWeight: 600,
+                            textAlign: "center",
+                            border: isHuman ? "1px solid rgba(37, 99, 235, 0.15)" : "1px solid rgba(100, 116, 139, 0.15)",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            boxSizing: "border-box"
+                          }}>
+                            {plainText}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    let isUser = msg.role === "user";
+                    let isAgent = msg.role === "agent";
+                    let displayRole = msg.role || "unknown";
+
+                    // Robustly search all keys in the message object for sender/role metadata
+                    const keys = Object.keys(msg);
+                    for (let k of keys) {
+                      const lk = k.toLowerCase();
+                      const val = (msg as any)[k];
+                      
+                      if (["role", "sender", "type", "author", "source", "from", "sender_type"].includes(lk)) {
+                        const strVal = String(val).toLowerCase();
+                        if (["agent", "bot", "ai", "admin", "support", "assistant", "system"].some(r => strVal.includes(r))) {
+                          isAgent = true;
+                          displayRole = displayRole || strVal;
+                        } else if (["user", "customer", "visitor", "client", "human", "guest"].some(r => strVal.includes(r))) {
+                          isUser = true;
+                          displayRole = displayRole || strVal;
+                        }
+                      }
+                      
+                      if (["is_user", "from_user", "is_customer"].includes(lk) && (val === true || val === 1 || val === "1" || val === "true")) {
+                        isUser = true;
+                        displayRole = displayRole || "user";
+                      }
+                      if (["is_bot", "is_agent", "is_admin", "is_ai"].includes(lk) && (val === true || val === 1 || val === "1" || val === "true")) {
+                        isAgent = true;
+                        displayRole = displayRole || "bot";
+                      }
+                    }
+
+                    // Fallback to text content if absolutely no metadata is available
+                    if (!isUser && !isAgent) {
+                      const lowerText = text.toLowerCase();
+                      if (lowerText.includes("welcome to") || lowerText.includes("how may i help") || lowerText.includes("support agent")) {
+                        isAgent = true;
+                        displayRole = "bot";
+                      } else {
+                        isUser = true;
+                        displayRole = "user";
+                      }
+                    }
+
                     return (
-                      <div key={idx} style={{
+                      <div key={`msg-${idx}`} style={{
                         display: "flex", gap: "10px", maxWidth: "78%",
-                        marginLeft: isUser ? "auto" : undefined,
+                        marginLeft: isUser ? "auto" : "0px",
+                        marginRight: !isUser ? "auto" : "0px",
                         flexDirection: isUser ? "row-reverse" : "row",
                       }}>
                         <div style={{
@@ -260,7 +440,7 @@ export default function ChatLogsPage() {
                             border: isUser ? "none" : isAgent ? "1px solid rgba(245,158,11,0.25)" : "1px solid var(--card-border)",
                             boxShadow: "0 2px 8px var(--shadow)",
                           }}>
-                            {msg.message || msg.content || msg.text || ""}
+                            {text}
                           </div>
                         </div>
                       </div>
@@ -290,7 +470,7 @@ export default function ChatLogsPage() {
                   />
                   <Button type="button" isLoading={isSending} disabled={!replyText.trim()} onClick={handleSendReply}
                     icon={<Send style={{ width: "13px", height: "13px" }} />}
-                    style={{ padding: "11px 20px", fontSize: "12px" } as React.CSSProperties}>
+                    style={{ padding: "10px 20px", fontSize: "12px" } as React.CSSProperties}>
                     Send
                   </Button>
                 </div>
