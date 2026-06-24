@@ -29,7 +29,7 @@ export default function IndustryPageContent({ industry }: Props) {
           Home
         </Link>
         <span>/</span>
-        <Link href="/#use-cases" style={{ color: "var(--muted-fg)", textDecoration: "none" }}>
+        <Link href="/solutions" style={{ color: "var(--muted-fg)", textDecoration: "none" }}>
           Solutions
         </Link>
         <span>/</span>

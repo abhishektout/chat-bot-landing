@@ -40,10 +40,10 @@ const trendData = [
 ];
 
 const insights = [
-  { icon: TrendingUp, title: "42% of customers ask about pricing", description: "Your pricing page gets the most queries but has the lowest satisfaction rate.", action: "Create a pricing FAQ page", priority: "High", color: "#4f7cff" },
-  { icon: AlertTriangle, title: "18 customers abandoned before checkout", description: "Cart abandonment peaked on Tuesday evening. Shipping cost was the main concern.", action: "Add free shipping threshold info", priority: "High", color: "#ef4444" },
-  { icon: HelpCircle, title: "Top unanswered: 'How does billing work?'", description: "This question appears 847 times this month with no satisfactory AI response.", action: "Update billing knowledge base", priority: "Medium", color: "#f59e0b" },
-  { icon: Lightbulb, title: "Lead opportunity: 234 enterprise inquiries", description: "Users asking about team plans — no human follow-up occurred for 67% of them.", action: "Enable enterprise lead routing", priority: "High", color: "#22c55e" },
+  { icon: TrendingUp, title: "Customer Trends: Pricing Inquiries Peak", description: "AI identified that 42% of incoming customer conversations relate to plan comparisons and pricing details, highlighting a clear trend.", action: "Optimize pricing comparisons", priority: "High", color: "#4f7cff" },
+  { icon: AlertTriangle, title: "Abandoned Customer Recovery", description: "18 shoppers abandoned their checkout page today. AI detected abandonment signals and initiated follow-up prompts.", action: "Deploy checkout rescue triggers", priority: "High", color: "#ef4444" },
+  { icon: HelpCircle, title: "Missing Knowledge Detection", description: "A query on 'billing cycles' was searched 847 times this week. AI flagged this gap for instant knowledge base updating.", action: "Resolve knowledge base gaps", priority: "Medium", color: "#f59e0b" },
+  { icon: Lightbulb, title: "Revenue & Lead Capture Opportunities", description: "AI automatically captured 234 high-intent enterprise email leads from anonymous chat visitors after hours.", action: "Route captured leads to CRM", priority: "High", color: "#22c55e" },
 ];
 
 const tipStyle = { background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "8px", fontSize: "11px", color: "var(--fg)" };
@@ -66,11 +66,11 @@ export default function InsightsSection() {
             AI Insights
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
-            Turn Conversations into<br />
-            <span className="gradient-text">Business Intelligence</span>
+            Turn Support Conversations into <br />
+            <span className="gradient-text">Business Growth</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "540px", margin: "0 auto", lineHeight: 1.7 }}>
-            AI analyzes every conversation to surface actionable insights that grow your business.
+            AI analyzes every conversation to capture more leads, recover abandoned checkouts, and uncover new revenue.
           </p>
         </motion.div>
 

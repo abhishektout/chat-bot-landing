@@ -15,10 +15,11 @@ export interface NavSection {
 
 /** Hash-anchor links that smooth-scroll on the homepage */
 export const HOMEPAGE_ANCHORS: NavLink[] = [
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Solutions", href: "#use-cases" },
-  { label: "Contact", href: "#contact" },
+  { label: "Features", href: "/features" },
+  { label: "Solutions", href: "/solutions" },
+  { label: "Enterprise", href: "/enterprise" },
+  { label: "Resources", href: "/resources" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
 /** Footer link columns */
@@ -26,7 +27,7 @@ export const FOOTER_SECTIONS: NavSection[] = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "#features" },
+      { label: "Features", href: "/features" },
       { label: "Pricing", href: "/pricing" },
       { label: "Book a Demo", href: "/book-demo" },
       { label: "Changelog", href: "/product/changelog" },
@@ -41,7 +42,9 @@ export const FOOTER_SECTIONS: NavSection[] = [
       { label: "Healthcare", href: "/solutions/healthcare" },
       { label: "SaaS", href: "/solutions/saas" },
       { label: "Finance", href: "/solutions/finance" },
-      { label: "Enterprise", href: "/solutions/enterprise" },
+      { label: "Education", href: "/solutions/education" },
+      { label: "Travel", href: "/solutions/travel" },
+      { label: "Enterprise", href: "/enterprise" },
     ],
   },
   {

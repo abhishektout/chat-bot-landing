@@ -52,7 +52,7 @@ export default function PricingSection() {
             Pricing
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            Simple, Transparent <span className="gradient-text">Pricing</span>
+            Choose Your <span className="gradient-text"> Plan</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", marginBottom: "28px" }}>No setup fees. No hidden charges. Cancel anytime.</p>
 
@@ -73,7 +73,7 @@ export default function PricingSection() {
                 style={{ position: "absolute", top: "3px", width: "18px", height: "18px", borderRadius: "50%", background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }}
               />
             </button>
-            <span style={{ fontSize: "14px", fontWeight: 600, color: annual ? "var(--fg)" : "var(--muted-fg )" }}>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: annual ? "var(--fg)" : "var(--muted-fg)" }}>
               Annual
               <span style={{ marginLeft: "6px", padding: "2px 7px", background: "rgba(34,197,94,0.18)", color: "#22c55e", fontSize: "10px", borderRadius: "100px", fontWeight: 700 }}>Save 20%</span>
             </span>

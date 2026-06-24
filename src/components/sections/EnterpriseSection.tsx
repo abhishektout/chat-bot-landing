@@ -34,7 +34,7 @@ const codeLines = [
 
 export default function EnterpriseSection() {
   return (
-    <section id="enterprise" style={{ position: "relative", overflow: "hidden", padding: "50px 0", background: "rgba(79,124,255,0.02)" }}>
+    <section id="enterprise" style={{ position: "relative", overflow: "hidden", padding: "50px 0" }}>
       <div className="grid-bg" style={{ position: "absolute", inset: 0, opacity: 0.18 }} />
       <div style={{ position: "absolute", top: "50%", left: 0, transform: "translateY(-50%)", width: "450px", height: "450px", background: "rgba(79,124,255,0.05)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", top: "50%", right: 0, transform: "translateY(-50%)", width: "400px", height: "400px", background: "rgba(0,212,255,0.04)", borderRadius: "50%", filter: "blur(80px)", pointerEvents: "none" }} />
@@ -47,7 +47,7 @@ export default function EnterpriseSection() {
             Enterprise
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 56px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            Built for <span className="gradient-text">Enterprise Teams</span>
+            Advanced Features for <span className="gradient-text">Growing Businesses</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>
             Security, compliance, and control at enterprise scale — without the enterprise complexity.

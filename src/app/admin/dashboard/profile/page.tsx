@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  User, 
-  Mail, 
-  Shield, 
-  Key, 
-  Save, 
-  ShieldCheck, 
-  Lock, 
-  Activity, 
+import {
+  User,
+  Mail,
+  Shield,
+  Key,
+  Save,
+  ShieldCheck,
+  Lock,
+  Activity,
   Edit2,
   Eye,
   EyeOff
@@ -55,9 +55,9 @@ function OTPVerificationModal({ isOpen, onClose, onVerifySuccess }: OTPVerificat
           Please enter the 6-digit verification code sent to your email to confirm this password change.
         </p>
 
-        <Input 
-          label="OTP Code" 
-          name="otp" 
+        <Input
+          label="OTP Code"
+          name="otp"
           value={otp}
           onChange={(e) => {
             const val = e.target.value.replace(/\D/g, '');
@@ -67,27 +67,27 @@ function OTPVerificationModal({ isOpen, onClose, onVerifySuccess }: OTPVerificat
           placeholder="000000"
           error={error || undefined}
           maxLength={6}
-          style={{ 
-            textAlign: "center", 
-            fontFamily: "monospace", 
-            fontSize: "24px", 
+          style={{
+            textAlign: "center",
+            fontFamily: "monospace",
+            fontSize: "24px",
             letterSpacing: "0.2em",
-            fontWeight: 700 
+            fontWeight: 700
           }}
         />
 
         <div style={{ marginTop: "8px", textAlign: "center", fontSize: "12px", color: "var(--muted-fg)" }}>
           Didn't receive the code?{" "}
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={handleResend}
-            style={{ 
-              background: "transparent", 
-              border: "none", 
-              color: "var(--accent)", 
-              fontWeight: 700, 
-              cursor: "pointer", 
-              padding: 0 
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--accent)",
+              fontWeight: 700,
+              cursor: "pointer",
+              padding: 0
             }}
           >
             Resend OTP
@@ -95,16 +95,16 @@ function OTPVerificationModal({ isOpen, onClose, onVerifySuccess }: OTPVerificat
         </div>
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={onClose}
             style={{ padding: "10px 20px" }}
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             variant="primary"
             icon={<ShieldCheck style={{ width: "14px", height: "14px" }} />}
             style={{ padding: "10px 20px" }}
@@ -133,7 +133,7 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
     newPassword: '',
     confirmPassword: ''
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   const [showOld, setShowOld] = useState(false);
@@ -197,8 +197,8 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
     <Modal title="Change Account Password" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
       <form onSubmit={handleVerifyOTP} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         <div style={{ position: "relative" }}>
-          <Input 
-            label="Old Password" 
+          <Input
+            label="Old Password"
             type={showOld ? "text" : "password"}
             name="oldPassword"
             value={formData.oldPassword}
@@ -228,8 +228,8 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
         </div>
 
         <div style={{ position: "relative" }}>
-          <Input 
-            label="New Password" 
+          <Input
+            label="New Password"
             type={showNew ? "text" : "password"}
             name="newPassword"
             value={formData.newPassword}
@@ -257,7 +257,7 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
             {showNew ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
           </button>
         </div>
-        
+
         {formData.newPassword && (
           <div style={{
             padding: "16px",
@@ -272,42 +272,42 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
           }}>
             <p style={{ fontWeight: 800, margin: 0, color: "var(--fg)" }}>Password Requirements:</p>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ 
-                width: "6px", 
-                height: "6px", 
-                borderRadius: "50%", 
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
                 background: strengthChecks.length ? "#10b981" : "#ef4444",
-                display: "inline-block" 
+                display: "inline-block"
               }} />
               <span style={{ color: strengthChecks.length ? "var(--fg)" : "var(--muted-fg)" }}>At least 8 characters</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ 
-                width: "6px", 
-                height: "6px", 
-                borderRadius: "50%", 
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
                 background: strengthChecks.uppercase ? "#10b981" : "#ef4444",
-                display: "inline-block" 
+                display: "inline-block"
               }} />
               <span style={{ color: strengthChecks.uppercase ? "var(--fg)" : "var(--muted-fg)" }}>At least 1 uppercase letter</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ 
-                width: "6px", 
-                height: "6px", 
-                borderRadius: "50%", 
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
                 background: strengthChecks.number ? "#10b981" : "#ef4444",
-                display: "inline-block" 
+                display: "inline-block"
               }} />
               <span style={{ color: strengthChecks.number ? "var(--fg)" : "var(--muted-fg)" }}>At least 1 digit</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ 
-                width: "6px", 
-                height: "6px", 
-                borderRadius: "50%", 
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
                 background: strengthChecks.special ? "#10b981" : "#ef4444",
-                display: "inline-block" 
+                display: "inline-block"
               }} />
               <span style={{ color: strengthChecks.special ? "var(--fg)" : "var(--muted-fg)" }}>At least 1 special character</span>
             </div>
@@ -315,8 +315,8 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
         )}
 
         <div style={{ position: "relative" }}>
-          <Input 
-            label="Confirm New Password" 
+          <Input
+            label="Confirm New Password"
             type={showConfirm ? "text" : "password"}
             name="confirmPassword"
             value={formData.confirmPassword}
@@ -346,16 +346,16 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
         </div>
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={onClose}
             style={{ padding: "10px 20px" }}
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             variant="primary"
             icon={<Lock style={{ width: "14px", height: "14px" }} />}
             style={{ padding: "10px 20px" }}
@@ -378,7 +378,7 @@ export default function ProfilePage() {
 
   // Safe extraction of tenant info from Admin Dashboard context
   let tenantInfo: any = null;
-  let refreshTenantInfo = async () => {};
+  let refreshTenantInfo = async () => { };
   try {
     const context = useAdminDashboard();
     tenantInfo = context?.tenantInfo;
@@ -592,7 +592,7 @@ export default function ProfilePage() {
     setPhoneError('');
     setProfileData(prev => ({ ...prev, phone: phoneValue }));
     setIsEditingPhone(false);
-    
+
     try {
       localStorage.setItem("saas_profile_phone", phoneValue);
       if (tenantInfo && !isSuperAdmin && !isAgent) {
@@ -634,15 +634,11 @@ export default function ProfilePage() {
       {/* ── Page Header ── */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
         <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
-          User Profile Info
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            My <span className="gradient-text">Profile</span>
+          </h2>
         </span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          My <span className="gradient-text">Profile</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Manage your account credentials, view security tokens, and inspect system-assigned variables.
-        </p>
+
       </div>
 
 
@@ -652,7 +648,7 @@ export default function ProfilePage() {
         gridTemplateColumns: "1.75fr 1fr",
         gap: "32px",
       }} className="profile-grid">
-        
+
         {/* Left Column: Personal Information Card */}
         <div className="card" style={{ padding: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "28px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
@@ -679,22 +675,22 @@ export default function ProfilePage() {
               label="Email Address" 
               name="emailAddress" 
               type="email"
-              value={profileData.email} 
-              readOnly 
+              value={profileData.email}
+              readOnly
               style={{ opacity: 0.8, cursor: "not-allowed" }}
             />
 
             <div>
               {!isEditingPhone ? (
                 <div style={{ position: "relative" }}>
-                  <Input 
-                    label="Phone Number" 
-                    name="phoneNumber" 
-                    value={profileData.phone} 
+                  <Input
+                    label="Phone Number"
+                    name="phoneNumber"
+                    value={profileData.phone}
                     readOnly
                     style={{ opacity: 0.8 }}
                   />
-                  <span 
+                  <span
                     onClick={() => setIsEditingPhone(true)}
                     style={{
                       position: "absolute",
@@ -715,9 +711,9 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <form onSubmit={handlePhoneSave} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <Input 
-                    label="Phone Number" 
-                    name="phoneNumber" 
+                  <Input
+                    label="Phone Number"
+                    name="phoneNumber"
                     value={phoneValue}
                     onChange={(e) => setPhoneValue(e.target.value)}
                     error={phoneError || undefined}
@@ -725,18 +721,18 @@ export default function ProfilePage() {
                     autoFocus
                   />
                   <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       size="sm"
                       onClick={handlePhoneCancel}
                       style={{ padding: "8px 16px" }}
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      type="submit" 
-                      variant="primary" 
+                    <Button
+                      type="submit"
+                      variant="primary"
                       size="sm"
                       style={{ padding: "8px 16px" }}
                     >
@@ -748,10 +744,10 @@ export default function ProfilePage() {
             </div>
 
             {isSuperAdmin && (
-              <Input 
-                label="Department" 
-                value={profileData.department} 
-                readOnly 
+              <Input
+                label="Department"
+                value={profileData.department}
+                readOnly
                 style={{ opacity: 0.8, cursor: "not-allowed" }}
               />
             )}
@@ -759,32 +755,32 @@ export default function ProfilePage() {
             {(isAdmin || isAgent) && (
               <>
                 <div style={{ margin: "8px 0", borderTop: "1px solid var(--card-border)" }} />
-                
+
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-                  <Input 
-                    label="Company Name" 
-                    value={profileData.companyName} 
+                  <Input
+                    label="Company Name"
+                    value={profileData.companyName}
                     readOnly
                     style={{ opacity: 0.8, cursor: "not-allowed" }}
                   />
-                  <Input 
-                    label="Industry" 
-                    value={profileData.industry} 
+                  <Input
+                    label="Industry"
+                    value={profileData.industry}
                     readOnly
                     style={{ opacity: 0.8, cursor: "not-allowed" }}
                   />
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-                  <Input 
-                    label="Website" 
-                    value={profileData.website} 
+                  <Input
+                    label="Website"
+                    value={profileData.website}
                     readOnly
                     style={{ opacity: 0.8, cursor: "not-allowed" }}
                   />
-                  <Input 
-                    label="Subscription Plan" 
-                    value={profileData.planType} 
+                  <Input
+                    label="Subscription Plan"
+                    value={profileData.planType}
                     readOnly
                     style={{ opacity: 0.8, cursor: "not-allowed", color: "var(--accent)", fontWeight: 700 }}
                   />
@@ -804,14 +800,14 @@ export default function ProfilePage() {
               </div>
               <h4 style={{ fontSize: "16px", fontWeight: 800, color: "var(--fg)", margin: 0 }}>Security Settings</h4>
             </div>
-            
+
             <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, marginBottom: "24px" }}>
               Update your authentication credentials to secure your user account. Changing password requires email OTP validation.
             </p>
 
-            <Button 
-              type="button" 
-              variant="primary" 
+            <Button
+              type="button"
+              variant="primary"
               onClick={() => setIsPasswordModalOpen(true)}
               icon={<Lock style={{ width: "15px", height: "15px" }} />}
               style={{ width: "100%", justifyContent: "center", padding: "10px" }}
@@ -842,7 +838,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Change Password Modals Flow */}
-      <PasswordChangeModal 
+      <PasswordChangeModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
         onOpenOTP={() => {
@@ -851,7 +847,7 @@ export default function ProfilePage() {
         }}
       />
 
-      <OTPVerificationModal 
+      <OTPVerificationModal
         isOpen={isOTPModalOpen}
         onClose={() => setIsOTPModalOpen(false)}
         onVerifySuccess={handleVerifyPasswordChangeSuccess}

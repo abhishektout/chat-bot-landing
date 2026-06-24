@@ -283,7 +283,7 @@ export default function DemoSection() {
             Live Demo
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 54px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            See the Platform in <span className="gradient-text">Action</span>
+            See How <span className="gradient-text">Assistly Works</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)" }}>Interactive product mockups — no signup required.</p>
         </motion.div>

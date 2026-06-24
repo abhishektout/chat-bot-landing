@@ -132,13 +132,12 @@ export default function BotSettingsPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Header */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
-        <span className="badge" style={{ width: "fit-content" }}><Settings style={{ width: "12px", height: "12px" }} />Workspace Configuration</span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Bot &amp; Widget <span className="gradient-text">Settings</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Customize agent behavior, brand styles, and integrate the chat widget into your website.
-        </p>
+        <span className="badge" style={{ width: "fit-content" }}>
+          {/* <Settings style={{ width: "15px", height: "15px" }} /> */}
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Bot &amp; Widget <span className="gradient-text">Settings</span>
+          </h2>
+        </span>
       </div>
 
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -167,10 +166,10 @@ export default function BotSettingsPage() {
               <Key style={{ width: "16px", height: "16px", color: "var(--accent)" }} />
               Gemini API Key Allocation
             </div>
-            
+
             <div style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}>
               <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px", color: "var(--fg)", fontWeight: 600 }}>
-                <input type="radio" name="apiKeyType" value="ours" checked={formData.apiKeyType === 'ours'} onChange={handleChange} 
+                <input type="radio" name="apiKeyType" value="ours" checked={formData.apiKeyType === 'ours'} onChange={handleChange}
                   style={{ accentColor: "var(--accent)", width: "16px", height: "16px" }} />
                 Use Platform's Default Key
               </label>
@@ -275,7 +274,7 @@ export default function BotSettingsPage() {
               </p>
             </div>
             <div style={{ position: "relative", borderRadius: "14px", background: "#080e1a", border: "1px solid rgba(79,124,255,0.2)", padding: "20px 24px" }}>
-              <Button type="button" variant="primary" size="sm" onClick={handleCopyCode} icon={<Copy style={{ width: "13px", height: "13px" }} />} style={{ position: "absolute", top: "16px", right: "16px",padding: "10px 15px" } as React.CSSProperties}>Copy</Button>
+              <Button type="button" variant="primary" size="sm" onClick={handleCopyCode} icon={<Copy style={{ width: "13px", height: "13px" }} />} style={{ position: "absolute", top: "16px", right: "16px", padding: "10px 15px" } as React.CSSProperties}>Copy</Button>
               <pre style={{ overflowX: "auto", fontSize: "13px", fontFamily: "'Fira Code', monospace", color: "#4ade80", paddingRight: "80px", lineHeight: 1.7, margin: 0 }}>
                 {embedMethod === "script"
                   ? `<script\n  type="module"\n  src="https://bot.a4tool.com/widget-file"\n  data-api-key="${activeKey || "YOUR_API_KEY_HERE"}">\n</script>`

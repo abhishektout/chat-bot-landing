@@ -8,7 +8,7 @@ const problems = [
   { icon: RefreshCw, title: "Repetitive questions drain teams", description: "Support agents spend 70% of their time answering the same questions over and over.", stat: "70% repetitive tasks", color: "#f97316" },
   { icon: MoonStar, title: "Leads lost after hours", description: "Without 24/7 coverage, businesses lose 65% of potential customers who reach out at night.", stat: "65% leads lost", color: "#eab308" },
   { icon: Unplug, title: "Data is siloed and disconnected", description: "Support agents can't access order history, CRM data, or product info in real-time.", stat: "4+ systems to check", color: "#8b5cf6" },
-  { icon: TrendingUp, title: "Support costs keep rising", description: "Hiring more agents to handle volume is expensive and doesn't scale efficiently.", stat: "₹10,00,000+ per agent/year", color: "#ec4899" },
+  { icon: TrendingUp, title: "Support costs keep rising", description: "Hiring more agents to handle volume is expensive and doesn't scale efficiently.", stat: "$45,000+ per agent/year", color: "#ec4899" },
   { icon: Eye, title: "Conversations go unanalyzed", description: "Valuable insights hidden in thousands of conversations are never acted on.", stat: "98% conversations lost", color: "#06b6d4" },
 ];
 
@@ -38,8 +38,8 @@ export default function ProblemSection() {
             The Problem
           </span> */}
           <h2 style={{ fontSize: "clamp(32px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
-            Customer Support Is{" "}
-            <span className="gradient-text">Broken</span>
+            Common Customer Support{" "}
+            <span className="gradient-text">Challenges</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "560px", margin: "0 auto", lineHeight: 1.7 }}>
             Traditional customer support costs too much, moves too slow, and loses too many opportunities.

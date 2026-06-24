@@ -1,21 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Globe, FileText, Database, User, Sparkles, Target, Heart, BookOpen, Wifi, Palette, Mic, BarChart3, Cpu } from "lucide-react";
+import { Globe, FileText, HelpCircle, Database, User, Sparkles, Target, Heart, Wifi, Palette, Mic, BarChart3, Cpu } from "lucide-react";
 
 const features = [
-  { icon: Globe, title: "Website URL Training", description: "Paste a website URL and automatically train the AI on your entire website content in minutes.", color: "#4f7cff", tag: "Training" },
-  { icon: FileText, title: "PDF Knowledge Base", description: "Upload PDFs and instantly create an intelligent support assistant with deep document understanding.", color: "#00d4ff", tag: "Knowledge" },
-  { icon: Database, title: "Business Data Integration", description: "Connect PostgreSQL, MySQL, REST APIs, CRMs, and internal systems for real-time data access.", color: "#8b5cf6", tag: "Integration" },
-  { icon: User, title: "Human Takeover", description: "Escalate conversations to live agents instantly with full context and conversation history.", color: "#22c55e", tag: "Handoff" },
-  { icon: Sparkles, title: "AI Suggested Replies", description: "AI assists your human agents with intelligent response suggestions, boosting their productivity 3×.", color: "#f59e0b", tag: "AI Assist" },
-  { icon: Target, title: "Lead Capture AI", description: "Automatically identify and capture customer information and sales opportunities 24/7.", color: "#ec4899", tag: "Revenue" },
-  { icon: Heart, title: "AI Sentiment Detection", description: "Detect frustrated or angry customers in real-time and trigger automatic human intervention.", color: "#ef4444", tag: "Smart Routing" },
-  { icon: BookOpen, title: "Training Suggestions", description: "Identify unanswered questions and get AI-powered suggestions to continuously improve accuracy.", color: "#06b6d4", tag: "Improvement" },
-  { icon: Wifi, title: "Multi-Channel Support", description: "Deploy across Website, WhatsApp, Facebook, Instagram, and Telegram from a single dashboard.", color: "#10b981", tag: "Omnichannel" },
-  { icon: Palette, title: "White Label Platform", description: "Custom branding, domains, colors, CSS, and HTML templates — sell it as your own product.", color: "#6366f1", tag: "White Label" },
+  { icon: Globe, title: "Website Training", description: "Paste a website URL and automatically train the AI on your entire website content in minutes.", color: "#4f7cff", tag: "Training" },
+  { icon: FileText, title: "PDF Training", description: "Upload PDFs and instantly create an intelligent support assistant with deep document understanding.", color: "#00d4ff", tag: "Knowledge" },
+  { icon: HelpCircle, title: "FAQ Training", description: "Train your AI on structured Q&As, existing FAQs, and automatically suggest solutions for unanswered questions.", color: "#06b6d4", tag: "FAQs" },
+  { icon: Database, title: "Database Integration", description: "Connect PostgreSQL, MySQL, REST APIs, CRMs, and internal systems for real-time customer data access.", color: "#8b5cf6", tag: "Integration" },
+  { icon: User, title: "Human Takeover", description: "Escalate complex conversations to live agents instantly with full context and conversation history.", color: "#22c55e", tag: "Handoff" },
+  { icon: Sparkles, title: "AI Suggested Replies", description: "AI assists your human agents with intelligent response suggestions, boosting productivity 3×.", color: "#f59e0b", tag: "AI Assist" },
+  { icon: Target, title: "Lead Capture", description: "Automatically identify and capture customer contact information and sales opportunities 24/7.", color: "#ec4899", tag: "Revenue" },
+  { icon: Heart, title: "Sentiment Detection", description: "Detect frustrated or angry customers in real-time and trigger automatic human intervention.", color: "#ef4444", tag: "Routing" },
+  { icon: Wifi, title: "Multi Channel Support", description: "Deploy across Website, WhatsApp, Facebook, Instagram, and Telegram from a single dashboard.", color: "#10b981", tag: "Omnichannel" },
+  { icon: Palette, title: "White Label", description: "Custom branding, domains, colors, CSS, and HTML templates — sell the platform as your own product.", color: "#6366f1", tag: "Agency" },
   { icon: Mic, title: "Voice Agent", description: "Enable natural voice conversations with AI for phone support and voice-first interfaces.", color: "#d946ef", tag: "Voice" },
-  { icon: BarChart3, title: "AI Business Insights", description: "Discover customer trends, identify missing knowledge, and uncover hidden revenue opportunities.", color: "#f97316", tag: "Analytics" },
+  { icon: BarChart3, title: "Business Insights", description: "Discover customer trends, identify missing knowledge, and uncover hidden revenue opportunities.", color: "#f97316", tag: "Analytics" },
 ];
 
 export default function FeaturesSection() {
@@ -37,8 +37,8 @@ export default function FeaturesSection() {
             Platform Features
           </span> */}
           <h2 style={{ fontSize: "clamp(32px, 5vw, 58px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "20px" }}>
-            Everything You Need to<br />
-            <span className="gradient-text">Automate Support</span>
+            Everything You Need in<br />
+            <span className="gradient-text">One Platform</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)", maxWidth: "540px", margin: "0 auto", lineHeight: 1.7 }}>
             12 powerful capabilities working together to deliver exceptional customer experiences at scale.

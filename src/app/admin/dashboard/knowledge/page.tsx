@@ -34,7 +34,7 @@ export default function KnowledgeBasePage() {
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const fetchDocuments = async () => {
@@ -207,13 +207,12 @@ export default function KnowledgeBasePage() {
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {/* Header */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
-        <span className="badge" style={{ width: "fit-content" }}><BookOpen style={{ width: "12px", height: "12px" }} />Intelligence Center</span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Knowledge <span className="gradient-text">Base</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Train your AI agent with business manuals and custom FAQs to respond to customers accurately.
-        </p>
+        <span className="badge" style={{ width: "fit-content" }}>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Knowledge <span className="gradient-text">Base</span>
+          </h2>
+        </span>
+
       </div>
 
       {/* Main Grid Wrapper */}

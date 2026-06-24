@@ -353,17 +353,16 @@ export default function ChatLogsPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px", height: "calc(100vh - 140px)" }}>
       {/* Header */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0, alignItems: "flex-start" }}>
-        <span className="badge" style={{ width: "fit-content" }}><MessageSquare style={{ width: "12px", height: "12px" }} />Workspace Conversations</span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Live Chat <span className="gradient-text">Stream Logs</span>
-        </h2>
-        <p style={{ fontSize: "13px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Monitor conversations, analyze AI responses, and takeover active sessions when needed.
-        </p>
+        <span className="badge" style={{ width: "fit-content" }}>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Live Chat <span className="gradient-text">Stream Logs</span>
+          </h2>
+        </span>
+
       </div>
 
       {/* Main Panel */}
-      <div style={{ display: "flex", gap: "10px", flex: 1, minHeight: 0, overflow: "hidden", paddingTop:"10px" }}>
+      <div style={{ display: "flex", gap: "10px", flex: 1, minHeight: 0, overflow: "hidden", paddingTop: "10px" }}>
         {/* Session Sidebar */}
         <div className="card" style={{
           width: "340px", flexShrink: 0, padding: "16px",
@@ -533,7 +532,7 @@ export default function ChatLogsPage() {
                     for (let k of keys) {
                       const lk = k.toLowerCase();
                       const val = (msg as any)[k];
-                      
+
                       if (["role", "sender", "type", "author", "source", "from", "sender_type"].includes(lk)) {
                         const strVal = String(val).toLowerCase();
                         if (["agent", "bot", "ai", "admin", "support", "assistant", "system"].some(r => strVal.includes(r))) {
@@ -544,7 +543,7 @@ export default function ChatLogsPage() {
                           displayRole = displayRole || strVal;
                         }
                       }
-                      
+
                       if (["is_user", "from_user", "is_customer"].includes(lk) && (val === true || val === 1 || val === "1" || val === "true")) {
                         isUser = true;
                         displayRole = displayRole || "user";

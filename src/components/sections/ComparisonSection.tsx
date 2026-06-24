@@ -39,7 +39,7 @@ export default function ComparisonSection() {
             Comparison
           </span> */}
           <h2 style={{ fontSize: "clamp(30px, 5vw, 54px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", marginTop: "12px", marginBottom: "18px" }}>
-            Why Businesses <span className="gradient-text">Choose Us</span>
+            Why  <span className="gradient-text">Choose Assistly?</span>
           </h2>
           <p style={{ fontSize: "18px", color: "var(--muted-fg)" }}>See how Assistly stacks up against the competition.</p>
         </motion.div>
