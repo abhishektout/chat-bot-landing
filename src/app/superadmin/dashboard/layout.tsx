@@ -36,11 +36,11 @@ export default function SuperAdminDashboardLayout({ children }: { children: Reac
 
   useEffect(() => {
     setMounted(true);
-    const token = localStorage.getItem("sa_token");
+    const token = localStorage.getItem("sa_token") || localStorage.getItem("saas_superadmin_token");
     const name = localStorage.getItem("sa_name");
 
     if (!token) {
-      router.push("/signin");
+      router.push("/superadmin/signin");
       return;
     }
 
@@ -65,8 +65,9 @@ export default function SuperAdminDashboardLayout({ children }: { children: Reac
 
   const handleLogout = () => {
     localStorage.removeItem("sa_token");
+    localStorage.removeItem("saas_superadmin_token");
     localStorage.removeItem("sa_name");
-    router.push("/signin");
+    router.push("/superadmin/signin");
   };
 
   const toggleCollapse = () => {

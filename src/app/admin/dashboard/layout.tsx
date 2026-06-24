@@ -162,6 +162,21 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     fetchTenantInfo(storedToken);
   }, []);
 
+  useEffect(() => {
+    if (!isLoading && role === "agent") {
+      const allowedPaths = [
+        "/admin/dashboard/overview",
+        "/admin/dashboard/history",
+        "/admin/dashboard/profile"
+      ];
+      const isAllowed = allowedPaths.some(path => pathname === path || pathname.startsWith(path + "/"));
+      if (!isAllowed) {
+        showToast("error", "Access Denied", "Support agents are only permitted to view Dashboard, Chat Logs, and Profile.");
+        router.push("/admin/dashboard/overview");
+      }
+    }
+  }, [role, pathname, isLoading, router]);
+
   const handleLogout = () => {
     localStorage.removeItem("saas_client_token");
     localStorage.removeItem("saas_user_role");
@@ -224,8 +239,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   const rawName = mounted ? localStorage.getItem("saas_agent_name") : "";
   const storedUserName = (rawName && rawName !== "Test Agent") ? rawName : "Nitesh Bagora";
 
-  // Sidebar links (Show all links to both admins and agents as requested)
-  const navLinks = [
+  // Sidebar links (Show all links to admins, and only Dashboard, Chat Logs, and Profile to support agents)
+  const allLinks = [
     { href: "/admin/dashboard/overview", label: "Dashboard", icon: BarChart3, color: "var(--accent)" },
     { href: "/admin/dashboard/settings", label: "Bot Settings", icon: Settings, color: "var(--accent)" },
     { href: "/admin/dashboard/knowledge", label: "Knowledge Base", icon: BookOpen, color: "var(--accent)" },
@@ -234,6 +249,14 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     { href: "/admin/dashboard/history", label: "Chat Logs", icon: MessageSquare, color: "var(--accent)" },
     { href: "/admin/dashboard/profile", label: "My Profile", icon: User, color: "var(--accent)" },
   ];
+
+  const navLinks = role === "agent"
+    ? allLinks.filter(link =>
+        link.href === "/admin/dashboard/overview" ||
+        link.href === "/admin/dashboard/history" ||
+        link.href === "/admin/dashboard/profile"
+      )
+    : allLinks;
 
   return (
     <AdminDashboardContext.Provider value={{ tenantInfo, isLoading, role, agentName, refreshTenantInfo }}>

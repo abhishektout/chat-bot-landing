@@ -34,7 +34,7 @@ export default function DeletedAccountsPage() {
     setIsLoading(true);
     try {
       const data = await superAdminService.getDeletedClients();
-      setDeletedClients(data.deleted_clients || []);
+      setDeletedClients(data.clients || data.deleted_clients || []);
     } catch (e) {
       console.error(e);
       showToast("error", "Sync Error", "Failed to retrieve archives list.");
@@ -67,31 +67,32 @@ export default function DeletedAccountsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      {/* ── Page Header ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge" style={{ marginBottom: "4px", width: "fit-content", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.06)" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
-          Archived Workspace Records
-        </span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Archived <span className="gradient-text" style={{ background: "linear-gradient(135deg, #f43f5e, #e11d48)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Tenants</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Review historical metadata or recover suspended client organizations back to active operations.
-        </p>
-      </div>
+      {/* ── Page Header & Action Bar ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "20px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: "280px" }}>
+          <span className="badge" style={{ marginBottom: "4px", width: "fit-content", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.06)" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
+            Archived Workspace Records
+          </span>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Archived <span className="gradient-text" style={{ background: "linear-gradient(135deg, #f43f5e, #e11d48)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Tenants</span>
+          </h2>
+          <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
+            Review historical metadata or recover suspended client organizations back to active operations.
+          </p>
+        </div>
 
-      {/* ── Top Actions ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-        <Button
-          variant="outline"
-          onClick={fetchDeletedClients}
-          isLoading={isLoading}
-          icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
-          style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
-        >
-          Sync Archive
-        </Button>
+        <div style={{ display: "flex", alignItems: "center", paddingBottom: "4px" }}>
+          <Button
+            variant="outline"
+            onClick={fetchDeletedClients}
+            isLoading={isLoading}
+            icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
+            style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
+          >
+            Sync Archive
+          </Button>
+        </div>
       </div>
 
       {/* Archive History Table */}

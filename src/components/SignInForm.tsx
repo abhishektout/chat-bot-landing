@@ -159,6 +159,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
           localStorage.setItem("saas_user_role", data.role || "agent");
           localStorage.setItem("saas_agent_id", data.agent_id);
           localStorage.setItem("saas_agent_name", data.name);
+          localStorage.setItem("saas_agent_email", email.trim());
 
           showToast("success", "Welcome Back", `Successfully logged in as ${data.name}.`);
           router.push("/admin/dashboard");
@@ -710,6 +711,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
                           localStorage.setItem("saas_user_role", "agent");
                           localStorage.setItem("saas_agent_id", "test_agent_id");
                           localStorage.setItem("saas_agent_name", "Test Agent");
+                          localStorage.setItem("saas_agent_email", "support.agent@company.com");
                           showToast("success", "Bypass Successful", "Logged in as Team Member (Testing)");
                           router.push("/admin/dashboard");
                         }}
