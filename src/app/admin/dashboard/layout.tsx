@@ -74,6 +74,133 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Frontend Notification Management State
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: "1",
+      title: "Human Takeover Requested",
+      description: "Web Visitor in session sess_1601vp17t needs support.",
+      time: "2 mins ago",
+      read: false,
+      type: "takeover",
+      role: "all",
+      sessionId: "sess_1601vp17t"
+    },
+    {
+      id: "2",
+      title: "New Team Member Registered",
+      description: "Agent 'Nitesh Bagora' has been added to the workspace.",
+      time: "1 hour ago",
+      read: false,
+      type: "admin_alert",
+      role: "client_admin",
+    },
+    {
+      id: "3",
+      title: "Database Connection Active",
+      description: "Synchronized tables: products, support_articles.",
+      time: "2 hours ago",
+      read: true,
+      type: "system",
+      role: "client_admin",
+    }
+  ]);
+
+  const filteredNotifications = notifications.filter(n => {
+    if (n.role === "all") return true;
+    if (n.role === "client_admin" && role === "client_admin") return true;
+    return false;
+  });
+
+  const unreadCount = filteredNotifications.filter(n => !n.read).length;
+
+  const handleMarkAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const handleMarkRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const renderDropdown = () => (
+    <div style={{
+      position: "absolute",
+      top: "100%",
+      right: 0,
+      marginTop: "8px",
+      width: "320px",
+      background: "var(--card-bg)",
+      border: "1px solid var(--card-border)",
+      borderRadius: "16px",
+      boxShadow: "0 10px 30px var(--shadow)",
+      zIndex: 100,
+      overflow: "hidden",
+      textAlign: "left",
+    }}>
+      <div style={{
+        padding: "16px",
+        borderBottom: "1px solid var(--card-border)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}>
+        <span style={{ fontWeight: 800, fontSize: "14px", color: "var(--fg)" }}>Notifications</span>
+        {unreadCount > 0 && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleMarkAllRead(); }}
+            style={{
+              background: "none", border: "none", color: "var(--accent)", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: 0
+            }}
+          >
+            Mark all read
+          </button>
+        )}
+      </div>
+      <div style={{ maxHeight: "280px", overflowY: "auto" }}>
+        {filteredNotifications.length === 0 ? (
+          <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--muted-fg)", fontSize: "13px" }}>
+            All caught up! No notifications.
+          </div>
+        ) : (
+          filteredNotifications.map(n => (
+            <div 
+              key={n.id} 
+              onClick={() => {
+                handleMarkRead(n.id);
+                setIsNotifOpen(false);
+                if (n.sessionId) {
+                  router.push("/admin/dashboard/history");
+                }
+              }}
+              style={{
+                padding: "12px 16px",
+                borderBottom: "1px solid var(--card-border)",
+                background: n.read ? "transparent" : "var(--muted-bg)",
+                cursor: "pointer",
+                transition: "background 0.2s",
+                position: "relative",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--muted-bg)"}
+              onMouseLeave={e => e.currentTarget.style.background = n.read ? "transparent" : n.read ? "transparent" : "var(--muted-bg)"}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", paddingLeft: n.read ? "0" : "8px" }}>
+                {!n.read && (
+                  <span style={{
+                    position: "absolute", left: "8px", top: "18px", width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)"
+                  }} />
+                )}
+                <span style={{ fontSize: "12.5px", fontWeight: 700, color: "var(--fg)" }}>{n.title}</span>
+                <span style={{ fontSize: "11px", color: "var(--muted-fg)", lineHeight: 1.4 }}>{n.description}</span>
+                <span style={{ fontSize: "9px", color: "var(--muted-fg)", marginTop: "4px", fontWeight: 600 }}>{n.time}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   useEffect(() => {
     setMounted(true);
     const val = localStorage.getItem("saas_sidebar_collapsed");
@@ -161,6 +288,113 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     setAgentName(storedAgentName);
     fetchTenantInfo(storedToken);
   }, []);
+
+  // Real-time WebSocket connection and Background Polling fallback for Notifications
+  useEffect(() => {
+    if (!token) return;
+
+    // 1. Build WebSocket URL from BASE_API
+    const baseApiUrl = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+    const wsProto = baseApiUrl.startsWith("https") ? "wss" : "ws";
+    const wsHost = baseApiUrl.replace(/^https?:\/\//, "");
+    const wsUrl = `${wsProto}://${wsHost}/ws/notifications?token=${token}`;
+
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: any = null;
+
+    const connectWebSocket = () => {
+      try {
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+          console.log("Admin notification WebSocket connected.");
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data && data.type === "notification") {
+              const newNotif = {
+                id: data.id || String(Date.now()),
+                title: data.title || "New Update",
+                description: data.description || "",
+                time: "Just now",
+                read: false,
+                type: data.notif_type || "takeover",
+                role: data.role || "all",
+                sessionId: data.sessionId || undefined,
+              };
+
+              setNotifications(prev => {
+                if (prev.some(n => n.id === newNotif.id)) return prev;
+                return [newNotif, ...prev];
+              });
+
+              showToast("info", newNotif.title, newNotif.description);
+            }
+          } catch (err) {
+            console.error("Failed to parse websocket message", err);
+          }
+        };
+
+        socket.onclose = () => {
+          console.warn("WebSocket closed. Attempting reconnect in 5s...");
+          reconnectTimeout = setTimeout(connectWebSocket, 5000);
+        };
+
+        socket.onerror = (err) => {
+          console.error("WebSocket error:", err);
+          socket?.close();
+        };
+      } catch (e) {
+        console.error("WebSocket connection failed", e);
+      }
+    };
+
+    connectWebSocket();
+
+    // 2. Polling Fallback (Checks every 10 seconds for new human takeover sessions)
+    const checkForNewTakeovers = async () => {
+      try {
+        const data = await adminService.getLiveSessions();
+        const sessionsList = Array.isArray(data) ? data : (data.sessions || data.data || []);
+        
+        sessionsList.forEach((sess: any) => {
+          const sId = sess.id || sess.session_id;
+          if (sess.human_takeover) {
+            setNotifications(prev => {
+              const hasNotif = prev.some(n => n.sessionId === sId && n.type === "takeover");
+              if (!hasNotif) {
+                const newNotif = {
+                  id: `takeover_${sId}`,
+                  title: "Human Takeover Active",
+                  description: `Web Visitor in session ${sId} has requested assistance.`,
+                  time: "Just now",
+                  read: false,
+                  type: "takeover" as const,
+                  role: "all",
+                  sessionId: sId
+                };
+                showToast("info", newNotif.title, newNotif.description);
+                return [newNotif, ...prev];
+              }
+              return prev;
+            });
+          }
+        });
+      } catch (err) {
+        // Silently fail polling
+      }
+    };
+
+    const interval = setInterval(checkForNewTakeovers, 10000);
+
+    return () => {
+      if (socket) socket.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      clearInterval(interval);
+    };
+  }, [token, role]);
 
   const handleLogout = () => {
     localStorage.removeItem("saas_client_token");
@@ -300,32 +534,52 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           </div>
 
           {/* Right Side of Mobile Top Bar: Notifications + Theme Toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative" }}>
             {/* Notification Icon */}
-            <button style={{
-              background: "none",
-              border: "none",
-              color: "var(--muted-fg)",
-              cursor: "pointer",
-              padding: "6px",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-            }}>
+            <button 
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              style={{
+                background: "none",
+                border: "none",
+                color: isNotifOpen ? "var(--fg)" : "var(--muted-fg)",
+                cursor: "pointer",
+                padding: "6px",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+              }}
+            >
               <Bell style={{ width: "18px", height: "18px" }} />
-              <span style={{
-                position: "absolute",
-                top: "4px",
-                right: "4px",
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "#ef4444",
-                border: "1.5px solid var(--bg)"
-              }} />
+              {unreadCount > 0 && (
+                <span style={{
+                  position: "absolute",
+                  top: "4px",
+                  right: "4px",
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: "#ef4444",
+                  border: "1.5px solid var(--bg)"
+                }} />
+              )}
             </button>
+
+            {isNotifOpen && (
+              <>
+                <div 
+                  onClick={() => setIsNotifOpen(false)}
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 99,
+                    background: "transparent",
+                  }}
+                />
+                {renderDropdown()}
+              </>
+            )}
 
             {/* Theme Toggle */}
             <button
@@ -793,42 +1047,65 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             </div>
 
             {/* Right Side: Notification Icon + Theme Toggle */}
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative" }}>
               {/* Notification Icon */}
-              <button style={{
-                background: "none",
-                border: "none",
-                color: "var(--muted-fg)",
-                cursor: "pointer",
-                padding: "8px",
-                borderRadius: "10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.color = "var(--fg)";
-                e.currentTarget.style.backgroundColor = "var(--muted-bg)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color = "var(--muted-fg)";
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
+              <button 
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: isNotifOpen ? "var(--fg)" : "var(--muted-fg)",
+                  cursor: "pointer",
+                  padding: "8px",
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => {
+                  if (!isNotifOpen) {
+                    e.currentTarget.style.color = "var(--fg)";
+                    e.currentTarget.style.backgroundColor = "var(--muted-bg)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isNotifOpen) {
+                    e.currentTarget.style.color = "var(--muted-fg)";
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }
+                }}
               >
                 <Bell style={{ width: "18px", height: "18px" }} />
-                <span style={{
-                  position: "absolute",
-                  top: "6px",
-                  right: "6px",
-                  width: "7px",
-                  height: "7px",
-                  borderRadius: "50%",
-                  background: "#ef4444",
-                  border: "1.5px solid var(--bg)"
-                }} />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: "absolute",
+                    top: "6px",
+                    right: "6px",
+                    width: "7px",
+                    height: "7px",
+                    borderRadius: "50%",
+                    background: "#ef4444",
+                    border: "1.5px solid var(--bg)"
+                  }} />
+                )}
               </button>
+
+              {isNotifOpen && (
+                <>
+                  <div 
+                    onClick={() => setIsNotifOpen(false)}
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 99,
+                      background: "transparent",
+                    }}
+                  />
+                  {renderDropdown()}
+                </>
+              )}
 
               {/* Theme Toggle */}
               <button
