@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Users, MessageSquare, ArrowUpRight, RefreshCw, Calendar, Sparkles, TrendingUp } from "lucide-react";
+import { Users, MessageSquare, ArrowUpRight, RefreshCw, Calendar, Sparkles, TrendingUp, Bot, User } from "lucide-react";
 import { Card, Badge, Button, Skeleton } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
 
@@ -347,6 +347,11 @@ export default function DashboardOverviewPage() {
                   const agentNameText = session.human_takeover
                     ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
                     : "AI Copilot Autopilot";
+                  
+                  // Determine if session was active in the last 5 minutes
+                  const lastActiveTime = new Date(session.last_active || session.created_at || Date.now()).getTime();
+                  const isActiveRecently = (Date.now() - lastActiveTime) < 5 * 60 * 1000;
+
                   return (
                     <tr
                       key={session.id || session.session_id || idx}
@@ -359,9 +364,19 @@ export default function DashboardOverviewPage() {
                     >
                       <td style={{ padding: "16px 24px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                          <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                            {session.visitor_name || (session as any).client_name || session.user_name || "Web Visitor"}
-                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {isActiveRecently && (
+                              <span className="relative flex h-2 w-2 flex-shrink-0" title="Active recently">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                              </span>
+                            )}
+                            <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
+                              {session.human_takeover
+                                ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
+                                : (session.user_name || "Anonymous Session")}
+                            </span>
+                          </div>
                           <span style={{ fontSize: "10px", color: "var(--muted-fg)", fontFamily: "monospace" }}>
                             {session.id || session.session_id || "Unknown"}
                           </span>
@@ -375,9 +390,13 @@ export default function DashboardOverviewPage() {
                       </td>
                       <td style={{ padding: "16px" }}>
                         {session.human_takeover ? (
-                          <Badge variant="warning" style={{ padding: "4px" }}>Live Agent</Badge>
+                          <Badge variant="warning" style={{ padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px" } as React.CSSProperties}>
+                            <User style={{ width: "11px", height: "11px" }} /> Live Agent
+                          </Badge>
                         ) : (
-                          <Badge variant="success" style={{ padding: "4px" }}>AI Autopilot</Badge>
+                          <Badge variant="success" style={{ padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px" } as React.CSSProperties}>
+                            <Bot style={{ width: "11px", height: "11px" }} /> AI Autopilot
+                          </Badge>
                         )}
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
