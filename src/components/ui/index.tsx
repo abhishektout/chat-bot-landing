@@ -395,14 +395,16 @@ export const Modal = ({ isOpen, onClose, title, children, footer, maxWidthClass 
         style={{ padding: "28px" }}
       >
         {/* Header */}
-        <div className="flex justify-between items-center pb-4 border-b border-[var(--card-border)]">
+        {/* <div className="flex justify-between items-center pb-4 border-b border-[var(--card-border)]">
           <h3 className="text-xl font-bold text-[var(--fg)]">{title}</h3>
-          <button
-            onClick={onClose}
-            className="text-[var(--muted-fg)] hover:text-[var(--fg)] p-1.5 hover:bg-[var(--muted-bg)] rounded-lg transition-all"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        </div> */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+          <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
+            <h4 style={{ fontSize: "clamp(12px,1.5vw,16px)", fontWeight: 900, letterSpacing: "0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+              Change <span className="gradient-text">Account Password</span>
+            </h4>
+          </span>
+
         </div>
 
         {/* Content */}
@@ -446,7 +448,7 @@ export const ConfirmModal = ({
   return (
     <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-[var(--card-bg)] rounded-3xl w-full max-w-[360px] p-7 shadow-2xl border border-[var(--card-border)] flex flex-col items-center text-center relative animate-in zoom-in-95 duration-300"
-        style={{padding: "28px", gap:"10px" }}
+        style={{ padding: "28px", gap: "10px" }}
       >
         <button
           onClick={onClose}

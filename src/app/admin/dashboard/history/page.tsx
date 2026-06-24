@@ -27,7 +27,7 @@ interface ChatMessage {
 
 const formatMessageText = (text: string) => {
   if (!text) return "";
-  
+
   const lines = text.split("\n");
   const resultElements: React.ReactNode[] = [];
 
@@ -44,7 +44,7 @@ const formatMessageText = (text: string) => {
   lines.forEach((line, index) => {
     const trimmed = line.trim();
     const isBullet = trimmed.startsWith("* ") || trimmed.startsWith("- ") || /^\*\s+/.test(trimmed) || /^-\s+/.test(trimmed);
-    
+
     if (isBullet) {
       const content = trimmed.replace(/^\*\s+|^-\s+/, "");
       resultElements.push(
@@ -102,7 +102,7 @@ export default function ChatLogsPage() {
 
   const isTakeoverOwner = (() => {
     if (!selectedSession || !selectedSession.human_takeover) return false;
-    
+
     const takenBy = selectedSession.agent_name;
     if (!takenBy) {
       // Fallback to localStorage if backend is offline / doesn't provide agent_name
@@ -112,7 +112,7 @@ export default function ChatLogsPage() {
     }
 
     const cleanTakenBy = takenBy.trim().toLowerCase();
-    
+
     if (currentRole === "agent") {
       return currentAgentName && cleanTakenBy === currentAgentName.trim().toLowerCase();
     } else {
@@ -157,15 +157,15 @@ export default function ChatLogsPage() {
       sessionsList = sessionsList.map(s => {
         const sId = s.id || s.session_id;
         if (sId && currentDeduced[sId] !== undefined) {
-          return { 
-            ...s, 
-            human_takeover: currentDeduced[sId].human_takeover, 
-            agent_name: currentDeduced[sId].agent_name 
+          return {
+            ...s,
+            human_takeover: currentDeduced[sId].human_takeover,
+            agent_name: currentDeduced[sId].agent_name
           };
         }
         if (sId && localStates[sId] !== undefined) {
-          return { 
-            ...s, 
+          return {
+            ...s,
             human_takeover: localStates[sId],
             agent_name: localStates[sId] ? (localAgents[sId] || s.agent_name || "Human Support") : ""
           };
@@ -195,7 +195,7 @@ export default function ChatLogsPage() {
         const text = msg.message || msg.content || msg.text || "";
         return text.trim() !== "";
       });
-      
+
       setChats(validChats);
 
       // Deduce human takeover state and owner from the chat message history
@@ -206,7 +206,7 @@ export default function ChatLogsPage() {
         const msg = validChats[i];
         const text = msg.message || msg.content || msg.text || "";
         const plainText = text.replace(/<[^>]+>/g, "").trim();
-        
+
         if (/took over the conversation|has taken over the chat|joined the chat|joined the conversation/i.test(plainText)) {
           deducedTakeover = true;
           const match = plainText.match(/(?:👤|User)?\s*(?:Admin|Agent)?\s*(.*?)\s+(?:has taken over|joined|took over)/i);
@@ -259,7 +259,7 @@ export default function ChatLogsPage() {
       }));
       // Only update if chats actually changed (avoids resetting scroll position unnecessarily)
       setChats(prev => {
-        const isSame = prev.length === validChats.length && 
+        const isSame = prev.length === validChats.length &&
           prev.every((msg, idx) => {
             const prevText = msg.message || msg.content || msg.text || "";
             const nextText = validChats[idx].message || validChats[idx].content || validChats[idx].text || "";
@@ -348,7 +348,7 @@ export default function ChatLogsPage() {
 
       await adminService.takeoverSession(sId);
       const isNowHuman = !selectedSession.human_takeover;
-      
+
       const takerName = isNowHuman
         ? (currentRole === "agent"
           ? (currentAgentName || "Human Support")
@@ -368,13 +368,13 @@ export default function ChatLogsPage() {
 
       showToast("success", isNowHuman ? "Takeover Activated" : "AI Restored", isNowHuman ? "You have taken over this chat." : "AI has resumed control.");
       setSelectedSession(prev => prev ? { ...prev, human_takeover: isNowHuman, agent_name: takerName } : null);
-      
+
       // Optimistically update sessions list
       setSessions(prev => prev.map(s => (s.id || s.session_id) === sId ? { ...s, human_takeover: isNowHuman, agent_name: takerName } : s));
 
       // Send a system takeover/resume notification message to the conversation
-      const notificationMsg = isNowHuman 
-        ? `👤 ${currentRole === "agent" ? "Agent" : "Admin"} ${takerName} has taken over the chat.` 
+      const notificationMsg = isNowHuman
+        ? `👤 ${currentRole === "agent" ? "Agent" : "Admin"} ${takerName} has taken over the chat.`
         : "🤖 The AI has resumed control of the chat.";
       try {
         await adminService.sendChatMessage(sId, notificationMsg);
@@ -436,7 +436,7 @@ export default function ChatLogsPage() {
                 const sId = session.id || session.session_id || "";
                 const isSelected = selectedSession && (selectedSession.id || selectedSession.session_id) === sId;
                 const isSessionAdmin = session.agent_name?.toLowerCase().includes("admin") || session.agent_name?.toLowerCase().includes("workspace");
-                
+
                 // Determine if session was active in the last 5 minutes
                 const lastActiveTime = new Date(session.last_active || session.created_at || Date.now()).getTime();
                 const isActiveRecently = (Date.now() - lastActiveTime) < 5 * 60 * 1000;
@@ -543,7 +543,7 @@ export default function ChatLogsPage() {
                     Auditing: {selectedSession.visitor_name || (selectedSession as any).client_name || selectedSession.user_name || "Web Visitor"} ({selectedSession.id || selectedSession.session_id})
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px" , padding: "4px"} as React.CSSProperties}>
+                    <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px", padding: "4px" } as React.CSSProperties}>
                       {selectedSession.human_takeover ? "Live Agent" : "AI Autopilot"}
                     </Badge>
                     {selectedSession.human_takeover && (
@@ -559,14 +559,14 @@ export default function ChatLogsPage() {
                   onClick={handleTakeover}
                   disabled={selectedSession.human_takeover && !isTakeoverOwner}
                   icon={selectedSession.human_takeover && !isTakeoverOwner ? <Lock style={{ width: "14px", height: "14px" }} /> : <Zap style={{ width: "14px", height: "14px" }} />}
-                  style={{ 
-                    fontSize: "12px", 
-                    padding: "10px 20px", 
-                    cursor: selectedSession.human_takeover && !isTakeoverOwner ? "not-allowed" : "pointer" 
+                  style={{
+                    fontSize: "12px",
+                    padding: "10px 20px",
+                    cursor: selectedSession.human_takeover && !isTakeoverOwner ? "not-allowed" : "pointer"
                   } as React.CSSProperties}
                 >
-                  {selectedSession.human_takeover 
-                    ? (isTakeoverOwner ? "Return Control to AI" : `Locked by ${selectedSession.agent_name || "Agent"}`) 
+                  {selectedSession.human_takeover
+                    ? (isTakeoverOwner ? "Return Control to AI" : `Locked by ${selectedSession.agent_name || "Agent"}`)
                     : "Take Over Stream"}
                 </Button>
               </div>
@@ -684,21 +684,21 @@ export default function ChatLogsPage() {
                         <div style={{
                           width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          background: isUser 
-                            ? "var(--accent)" 
-                            : isAgent 
-                            ? "rgba(16, 185, 129, 0.15)" 
-                            : "var(--card-bg)",
-                          color: isUser 
-                            ? "#fff" 
-                            : isAgent 
-                            ? "#10b981" 
-                            : "var(--accent)",
-                          border: isUser 
-                            ? "none" 
-                            : isAgent 
-                            ? "1px solid rgba(16, 185, 129, 0.3)" 
-                            : "1px solid var(--card-border)",
+                          background: isUser
+                            ? "var(--accent)"
+                            : isAgent
+                              ? "rgba(16, 185, 129, 0.15)"
+                              : "var(--card-bg)",
+                          color: isUser
+                            ? "#fff"
+                            : isAgent
+                              ? "#10b981"
+                              : "var(--accent)",
+                          border: isUser
+                            ? "none"
+                            : isAgent
+                              ? "1px solid rgba(16, 185, 129, 0.3)"
+                              : "1px solid var(--card-border)",
                           boxShadow: "0 2px 4px var(--shadow)",
                           fontWeight: 800, fontSize: "10px",
                         }}>
@@ -713,24 +713,24 @@ export default function ChatLogsPage() {
                             {isUser
                               ? "User"
                               : isAgent
-                              ? agentName
-                              : "Copilot AI"}
+                                ? agentName
+                                : "Assistly AI"}
                           </span>
                           <div style={{
                             padding: "12px 16px", borderRadius: "14px", fontSize: "12.5px", fontWeight: 500, lineHeight: 1.6,
                             borderTopRightRadius: isOutgoing ? "4px" : "14px",
                             borderTopLeftRadius: !isOutgoing ? "4px" : "14px",
-                            background: isUser 
-                              ? "var(--accent)" 
-                              : isAgent 
-                              ? "rgba(16, 185, 129, 0.08)" 
-                              : "var(--muted-bg)",
+                            background: isUser
+                              ? "var(--accent)"
+                              : isAgent
+                                ? "rgba(16, 185, 129, 0.08)"
+                                : "var(--muted-bg)",
                             color: isUser ? "#fff" : "var(--fg)",
-                            border: isUser 
-                              ? "none" 
-                              : isAgent 
-                              ? "1px solid rgba(16, 185, 129, 0.25)" 
-                              : "1px solid var(--card-border)",
+                            border: isUser
+                              ? "none"
+                              : isAgent
+                                ? "1px solid rgba(16, 185, 129, 0.25)"
+                                : "1px solid var(--card-border)",
                             boxShadow: "0 2px 8px var(--shadow)",
                           }}>
                             {formatMessageText(text)}

@@ -12,92 +12,191 @@ import {
   Activity,
   Edit2,
   Eye,
-  EyeOff
+  EyeOff,
+  KeyRound,
+  AlertCircle,
+  ArrowRight
 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
 import { Card, Input, Button, Badge, Skeleton, Modal } from "@/components/ui";
 import { adminService } from "@/services/admin.service";
+import { authService } from "@/services/auth.service";
 
 interface OTPVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onVerifySuccess: () => void;
+  oldPasswordVal: string;
+  newPasswordVal: string;
+  role: string;
+  onResendOtp: () => Promise<void>;
 }
 
 /**
  * OTPVerificationModal component
  * Handles the OTP code input step for the password change flow.
  */
-function OTPVerificationModal({ isOpen, onClose, onVerifySuccess }: OTPVerificationModalProps) {
+function OTPVerificationModal({ isOpen, onClose, onVerifySuccess, oldPasswordVal, newPasswordVal, role, onResendOtp }: OTPVerificationModalProps) {
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
 
-  const handleVerify = (e: React.FormEvent) => {
+  // Clear modal inputs & error states when closed
+  useEffect(() => {
+    if (!isOpen) {
+      setOtp('');
+      setError('');
+    }
+  }, [isOpen]);
+
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.trim().length !== 6 || !/^\d+$/.test(otp.trim())) {
       setError("Please enter a valid 6-digit OTP.");
       return;
     }
     setError('');
-    onVerifySuccess();
+    setIsLoading(true);
+
+    try {
+      const res = await authService.verifyChangePasswordOtp(oldPasswordVal, newPasswordVal, otp.trim(), role);
+      if (res.status === "success") {
+        onVerifySuccess();
+      } else {
+        setError(res.message || "Invalid verification code.");
+      }
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || "Verification failed. Please try again.";
+      setError(errMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleResend = () => {
-    showToast("success", "OTP Resent", "OTP has been resent to your email.");
+  const handleResend = async () => {
+    setIsLoading(true);
+    try {
+      await onResendOtp();
+      showToast("success", "OTP Sent", "A new verification code has been sent to your email.");
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || "Failed to resend verification code.";
+      showToast("error", "Error", errMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Modal title="Verification Required" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
+    <Modal title="Security Verification" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
       <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <p style={{ fontSize: "13px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
-          Please enter the 6-digit verification code sent to your email to confirm this password change.
+        <p style={{ fontSize: "14px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
+          A 6-digit OTP verification code has been dispatched to your email. Please enter the code below to confirm this password change.
         </p>
 
-        <Input
-          label="OTP Code"
-          name="otp"
-          value={otp}
-          onChange={(e) => {
-            const val = e.target.value.replace(/\D/g, '');
-            setOtp(val);
-            if (error) setError('');
-          }}
-          placeholder="000000"
-          error={error || undefined}
-          maxLength={6}
-          style={{
-            textAlign: "center",
-            fontFamily: "monospace",
-            fontSize: "24px",
-            letterSpacing: "0.2em",
-            fontWeight: 700
-          }}
-        />
-
-        <div style={{ marginTop: "8px", textAlign: "center", fontSize: "12px", color: "var(--muted-fg)" }}>
-          Didn't receive the code?{" "}
-          <button
-            type="button"
-            onClick={handleResend}
+        {/* OTP Input Container */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <label
+            htmlFor="profile-otp"
             style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--accent)",
+              fontSize: "12px",
               fontWeight: 700,
-              cursor: "pointer",
-              padding: 0
+              color: "var(--fg)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              textAlign: "center",
             }}
           >
-            Resend OTP
+            Enter 6-Digit OTP Code
+          </label>
+          <div style={{ position: "relative" }}>
+            <KeyRound
+              style={{
+                position: "absolute",
+                left: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "18px",
+                height: "18px",
+                color: "var(--muted-fg)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              id="profile-otp"
+              type="text"
+              maxLength={6}
+              disabled={isLoading}
+              placeholder="123456"
+              value={otp}
+              onChange={(e) => {
+                setOtp(e.target.value.replace(/\D/g, ""));
+                if (error) setError("");
+              }}
+              style={{
+                width: "100%",
+                padding: "14px 14px 14px 44px",
+                borderRadius: "10px",
+                background: "var(--muted-bg)",
+                border: error ? "1.5px solid #ef4444" : "1px solid var(--card-border)",
+                color: "var(--fg)",
+                fontSize: "22px",
+                fontWeight: 700,
+                letterSpacing: "0.3em",
+                textAlign: "center",
+                outline: "none",
+                transition: "border-color 0.2s",
+                boxSizing: "border-box",
+                fontFamily: "monospace",
+              }}
+              onFocus={e => {
+                if (!error) {
+                  e.currentTarget.style.borderColor = "var(--accent)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-glow)";
+                }
+              }}
+              onBlur={e => {
+                e.currentTarget.style.borderColor = error ? "#ef4444" : "var(--card-border)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+          {error && (
+            <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "2.6px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+              <AlertCircle style={{ width: "13px", height: "13px" }} />
+              {error}
+            </span>
+          )}
+        </div>
+
+        {/* Resend Link */}
+        <div style={{ textAlign: "center", fontSize: "13px", color: "var(--muted-fg)" }}>
+          Haven't received a code?{" "}
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={handleResend}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--accent)",
+              fontWeight: 600,
+              cursor: isLoading ? "not-allowed" : "pointer",
+              padding: 0,
+              opacity: isLoading ? 0.6 : 1
+            }}
+          >
+            Resend Code
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
+        {/* Action Buttons */}
+        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "8px" }}>
           <Button
             type="button"
             variant="outline"
+            disabled={isLoading}
             onClick={onClose}
             style={{ padding: "10px 20px" }}
           >
@@ -105,11 +204,17 @@ function OTPVerificationModal({ isOpen, onClose, onVerifySuccess }: OTPVerificat
           </Button>
           <Button
             type="submit"
-            variant="primary"
-            icon={<ShieldCheck style={{ width: "14px", height: "14px" }} />}
-            style={{ padding: "10px 20px" }}
+            disabled={isLoading}
+            isLoading={isLoading}
+            style={{
+              padding: "10px 24px",
+              background: "linear-gradient(135deg, #10b981, #059669)",
+              color: "white",
+              border: "none",
+              boxShadow: "0 4px 12px rgba(16,185,129,0.2)"
+            }}
           >
-            Verify
+            Verify & Update
           </Button>
         </div>
       </form>
@@ -120,14 +225,15 @@ function OTPVerificationModal({ isOpen, onClose, onVerifySuccess }: OTPVerificat
 interface PasswordChangeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenOTP: () => void;
+  onOpenOTP: (oldPass: string, newPass: string) => void;
+  role: string;
 }
 
 /**
  * PasswordChangeModal component
  * Form validation and modal display for changing a user's password.
  */
-function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModalProps) {
+function PasswordChangeModal({ isOpen, onClose, onOpenOTP, role }: PasswordChangeModalProps) {
   const [formData, setFormData] = useState({
     oldPassword: '',
     newPassword: '',
@@ -135,10 +241,27 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
   });
 
   const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
 
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Clear modal inputs, errors & password visibility states when closed
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setErrors({});
+      setShowOld(false);
+      setShowNew(false);
+      setShowConfirm(false);
+    }
+  }, [isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -163,7 +286,7 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
     };
   };
 
-  const handleVerifyOTP = (e: React.FormEvent) => {
+  const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -188,7 +311,26 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
     }
 
     setErrors({});
-    onOpenOTP();
+    setIsLoading(true);
+
+    try {
+      const res = await authService.sendChangePasswordOtp(formData.oldPassword, formData.newPassword, role);
+      if (res.status === "success") {
+        showToast("success", "OTP Sent", res.message || "A verification code has been sent to your email.");
+        if ((res as any).otp) {
+          console.log(`%c[OTP Change Password Code]: ${(res as any).otp}`, "background: #111827; color: #3b82f6; font-size: 16px; font-weight: bold; padding: 8px; border-radius: 4px;");
+        }
+        onOpenOTP(formData.oldPassword, formData.newPassword);
+      } else {
+        showToast("error", "Error", res.message || "Failed to send verification code.");
+      }
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || "Failed to initiate password change. Check your current password.";
+      showToast("error", "Error", errMsg);
+      setErrors({ oldPassword: errMsg });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const strengthChecks = validateStrength(formData.newPassword);
@@ -196,68 +338,160 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
   return (
     <Modal title="Change Account Password" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
       <form onSubmit={handleVerifyOTP} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <div style={{ position: "relative" }}>
-          <Input
-            label="Old Password"
-            type={showOld ? "text" : "password"}
-            name="oldPassword"
-            value={formData.oldPassword}
-            onChange={handleChange}
-            placeholder="••••••••"
-            error={errors.oldPassword || undefined}
-            style={{ paddingRight: "40px" }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowOld(!showOld)}
+        
+        {/* Old Password */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <label
+            htmlFor="oldPassword"
             style={{
-              position: "absolute",
-              right: "12px",
-              top: "38px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--muted-fg)",
-              display: "flex",
-              alignItems: "center",
-              padding: 0
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "var(--fg)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
           >
-            {showOld ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
-          </button>
+            Old Password *
+          </label>
+          <div style={{ position: "relative" }}>
+            <Lock
+              style={{
+                position: "absolute",
+                left: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "18px",
+                height: "18px",
+                color: "var(--muted-fg)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              id="oldPassword"
+              type={showOld ? "text" : "password"}
+              name="oldPassword"
+              disabled={isLoading}
+              placeholder="••••••••"
+              value={formData.oldPassword}
+              onChange={handleChange}
+              style={{
+                width: "100%",
+                padding: "14px 44px 14px 44px",
+                borderRadius: "10px",
+                background: "var(--muted-bg)",
+                border: errors.oldPassword ? "1px solid #ef4444" : "1px solid var(--card-border)",
+                color: "var(--fg)",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+                boxSizing: "border-box",
+              }}
+            />
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => setShowOld(!showOld)}
+              style={{
+                position: "absolute",
+                right: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--muted-fg)",
+                display: "flex",
+                alignItems: "center",
+                padding: "4px"
+              }}
+            >
+              {showOld ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
+            </button>
+          </div>
+          {errors.oldPassword && (
+            <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "2px" }}>
+              {errors.oldPassword}
+            </span>
+          )}
         </div>
 
-        <div style={{ position: "relative" }}>
-          <Input
-            label="New Password"
-            type={showNew ? "text" : "password"}
-            name="newPassword"
-            value={formData.newPassword}
-            onChange={handleChange}
-            placeholder="••••••••"
-            error={errors.newPassword || undefined}
-            style={{ paddingRight: "40px" }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowNew(!showNew)}
+        {/* New Password */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <label
+            htmlFor="newPassword"
             style={{
-              position: "absolute",
-              right: "12px",
-              top: "38px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--muted-fg)",
-              display: "flex",
-              alignItems: "center",
-              padding: 0
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "var(--fg)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
           >
-            {showNew ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
-          </button>
+            New Password *
+          </label>
+          <div style={{ position: "relative" }}>
+            <Lock
+              style={{
+                position: "absolute",
+                left: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "18px",
+                height: "18px",
+                color: "var(--muted-fg)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              id="newPassword"
+              type={showNew ? "text" : "password"}
+              name="newPassword"
+              disabled={isLoading}
+              placeholder="••••••••"
+              value={formData.newPassword}
+              onChange={handleChange}
+              style={{
+                width: "100%",
+                padding: "14px 44px 14px 44px",
+                borderRadius: "10px",
+                background: "var(--muted-bg)",
+                border: errors.newPassword ? "1px solid #ef4444" : "1px solid var(--card-border)",
+                color: "var(--fg)",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+                boxSizing: "border-box",
+              }}
+            />
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => setShowNew(!showNew)}
+              style={{
+                position: "absolute",
+                right: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--muted-fg)",
+                display: "flex",
+                alignItems: "center",
+                padding: "4px"
+              }}
+            >
+              {showNew ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
+            </button>
+          </div>
+          {errors.newPassword && (
+            <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "2px" }}>
+              {errors.newPassword}
+            </span>
+          )}
         </div>
 
+        {/* Strength requirements checklist */}
         {formData.newPassword && (
           <div style={{
             padding: "16px",
@@ -314,54 +548,123 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP }: PasswordChangeModal
           </div>
         )}
 
-        <div style={{ position: "relative" }}>
-          <Input
-            label="Confirm New Password"
-            type={showConfirm ? "text" : "password"}
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="••••••••"
-            error={errors.confirmPassword || undefined}
-            style={{ paddingRight: "40px" }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirm(!showConfirm)}
+        {/* Confirm Password */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <label
+            htmlFor="confirmPassword"
             style={{
-              position: "absolute",
-              right: "12px",
-              top: "38px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--muted-fg)",
-              display: "flex",
-              alignItems: "center",
-              padding: 0
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "var(--fg)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
           >
-            {showConfirm ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
-          </button>
+            Confirm New Password *
+          </label>
+          <div style={{ position: "relative" }}>
+            <Lock
+              style={{
+                position: "absolute",
+                left: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "18px",
+                height: "18px",
+                color: "var(--muted-fg)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              id="confirmPassword"
+              type={showConfirm ? "text" : "password"}
+              name="confirmPassword"
+              disabled={isLoading}
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              style={{
+                width: "100%",
+                padding: "14px 44px 14px 44px",
+                borderRadius: "10px",
+                background: "var(--muted-bg)",
+                border: errors.confirmPassword ? "1px solid #ef4444" : "1px solid var(--card-border)",
+                color: "var(--fg)",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+                boxSizing: "border-box",
+              }}
+            />
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => setShowConfirm(!showConfirm)}
+              style={{
+                position: "absolute",
+                right: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--muted-fg)",
+                display: "flex",
+                alignItems: "center",
+                padding: "4px"
+              }}
+            >
+              {showConfirm ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
+            </button>
+          </div>
+          {errors.confirmPassword && (
+            <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "2px" }}>
+              {errors.confirmPassword}
+            </span>
+          )}
         </div>
 
+        {/* Action Buttons */}
         <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
-          <Button
+          <button
             type="button"
-            variant="outline"
+            disabled={isLoading}
             onClick={onClose}
-            style={{ padding: "10px 20px" }}
+            style={{
+              padding: "10px 20px",
+              fontSize: "14px",
+              fontWeight: 600,
+              borderRadius: "8px",
+              background: "transparent",
+              border: "1px solid var(--card-border)",
+              color: "var(--fg)",
+              cursor: "pointer",
+              transition: "background 0.2s"
+            }}
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
             type="submit"
-            variant="primary"
-            icon={<Lock style={{ width: "14px", height: "14px" }} />}
-            style={{ padding: "10px 20px" }}
+            disabled={isLoading}
+            style={{
+              padding: "10px 24px",
+              fontSize: "14px",
+              fontWeight: 600,
+              borderRadius: "8px",
+              background: "var(--accent)",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              boxShadow: "0 4px 12px var(--accent-glow)",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
           >
-            Verify OTP
-          </Button>
+            {isLoading ? "Sending..." : "Send OTP"}
+            <ArrowRight style={{ width: "16px", height: "16px" }} />
+          </button>
         </div>
       </form>
     </Modal>
@@ -396,6 +699,8 @@ export default function ProfilePage() {
   // Modals state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isOTPModalOpen, setIsOTPModalOpen] = useState(false);
+  const [oldPasswordVal, setOldPasswordVal] = useState("");
+  const [newPasswordVal, setNewPasswordVal] = useState("");
 
   // Form states
   const [isEditingPhone, setIsEditingPhone] = useState(false);
@@ -841,7 +1146,10 @@ export default function ProfilePage() {
       <PasswordChangeModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
-        onOpenOTP={() => {
+        role={isSuperAdmin ? "super-admin" : isAgent ? "team-member" : "admin"}
+        onOpenOTP={(oldPass, newPass) => {
+          setOldPasswordVal(oldPass);
+          setNewPasswordVal(newPass);
           setIsPasswordModalOpen(false);
           setIsOTPModalOpen(true);
         }}
@@ -850,6 +1158,16 @@ export default function ProfilePage() {
       <OTPVerificationModal
         isOpen={isOTPModalOpen}
         onClose={() => setIsOTPModalOpen(false)}
+        oldPasswordVal={oldPasswordVal}
+        newPasswordVal={newPasswordVal}
+        role={isSuperAdmin ? "super-admin" : isAgent ? "team-member" : "admin"}
+        onResendOtp={async () => {
+          await authService.sendChangePasswordOtp(
+            oldPasswordVal,
+            newPasswordVal,
+            isSuperAdmin ? "super-admin" : isAgent ? "team-member" : "admin"
+          );
+        }}
         onVerifySuccess={handleVerifyPasswordChangeSuccess}
       />
 

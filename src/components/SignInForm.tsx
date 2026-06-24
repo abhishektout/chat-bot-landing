@@ -175,6 +175,32 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
     }
   };
 
+  const handleResendOTP = async () => {
+    setIsLoading(true);
+    try {
+      if (role === "super-admin") {
+        const otpData = await authService.sendSuperAdminOtp(email.trim(), password);
+        if (otpData.status === "success") {
+          showToast("success", "OTP Sent", "A secure verification code has been sent to your email.");
+        } else {
+          showToast("error", "OTP Failed", otpData.message || "Failed to generate security code.");
+        }
+      } else if (role === "admin") {
+        const data = await authService.sendClientOtp(email.trim());
+        if (data.status === "success") {
+          showToast("success", "OTP Sent", "Please check your email for the verification code.");
+        } else {
+          showToast("error", "Error", data.message || "Failed to dispatch OTP code.");
+        }
+      }
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || "Could not connect to the remote authentication server.";
+      showToast("error", "Connection Error", errMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim() || otp.length !== 6) {
@@ -227,27 +253,9 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (!email.trim() || !emailRegex.test(email)) {
-      showToast("error", "Invalid Email", "Please enter a valid work email address to receive password reset link.");
-      setErrors({ email: "Valid email is required to reset password." });
-      return;
-    }
 
-    if (role === "super-admin") {
-      showToast(
-        "info",
-        "System Master Security",
-        "Master system accounts require database intervention. Please contact DevOps support."
-      );
-    } else {
-      showToast(
-        "success",
-        "Recovery Link Dispatched",
-        `Password recovery instructions have been successfully dispatched to ${email}.`
-      );
-    }
+    const emailParam = email.trim() ? `?email=${encodeURIComponent(email.trim())}&role=${role}` : `?role=${role}`;
+    router.push(`/forgot-password${emailParam}`);
   };
 
   return (
@@ -884,7 +892,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
                   Haven't received a code?{" "}
                   <button
                     type="button"
-                    onClick={handleSendOTPOrLogin}
+                    onClick={handleResendOTP}
                     style={{
                       background: "none",
                       border: "none",

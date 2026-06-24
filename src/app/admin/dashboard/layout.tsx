@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -74,8 +74,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Frontend Notification Management State
+  // Frontend Notification Management State and Refs
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const mobileNotifRef = useRef<HTMLDivElement>(null);
+  const desktopNotifRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState([
     {
       id: "1",
@@ -213,6 +215,26 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Close notifications on click outside
+  useEffect(() => {
+    if (!isNotifOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const clickedOutsideMobile = !mobileNotifRef.current || !mobileNotifRef.current.contains(target);
+      const clickedOutsideDesktop = !desktopNotifRef.current || !desktopNotifRef.current.contains(target);
+      
+      if (clickedOutsideMobile && clickedOutsideDesktop) {
+        setIsNotifOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isNotifOpen]);
 
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
@@ -556,7 +578,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           </div>
 
           {/* Right Side of Mobile Top Bar: Notifications + Theme Toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative" }}>
+          <div ref={mobileNotifRef} style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative" }}>
             {/* Notification Icon */}
             <button 
               onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -588,20 +610,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               )}
             </button>
 
-            {isNotifOpen && (
-              <>
-                <div 
-                  onClick={() => setIsNotifOpen(false)}
-                  style={{
-                    position: "fixed",
-                    inset: 0,
-                    zIndex: 99,
-                    background: "transparent",
-                  }}
-                />
-                {renderDropdown()}
-              </>
-            )}
+            {isNotifOpen && renderDropdown()}
 
             {/* Theme Toggle */}
             <button
@@ -1069,7 +1078,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             </div>
 
             {/* Right Side: Notification Icon + Theme Toggle */}
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative" }}>
+            <div ref={desktopNotifRef} style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative" }}>
               {/* Notification Icon */}
               <button 
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -1114,20 +1123,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 )}
               </button>
 
-              {isNotifOpen && (
-                <>
-                  <div 
-                    onClick={() => setIsNotifOpen(false)}
-                    style={{
-                      position: "fixed",
-                      inset: 0,
-                      zIndex: 99,
-                      background: "transparent",
-                    }}
-                  />
-                  {renderDropdown()}
-                </>
-              )}
+              {isNotifOpen && renderDropdown()}
 
               {/* Theme Toggle */}
               <button

@@ -183,4 +183,164 @@ export const authService = {
       data: payload,
     };
   },
+
+  // ── Forgot Password & Reset ──
+
+  /**
+   * Send OTP for Forgot Password
+   * API Endpoint: POST /auth/forgot-password/send-otp
+   */
+  sendForgotPasswordOtp: async (email: string, role: string) => {
+    // ──────── REAL API ENDPOINT (Uncomment to use real backend) ────────
+    // const response = await axios.post(`${BASE_API}/auth/forgot-password/send-otp`, { email, role });
+    // return response.data;
+    // ───────────────────────────────────────────────────────────────────
+
+    console.log(`authService.sendForgotPasswordOtp called for ${email} as ${role}`);
+    
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    
+    // Generate a 6-digit code and store in localStorage for interactive web flow testing
+    const testOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    localStorage.setItem(`otp_reset_${email}`, testOtp);
+    
+    console.log(`[DEVELOPER MODE] Forgot Password OTP for ${email}: ${testOtp}`);
+    
+    return {
+      status: "success",
+      message: `OTP verification code has been dispatched to ${email}.`,
+      otp: testOtp // Exposed only for frontend convenience / developer visibility in testing
+    };
+  },
+
+  /**
+   * Verify OTP for Forgot Password
+   * API Endpoint: POST /auth/forgot-password/verify-otp
+   */
+  verifyForgotPasswordOtp: async (email: string, role: string, otpCode: string) => {
+    // ──────── REAL API ENDPOINT (Uncomment to use real backend) ────────
+    // const response = await axios.post(`${BASE_API}/auth/forgot-password/verify-otp`, {
+    //   email,
+    //   role,
+    //   otp_code: otpCode,
+    // });
+    // return response.data;
+    // ───────────────────────────────────────────────────────────────────
+
+    console.log(`authService.verifyForgotPasswordOtp called for ${email} with code ${otpCode}`);
+    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    const storedOtp = localStorage.getItem(`otp_reset_${email}`);
+    
+    // Accept either the correct generated OTP or the fallback developer code 123456
+    if (otpCode === storedOtp || otpCode === "123456") {
+      return {
+        status: "success",
+        message: "OTP verification code is valid.",
+      };
+    } else {
+      return {
+        status: "error",
+        message: "Invalid or expired verification code.",
+      };
+    }
+  },
+
+  /**
+   * Reset Password to a New Value
+   * API Endpoint: POST /auth/forgot-password/reset
+   */
+  resetPassword: async (email: string, role: string, otpCode: string, newPassword: string) => {
+    // ──────── REAL API ENDPOINT (Uncomment to use real backend) ────────
+    // const response = await axios.post(`${BASE_API}/auth/forgot-password/reset`, {
+    //   email,
+    //   role,
+    //   otp_code: otpCode,
+    //   new_password: newPassword,
+    // });
+    // return response.data;
+    // ───────────────────────────────────────────────────────────────────
+
+    console.log(`authService.resetPassword called for ${email} with role ${role}`);
+    
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    
+    // Clear OTP after successful reset
+    localStorage.removeItem(`otp_reset_${email}`);
+    
+    return {
+      status: "success",
+      message: "Your password has been successfully updated.",
+    };
+  },
+
+  /**
+   * Send OTP for authenticated Change Password
+   * API Endpoint: POST /auth/change-password/send-otp
+   */
+  sendChangePasswordOtp: async (oldPassword: string, newPassword: string, role: string) => {
+    // ──────── REAL API ENDPOINT (Uncomment to use real backend) ────────
+    // const client = role === "super-admin" ? superAdminClient : adminClient;
+    // const response = await client.post("/auth/change-password/send-otp", {
+    //   old_password: oldPassword,
+    //   new_password: newPassword,
+    // });
+    // return response.data;
+    // ───────────────────────────────────────────────────────────────────
+
+    console.log(`authService.sendChangePasswordOtp called for role ${role}`);
+    
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    
+    // Generate a 6-digit code and store in localStorage for interactive web flow testing
+    const testOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    localStorage.setItem(`otp_change_password`, testOtp);
+    
+    console.log(`[DEVELOPER MODE] Change Password OTP: ${testOtp}`);
+    
+    return {
+      status: "success",
+      message: "A verification code has been successfully dispatched to your registered email address.",
+      otp: testOtp
+    };
+  },
+
+  /**
+   * Verify OTP and change password
+   * API Endpoint: POST /auth/change-password/verify
+   */
+  verifyChangePasswordOtp: async (oldPassword: string, newPassword: string, otpCode: string, role: string) => {
+    // ──────── REAL API ENDPOINT (Uncomment to use real backend) ────────
+    // const client = role === "super-admin" ? superAdminClient : adminClient;
+    // const response = await client.post("/auth/change-password/verify", {
+    //   old_password: oldPassword,
+    //   new_password: newPassword,
+    //   otp_code: otpCode,
+    // });
+    // return response.data;
+    // ───────────────────────────────────────────────────────────────────
+
+    console.log(`authService.verifyChangePasswordOtp called for role ${role} with code ${otpCode}`);
+    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    const storedOtp = localStorage.getItem(`otp_change_password`);
+    
+    // Accept either the correct generated OTP or the fallback developer code 123456
+    if (otpCode === storedOtp || otpCode === "123456") {
+      localStorage.removeItem(`otp_change_password`);
+      return {
+        status: "success",
+        message: "Your account password has been successfully updated.",
+      };
+    } else {
+      return {
+        status: "error",
+        message: "Invalid or expired verification code.",
+      };
+    }
+  },
 };

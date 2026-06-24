@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ToastProvider } from "@/components/Toast";
+import { PublicPageGuard } from "@/components/PublicPageGuard";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange={false}>
           <ToastProvider>
+            <PublicPageGuard />
             <SmoothScroll>{children}</SmoothScroll>
           </ToastProvider>
         </ThemeProvider>
