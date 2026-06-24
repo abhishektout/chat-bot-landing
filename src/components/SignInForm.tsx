@@ -741,7 +741,7 @@ export default function SignInForm({ forcedRole }: SignInFormProps) {
                         onClick={() => {
                           localStorage.setItem("sa_token", "test_superadmin_token");
                           localStorage.setItem("saas_superadmin_token", "test_superadmin_token");
-                          localStorage.setItem("sa_name", "Test Super Admin");
+                          localStorage.setItem("sa_name", "Super Admin");
                           showToast("success", "Bypass Successful", "Logged in as Super Admin (Testing)");
                           router.push("/superadmin/dashboard");
                         }}

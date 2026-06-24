@@ -48,7 +48,7 @@ export default function ManageClientsPage() {
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const fetchClients = async () => {
@@ -510,7 +510,8 @@ export default function ManageClientsPage() {
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Modify Tenant Properties"
+        title="Modify"
+        title1="Tenant Properties"
         footer={
           <>
             <Button

@@ -89,7 +89,7 @@ function OTPVerificationModal({ isOpen, onClose, onVerifySuccess, oldPasswordVal
   };
 
   return (
-    <Modal title="Security Verification" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
+    <Modal title="Change" title1="Security Verification" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
       <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         <p style={{ fontSize: "14px", color: "var(--muted-fg)", lineHeight: 1.6, margin: 0 }}>
           A 6-digit OTP verification code has been dispatched to your email. Please enter the code below to confirm this password change.
@@ -336,9 +336,9 @@ function PasswordChangeModal({ isOpen, onClose, onOpenOTP, role }: PasswordChang
   const strengthChecks = validateStrength(formData.newPassword);
 
   return (
-    <Modal title="Change Account Password" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
+    <Modal title="Change" title1="Account Password" isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
       <form onSubmit={handleVerifyOTP} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        
+
         {/* Old Password */}
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <label
@@ -804,8 +804,8 @@ export default function ProfilePage() {
           const agents = await adminService.getAgents();
           const agentId = typeof window !== "undefined" ? localStorage.getItem("saas_agent_id") : null;
           const agentName = typeof window !== "undefined" ? localStorage.getItem("saas_agent_name") : null;
-          const currentAgent = agents.find((a: any) => 
-            (agentId && String(a.id) === String(agentId)) || 
+          const currentAgent = agents.find((a: any) =>
+            (agentId && String(a.id) === String(agentId)) ||
             (agentName && a.name === agentName)
           );
           if (currentAgent) {
@@ -967,18 +967,18 @@ export default function ProfilePage() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {isAgent && (
-              <Input 
-                label="Support Person Name" 
+              <Input
+                label="Support Person Name"
                 name="fullName"
                 value={profileData.fullName}
-                readOnly 
+                readOnly
                 style={{ opacity: 0.8, cursor: "not-allowed" }}
               />
             )}
 
-            <Input 
-              label="Email Address" 
-              name="emailAddress" 
+            <Input
+              label="Email Address"
+              name="emailAddress"
               type="email"
               value={profileData.email}
               readOnly

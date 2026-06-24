@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "http://bot.a4tool.com";
+const BASE_API = process.env.NEXT_PUBLIC_BASE_API || "https://chat-umaxx.a4tool.com";
 
 // Axios instance for Tenant Admins
 export const adminClient = axios.create({

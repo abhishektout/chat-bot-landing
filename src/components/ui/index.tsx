@@ -383,9 +383,10 @@ export interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidthClass?: string;
+  title1?: string;
 }
 
-export const Modal = ({ isOpen, onClose, title, children, footer, maxWidthClass = "max-w-2xl" }: ModalProps) => {
+export const Modal = ({ isOpen, onClose, title, title1, children, footer, maxWidthClass = "max-w-2xl" }: ModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -401,7 +402,7 @@ export const Modal = ({ isOpen, onClose, title, children, footer, maxWidthClass 
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
           <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
             <h4 style={{ fontSize: "clamp(12px,1.5vw,16px)", fontWeight: 900, letterSpacing: "0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-              Change <span className="gradient-text">Account Password</span>
+              {title1 ? title : title}  <span className="gradient-text">{title1}</span>
             </h4>
           </span>
 

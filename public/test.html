@@ -74,9 +74,31 @@
         <p>&copy; 2026 AcmeCorp. Simulated environment for SaaS widget testing.</p>
     </footer>
 
-    <!-- Injecting the Widget Script -->
-    <!-- Served locally from the public/ directory -->
-    <script type="module" src="http://bot.a4tool.com/widget-file" data-api-key="ast_dev_key_123456789">
+    <!-- Injecting the Widget Script dynamically using API key from .env -->
+    <script type="module">
+        async function loadWidget() {
+            try {
+                const response = await fetch('/api/widget-config');
+                const data = await response.json();
+                const apiKey = data.apiKey || 'ast_dev_key_123456789';
+                const widgetUrl = data.widgetUrl || 'https://chat-umaxx.a4tool.com';
+                
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = `${widgetUrl}/widget-file`;
+                script.setAttribute('data-api-key', apiKey);
+                document.body.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load chatbot widget configuration:', error);
+                // Fallback to default key if API call fails
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = 'https://chat-umaxx.a4tool.com/widget-file';
+                script.setAttribute('data-api-key', 'ast_dev_key_123456789');
+                document.body.appendChild(script);
+            }
+        }
+        loadWidget();
     </script>
 </body>
 

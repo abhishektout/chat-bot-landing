@@ -82,7 +82,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     {
       id: "1",
       title: "Human Takeover Requested",
-      description: "Web Visitor in session sess_1601vp17t needs support.",
+      description: "Assistly AI in session sess_1601vp17t needs support.",
       time: "2 mins ago",
       read: false,
       type: "takeover",
@@ -149,7 +149,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       }}>
         <span style={{ fontWeight: 800, fontSize: "14px", color: "var(--fg)" }}>Notifications</span>
         {unreadCount > 0 && (
-          <button 
+          <button
             onClick={(e) => { e.stopPropagation(); handleMarkAllRead(); }}
             style={{
               background: "none", border: "none", color: "var(--accent)", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: 0
@@ -166,8 +166,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           </div>
         ) : (
           filteredNotifications.map(n => (
-            <div 
-              key={n.id} 
+            <div
+              key={n.id}
               onClick={() => {
                 handleMarkRead(n.id);
                 setIsNotifOpen(false);
@@ -224,7 +224,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       const target = event.target as Node;
       const clickedOutsideMobile = !mobileNotifRef.current || !mobileNotifRef.current.contains(target);
       const clickedOutsideDesktop = !desktopNotifRef.current || !desktopNotifRef.current.contains(target);
-      
+
       if (clickedOutsideMobile && clickedOutsideDesktop) {
         setIsNotifOpen(false);
       }
@@ -379,11 +379,11 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         };
 
         socket.onerror = (err) => {
-          console.error("WebSocket error:", err);
+          console.warn("WebSocket connection encountered an error. Polling fallback is active.");
           socket?.close();
         };
       } catch (e) {
-        console.error("WebSocket connection failed", e);
+        console.warn("WebSocket connection setup failed:", e);
       }
     };
 
@@ -394,7 +394,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       try {
         const data = await adminService.getLiveSessions();
         const sessionsList = Array.isArray(data) ? data : (data.sessions || data.data || []);
-        
+
         sessionsList.forEach((sess: any) => {
           const sId = sess.id || sess.session_id;
           if (sess.human_takeover) {
@@ -404,7 +404,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 const newNotif = {
                   id: `takeover_${sId}`,
                   title: "Human Takeover Active",
-                  description: `Web Visitor in session ${sId} has requested assistance.`,
+                  description: `Assistly AI in session ${sId} has requested assistance.`,
                   time: "Just now",
                   read: false,
                   type: "takeover" as const,
@@ -489,10 +489,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
   const isAdmin = role !== "agent";
   const customIcon = tenantInfo?.widget_icon_url || "";
-  
-  // Ensure "Test Agent" doesn't show in the sidebar, fallback to default name "Nitesh Bagora"
+
+  // Ensure "Test Agent" doesn't show in the sidebar, fallback to default name "Workspace Administrator"
   const rawName = mounted ? localStorage.getItem("saas_agent_name") : "";
-  const storedUserName = (rawName && rawName !== "Test Agent") ? rawName : "Nitesh Bagora";
+  const storedUserName = (rawName && rawName !== "Test Agent") ? rawName : "Workspace Administrator";
 
   // Sidebar links (Show all links to admins, and only Dashboard, Chat Logs, and Profile to support agents)
   const allLinks = [
@@ -507,10 +507,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
   const navLinks = role === "agent"
     ? allLinks.filter(link =>
-        link.href === "/admin/dashboard/overview" ||
-        link.href === "/admin/dashboard/history" ||
-        link.href === "/admin/dashboard/profile"
-      )
+      link.href === "/admin/dashboard/overview" ||
+      link.href === "/admin/dashboard/history" ||
+      link.href === "/admin/dashboard/profile"
+    )
     : allLinks;
 
   return (
@@ -580,7 +580,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
           {/* Right Side of Mobile Top Bar: Notifications + Theme Toggle */}
           <div ref={mobileNotifRef} style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative" }}>
             {/* Notification Icon */}
-            <button 
+            <button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
               style={{
                 background: "none",
@@ -627,8 +627,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 justifyContent: "center",
               }}
             >
-              {theme === "dark" 
-                ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} /> 
+              {theme === "dark"
+                ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} />
                 : <Moon style={{ width: "18px", height: "18px", color: "var(--accent)" }} />}
             </button>
           </div>
@@ -1080,7 +1080,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             {/* Right Side: Notification Icon + Theme Toggle */}
             <div ref={desktopNotifRef} style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative" }}>
               {/* Notification Icon */}
-              <button 
+              <button
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
                 style={{
                   background: "none",
@@ -1149,8 +1149,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                   e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
-                {theme === "dark" 
-                  ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} /> 
+                {theme === "dark"
+                  ? <Sun style={{ width: "18px", height: "18px", color: "#f59e0b" }} />
                   : <Moon style={{ width: "18px", height: "18px", color: "var(--accent)" }} />}
               </button>
             </div>

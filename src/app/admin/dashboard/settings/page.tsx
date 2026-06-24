@@ -27,6 +27,15 @@ export default function BotSettingsPage() {
     customGeminiKey?: string;
   }>({});
 
+  const [widgetChatUrl, setWidgetChatUrl] = useState("https://bot.a4tool.com");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const defaultUrl = process.env.NEXT_PUBLIC_WIDGET_URL || window.location.origin;
+      setWidgetChatUrl(defaultUrl);
+    }
+  }, []);
+
   useEffect(() => {
     if (tenantInfo) {
       setFormData({
@@ -109,8 +118,8 @@ export default function BotSettingsPage() {
 
   const handleCopyCode = () => {
     const code = embedMethod === "script"
-      ? `<script\n  type="module"\n  src="https://bot.a4tool.com/widget-file"\n  data-api-key="${activeKey}">\n</script>`
-      : `<iframe\n  allow="clipboard-write"\n  style="border: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background-color: #0000;"\n  src="https://bot.a4tool.com/chatbot?key=${activeKey}">\n</iframe>`;
+      ? `<script\n  type="module"\n  src="${widgetChatUrl}/widget-file"\n  data-api-key="${activeKey}">\n</script>`
+      : `<iframe\n  allow="clipboard-write"\n  style="border: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background-color: #0000;"\n  src="${widgetChatUrl}/chatbot?key=${activeKey}">\n</iframe>`;
     navigator.clipboard.writeText(code)
       .then(() => showToast("success", "Copied", "Embed code copied to clipboard."))
       .catch(() => showToast("error", "Copy Failed", "Could not copy code automatically."));
@@ -277,8 +286,8 @@ export default function BotSettingsPage() {
               <Button type="button" variant="primary" size="sm" onClick={handleCopyCode} icon={<Copy style={{ width: "13px", height: "13px" }} />} style={{ position: "absolute", top: "16px", right: "16px", padding: "10px 15px" } as React.CSSProperties}>Copy</Button>
               <pre style={{ overflowX: "auto", fontSize: "13px", fontFamily: "'Fira Code', monospace", color: "#4ade80", paddingRight: "80px", lineHeight: 1.7, margin: 0 }}>
                 {embedMethod === "script"
-                  ? `<script\n  type="module"\n  src="https://bot.a4tool.com/widget-file"\n  data-api-key="${activeKey || "YOUR_API_KEY_HERE"}">\n</script>`
-                  : `<iframe\n  allow="clipboard-write"\n  style="border: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background-color: #0000;"\n  src="https://bot.a4tool.com/chatbot?key=${activeKey || "YOUR_API_KEY_HERE"}">\n</iframe>`}
+                  ? `<script\n  type="module"\n  src="${widgetChatUrl}/widget-file"\n  data-api-key="${activeKey || "YOUR_API_KEY_HERE"}">\n</script>`
+                  : `<iframe\n  allow="clipboard-write"\n  style="border: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background-color: #0000;"\n  src="${widgetChatUrl}/chatbot?key=${activeKey || "YOUR_API_KEY_HERE"}">\n</iframe>`}
               </pre>
             </div>
           </div>

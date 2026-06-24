@@ -21,10 +21,11 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const widgetChatUrl = process.env.NEXT_PUBLIC_WIDGET_URL || "http://bot.a4tool.com";
 
   const showToast = (type: ToastType, title: string, description?: any) => {
     const id = Math.random().toString(36).substring(2, 9);
-    
+
     let cleanTitle = typeof title === "string" ? title : JSON.stringify(title);
     let cleanDescription = description;
 

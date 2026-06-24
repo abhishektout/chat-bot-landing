@@ -744,7 +744,9 @@ export default function TeamManagementPage() {
           cancelEdit();
           setIsFormOpen(false);
         }}
-        title={editingId ? "Modify Team Member" : "Register Team Member"}
+        title={editingId ? "Modify" : "Register"}
+        title1={editingId ? "Team Member" : "Team Member"}
+
         maxWidthClass="max-w-md"
       >
         <form onSubmit={handleSaveAgent} noValidate style={{ display: "flex", flexDirection: "column", gap: "20px", paddingRight: "5px" }}>
@@ -755,31 +757,31 @@ export default function TeamManagementPage() {
             }
           </p>
 
-          <Input 
-            label="Full Name" 
-            name="name" 
-            value={formData.name} 
-            onChange={handleChange} 
-            placeholder="e.g. John Doe" 
+          <Input
+            label="Full Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="e.g. John Doe"
             error={errors.name}
           />
-          <Input 
-            label="Login Email Address" 
-            type="email" 
-            name="email" 
-            value={formData.email} 
-            onChange={handleChange} 
-            placeholder="john@company.com" 
-            icon={<Mail style={{ width: "14px", height: "14px" }} />} 
+          <Input
+            label="Login Email Address"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="john@company.com"
+            icon={<Mail style={{ width: "14px", height: "14px" }} />}
             error={errors.email}
           />
-          <Input 
-            label="Phone Number" 
-            name="phone_number" 
-            value={formData.phone_number} 
-            onChange={handleChange} 
-            placeholder="+1 555-0100" 
-            icon={<Phone style={{ width: "14px", height: "14px" }} />} 
+          <Input
+            label="Phone Number"
+            name="phone_number"
+            value={formData.phone_number}
+            onChange={handleChange}
+            placeholder="+1 555-0100"
+            icon={<Phone style={{ width: "14px", height: "14px" }} />}
             error={errors.phone_number}
           />
 

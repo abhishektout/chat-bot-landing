@@ -196,8 +196,6 @@ export default function ChatLogsPage() {
         return text.trim() !== "";
       });
 
-      setChats(validChats);
-
       // Deduce human takeover state and owner from the chat message history
       let deducedTakeover = false;
       let deducedAgentName = "";
@@ -309,29 +307,56 @@ export default function ChatLogsPage() {
   }, [selectedSession]);
 
   useEffect(() => {
-    if (!chatContainerRef.current) return;
-    const currentSessionId = selectedSession ? (selectedSession.id || selectedSession.session_id || null) : null;
+    const container = chatContainerRef.current;
+    if (!container) return;
 
+    const currentSessionId = selectedSession ? (selectedSession.id || selectedSession.session_id || null) : null;
     if (!currentSessionId) return;
 
     const isNewSession = currentSessionId !== hasScrolledForSessionRef.current;
 
+    const scrollToBottom = () => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    };
+
     if (isNewSession && chats.length > 0) {
       hasScrolledForSessionRef.current = currentSessionId;
       prevChatsLengthRef.current = chats.length;
-      setTimeout(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-      }, 100);
+
+      // Perform initial scroll with multiple stages to let DOM lay out completely
+      scrollToBottom();
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+      setTimeout(scrollToBottom, 300);
     } else if (!isNewSession && chats.length > prevChatsLengthRef.current) {
-      prevChatsLengthRef.current = chats.length;
-      // When a new message actually arrives, always scroll to the bottom to show it
-      setTimeout(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      const isOutgoing = (() => {
+        if (chats.length === 0) return false;
+        const lastMsg = chats[chats.length - 1];
+        const keys = Object.keys(lastMsg);
+        for (let k of keys) {
+          const lk = k.toLowerCase();
+          if (["role", "sender", "type", "sender_type"].includes(lk)) {
+            const val = String((lastMsg as any)[k]).toLowerCase();
+            if (["agent", "support", "admin", "ai", "bot", "assistant", "copilot"].includes(val)) {
+              return true;
+            }
+          }
         }
-      }, 100);
+        return false;
+      })();
+
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 250;
+
+      // Force scroll to bottom if it is an outgoing message or if user is near bottom
+      if (isOutgoing || isNearBottom) {
+        scrollToBottom();
+        setTimeout(scrollToBottom, 50);
+        setTimeout(scrollToBottom, 150);
+        setTimeout(scrollToBottom, 300);
+      }
+      prevChatsLengthRef.current = chats.length;
     }
   }, [chats, selectedSession]);
 
@@ -396,6 +421,12 @@ export default function ChatLogsPage() {
       await adminService.sendChatMessage(sId, replyText.trim());
       setReplyText("");
       fetchChats(sId);
+      // Fast scroll to bottom on reply submission to prepare UI
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 50);
     } catch {
       showToast("error", "Error", "Error sending message.");
     } finally {
@@ -453,7 +484,7 @@ export default function ChatLogsPage() {
                     onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.borderColor = "var(--card-border)"; }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingLeft: "3px" }}>
                         {isActiveRecently && (
                           <span className="relative flex h-2 w-2 flex-shrink-0" title="Active recently">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -463,7 +494,7 @@ export default function ChatLogsPage() {
                         <span style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "var(--accent)" : "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {session.human_takeover
                             ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
-                            : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
+                            : (session.user_name === "Web Visitor" ? "Assistly AI" : (session.user_name || `Session: ${sId.substring(0, 10)}`))}
                         </span>
                       </div>
                       {session.human_takeover ? (
@@ -540,7 +571,10 @@ export default function ChatLogsPage() {
               }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                    Auditing: {selectedSession.visitor_name || (selectedSession as any).client_name || selectedSession.user_name || "Web Visitor"} ({selectedSession.id || selectedSession.session_id})
+                    Auditing: {(() => {
+                      const name = selectedSession.visitor_name || (selectedSession as any).client_name || selectedSession.user_name || "Web Visitor";
+                      return name === "Web Visitor" ? "Assistly AI" : name;
+                    })()} ({selectedSession.id || selectedSession.session_id})
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px", padding: "4px" } as React.CSSProperties}>
@@ -587,10 +621,10 @@ export default function ChatLogsPage() {
                     if (!text.trim()) return null;
 
                     const plainText = text.replace(/<[^>]+>/g, "").trim();
-                    const isSystem = /joined the chat|resumed control|joined the conversation|took over the conversation|left the conversation/i.test(plainText);
+                    const isSystem = /joined the chat|resumed control|joined the conversation|took over the conversation|left the conversation|has taken over/i.test(plainText);
 
                     if (isSystem) {
-                      const isHuman = plainText.includes("joined");
+                      const isHuman = /joined|took over|taken over/i.test(plainText);
                       return (
                         <div key={`sys-${idx}`} style={{ alignSelf: "center", marginTop: "12px", marginBottom: "12px", maxWidth: "90%" }}>
                           <div style={{
