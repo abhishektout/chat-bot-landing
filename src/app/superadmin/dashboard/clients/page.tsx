@@ -29,10 +29,11 @@ export default function ManageClientsPage() {
 
   // Form states
   const [companyName, setCompanyName] = useState("");
-  const [botName, setBotName] = useState("");
-  const [supportEmail, setSupportEmail] = useState("");
-  const [subscriptionPlan, setSubscriptionPlan] = useState("free");
-  const [isActive, setIsActive] = useState(true);
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [website, setWebsite] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [subscriptionPlan, setSubscriptionPlan] = useState("Basic");
 
   // Edit states for details
   const [showEditModal, setShowEditModal] = useState(false);
@@ -69,31 +70,68 @@ export default function ManageClientsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName.trim() || !botName.trim() || !supportEmail.trim()) {
-      showToast("error", "Validation Error", "Please fill in all required fields.");
+
+    const trimmedCompany = companyName.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedWebsite = website.trim();
+    const trimmedIndustry = industry.trim();
+
+    // 1. Required Fields Validation
+    if (!trimmedCompany || !trimmedEmail || !trimmedPhone) {
+      showToast("error", "Validation Error", "Company Name, Admin Email, and Phone Number are required.");
       return;
+    }
+
+    // 2. Email Format Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      showToast("error", "Validation Error", "Please enter a valid admin email address.");
+      return;
+    }
+
+    // 3. Phone Number Validation
+    const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      showToast("error", "Validation Error", "Please enter a valid phone number.");
+      return;
+    }
+
+    // 4. Website URL Validation (if entered)
+    if (trimmedWebsite) {
+      try {
+        const urlToTest = trimmedWebsite.startsWith("http://") || trimmedWebsite.startsWith("https://")
+          ? trimmedWebsite
+          : "http://" + trimmedWebsite;
+        new URL(urlToTest);
+      } catch (e) {
+        showToast("error", "Validation Error", "Please enter a valid Website URL.");
+        return;
+      }
     }
 
     setIsSaving(true);
     try {
       await superAdminService.createClient({
-        company_name: companyName.trim(),
-        bot_name: botName.trim(),
-        support_email: supportEmail.trim(),
+        company_name: trimmedCompany,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        website: trimmedWebsite,
+        industry: trimmedIndustry,
         subscription_plan: subscriptionPlan,
-        is_active: String(isActive),
       });
 
-      showToast("success", "Tenant Onboarded", "Client created successfully! Verification details emailed.");
+      showToast("success", "Tenant Onboarded", "Client created successfully! API Key generated.");
       setCompanyName("");
-      setBotName("");
-      setSupportEmail("");
-      setSubscriptionPlan("free");
-      setIsActive(true);
+      setEmail("");
+      setPhone("");
+      setWebsite("");
+      setIndustry("");
+      setSubscriptionPlan("Basic");
       fetchClients();
     } catch (error: any) {
       const errMsg = error.response?.data?.detail || "Failed to create client.";
-      showToast("error", "Process Failed", errMsg);
+      showToast("error", "Onboarding Failed", errMsg);
     } finally {
       setIsSaving(false);
     }
@@ -101,7 +139,7 @@ export default function ManageClientsPage() {
 
   const handleToggleStatus = async (clientId: string | number, currentStatus: boolean) => {
     try {
-      await superAdminService.toggleClientStatus(clientId, !currentStatus);
+      await superAdminService.toggleClientStatus(clientId);
       showToast("success", "Status Updated", "Client status toggled successfully.");
       fetchClients();
     } catch (error) {
@@ -160,31 +198,32 @@ export default function ManageClientsPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-      {/* ── Page Header ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
-          Platform Master Console
-        </span>
-        <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
-          Manage <span className="gradient-text">Clients</span>
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
-          Provision new organization tenants, control subscription tiers, and configure default branding rules.
-        </p>
-      </div>
+      {/* ── Page Header & Action Bar ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "20px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: "280px" }}>
+          <span className="badge" style={{ marginBottom: "4px", width: "fit-content" }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--accent)", display: "inline-block", animation: "pulseGlow 2s ease-in-out infinite" }} />
+            Platform Master Console
+          </span>
+          <h2 style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 900, letterSpacing: "-0.03em", color: "var(--fg)", lineHeight: 1.2 }}>
+            Manage <span className="gradient-text">Clients</span>
+          </h2>
+          <p style={{ fontSize: "14px", color: "var(--muted-fg)", fontWeight: 500, lineHeight: 1.6 }}>
+            Provision new organization tenants, control subscription tiers, and configure default branding rules.
+          </p>
+        </div>
 
-      {/* ── Action Bar ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-        <Button
-          variant="outline"
-          onClick={fetchClients}
-          isLoading={isLoading}
-          icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
-          style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
-        >
-          Sync Tenants
-        </Button>
+        <div style={{ display: "flex", alignItems: "center", paddingBottom: "4px" }}>
+          <Button
+            variant="outline"
+            onClick={fetchClients}
+            isLoading={isLoading}
+            icon={<RefreshCw style={{ width: "14px", height: "14px" }} />}
+            style={{ fontSize: "12px", padding: "8px 18px" } as React.CSSProperties}
+          >
+            Sync Tenants
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -223,65 +262,74 @@ export default function ManageClientsPage() {
 
           <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <Input
-              label="Company Name"
+              label="Company Name *"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="e.g. Acme Corp"
               required
             />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Admin Email *"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@acme.com"
+                required
+              />
+              <Input
+                label="Phone Number *"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. +1 555-0199"
+                required
+              />
+            </div>
             <Input
-              label="Bot Identifier Name"
-              value={botName}
-              onChange={(e) => setBotName(e.target.value)}
-              placeholder="e.g. Acme Assistant"
-              required
+              label="Website URL"
+              type="url"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://www.acme.com"
             />
-            <Input
-              label="Super User Email"
-              type="email"
-              value={supportEmail}
-              onChange={(e) => setSupportEmail(e.target.value)}
-              placeholder="admin@acme.com"
-              required
-            />
-            <Select
-              label="Subscription Tier"
-              value={subscriptionPlan}
-              onChange={(e) => setSubscriptionPlan(e.target.value)}
-            >
-              <option value="free">Free Starter Plan</option>
-              <option value="premium">Premium Pro Plan</option>
-              <option value="enterprise">Enterprise Scaling Plan</option>
-            </Select>
-
-            <Select
-              label="Access Status"
-              value={String(isActive)}
-              onChange={(e) => setIsActive(e.target.value === "true")}
-            >
-              <option value="true">Active / Verified</option>
-              <option value="false">Deactivated / Suspended</option>
-            </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Industry"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                placeholder="e.g. Technology"
+              />
+              <Select
+                label="Plan Tier"
+                value={subscriptionPlan}
+                onChange={(e) => setSubscriptionPlan(e.target.value)}
+              >
+                <option value="Basic">Basic</option>
+                <option value="Premium">Premium</option>
+                <option value="Enterprise">Enterprise</option>
+              </Select>
+            </div>
 
             <Button
               type="submit"
               isLoading={isSaving}
               style={{ fontSize: "13px", padding: "12px", width: "100%", marginTop: "8px" }}
             >
-              Onboard Account
+              Generate API Key & Save
             </Button>
           </form>
         </Card>
 
         {/* Tenants Table Grid */}
-        <Card className="card" style={{ padding: 0, overflow: "hidden", gridColumn: "span 2" } as React.CSSProperties}>
+        <Card className="card" style={{ padding: 0, overflow: "hidden", gridColumn: "span 2", background: "#0b1329", border: "1px solid #1e293b" } as React.CSSProperties}>
           <div style={{
             padding: "20px 24px",
-            borderBottom: "1px solid var(--card-border)",
+            borderBottom: "1px solid #1e293b",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "var(--muted-bg)",
+            background: "#0f172a",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ position: "relative", display: "inline-flex", width: "8px", height: "8px" }}>
@@ -289,39 +337,39 @@ export default function ManageClientsPage() {
                   position: "absolute",
                   inset: 0,
                   borderRadius: "50%",
-                  background: "var(--accent)",
+                  background: "#3b82f6",
                   opacity: 0.6,
                   animation: "pulseGlow 1.5s ease-in-out infinite",
                 }} />
-                <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+                <span style={{ position: "relative", width: "8px", height: "8px", borderRadius: "50%", background: "#3b82f6", display: "inline-block" }} />
               </span>
-              <h3 style={{ fontSize: "15px", fontWeight: 800, color: "var(--fg)" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 800, color: "#f8fafc" }}>
                 Active Business Tenants
               </h3>
             </div>
-            <Badge variant="info" style={{ fontSize: "9px" } as React.CSSProperties}>
+            <span className="rounded-full text-[10px] font-extrabold bg-[#1d4ed8] text-white uppercase tracking-wider shadow-sm" style={{ padding: "4px 12px" }}>
               {clients.length} Total
-            </Badge>
+            </span>
           </div>
 
           <div style={{ overflowX: "auto", width: "100%" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{
-                  background: "var(--muted-bg)",
-                  borderBottom: "1px solid var(--card-border)",
+                  background: "#0f172a",
+                  borderBottom: "1px solid #1e293b",
                 }}>
-                  {["Business / Bot", "Super User", "API Key", "Tier Plan", "Status", "Actions"].map((h, i) => (
+                  {["Business Name", "Plan", "Workspace API Key", "Status", "Actions"].map((h, i) => (
                     <th key={h} style={{
-                      padding: "14px 16px",
+                      padding: "16px 16px",
                       paddingLeft: i === 0 ? "24px" : "16px",
-                      paddingRight: i === 5 ? "24px" : "16px",
-                      fontSize: "10px",
+                      paddingRight: i === 4 ? "24px" : "16px",
+                      fontSize: "10.5px",
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.1em",
-                      color: "var(--muted-fg)",
-                      textAlign: i === 5 ? "right" : "left",
+                      color: "#94a3b8",
+                      textAlign: i === 4 ? "right" : "left",
                     }}>
                       {h}
                     </th>
@@ -331,24 +379,23 @@ export default function ManageClientsPage() {
               <tbody>
                 {isLoading ? (
                   Array.from({ length: 4 }).map((_, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid var(--card-border)" }}>
+                    <tr key={idx} style={{ borderBottom: "1px solid #1e293b" }}>
                       <td style={{ padding: "16px 24px" }}><Skeleton className="h-5 w-40" /></td>
-                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-32" /></td>
-                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-24" /></td>
                       <td style={{ padding: "16px" }}><Skeleton className="h-5 w-16" /></td>
+                      <td style={{ padding: "16px" }}><Skeleton className="h-4 w-24" /></td>
                       <td style={{ padding: "16px" }}><Skeleton className="h-5 w-16" /></td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}><Skeleton className="h-8 w-16 ml-auto" /></td>
                     </tr>
                   ))
                 ) : clients.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: "60px 24px", textAlign: "center" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", color: "var(--muted-fg)" }}>
+                    <td colSpan={5} style={{ padding: "60px 24px", textAlign: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", color: "#94a3b8" }}>
                         <div style={{
                           width: "48px",
                           height: "48px",
                           borderRadius: "12px",
-                          background: "var(--muted-bg)",
+                          background: "#0f172a",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -356,7 +403,7 @@ export default function ManageClientsPage() {
                           <Building style={{ width: "22px", height: "22px", opacity: 0.5 }} />
                         </div>
                         <div>
-                          <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)", marginBottom: "4px" }}>No Business Tenants</p>
+                          <p style={{ fontSize: "14px", fontWeight: 700, color: "#f8fafc", marginBottom: "4px" }}>No Business Tenants</p>
                           <p style={{ fontSize: "12px", maxWidth: "320px", lineHeight: 1.6 }}>
                             Provision your first organization workspace using the panel on the left.
                           </p>
@@ -369,67 +416,66 @@ export default function ManageClientsPage() {
                     <tr
                       key={client.id}
                       style={{
-                        borderBottom: "1px solid var(--card-border)",
+                        borderBottom: "1px solid #1e293b",
                         transition: "background 0.15s",
                       }}
-                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "var(--muted-bg)"}
+                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "#0f172a50"}
                       onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
                     >
                       <td style={{ padding: "16px 24px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                          <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
+                          <span style={{ fontSize: "14px", fontWeight: 700, color: "#f8fafc" }}>
                             {client.company_name}
                           </span>
-                          <span style={{ fontSize: "10px", color: "var(--muted-fg)" }}>
+                          <span style={{ fontSize: "11px", color: "#64748b" }}>
                             Bot: {client.bot_name}
                           </span>
                         </div>
                       </td>
-                      <td style={{ padding: "16px", fontSize: "12.5px", color: "var(--muted-fg)", fontWeight: 500 }}>
-                        {client.support_email}
-                      </td>
-                      <td style={{ padding: "16px", fontFamily: "monospace", fontSize: "12px", color: "var(--accent)", fontWeight: 600 }}>
-                        {client.api_key ? `${client.api_key.substring(0, 10)}...` : "None"}
+                      <td style={{ padding: "16px" }}>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#0f172a] border border-[#1e293b] text-[#cbd5e1] uppercase tracking-wider">
+                          {client.subscription_plan}
+                        </span>
                       </td>
                       <td style={{ padding: "16px" }}>
-                        <Badge variant="neutral" style={{ fontSize: "9px", padding: "3px 8px" }}>
-                          {client.subscription_plan}
-                        </Badge>
+                        <code style={{
+                          fontFamily: "monospace",
+                          fontSize: "13px",
+                          color: "#38bdf8",
+                          fontWeight: 600,
+                        }}>
+                          {client.api_key ? `${client.api_key.substring(0, 10)}...` : "None"}
+                        </code>
                       </td>
                       <td style={{ padding: "16px" }}>
                         <button
                           onClick={() => handleToggleStatus(client.id, client.is_active)}
                           style={{ border: "none", background: "none", padding: 0, cursor: "pointer" }}
                         >
-                          <Badge
-                            variant={client.is_active ? "success" : "error"}
-                            style={{ fontSize: "9px", padding: "3px 8px", cursor: "pointer" }}
-                          >
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${client.is_active ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/20' : 'bg-red-950/60 text-red-400 border border-red-500/20'}`}>
                             {client.is_active ? "Active" : "Suspended"}
-                          </Badge>
+                          </span>
                         </button>
                       </td>
                       <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
+                        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", alignItems: "center" }}>
                           <button
                             type="button"
                             onClick={() => openEditModal(client)}
                             style={{
                               background: "none",
                               border: "none",
-                              color: "var(--accent)",
+                              color: "#38bdf8",
                               cursor: "pointer",
-                              padding: "6px",
-                              borderRadius: "8px",
+                              padding: "4px",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              outline: "none",
                             }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--accent-glow)")}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                             title="Edit"
                           >
-                            <Pencil style={{ width: "15px", height: "15px" }} />
+                            <Pencil style={{ width: "16px", height: "16px" }} />
                           </button>
                           <button
                             type="button"
@@ -439,17 +485,15 @@ export default function ManageClientsPage() {
                               border: "none",
                               color: "#ef4444",
                               cursor: "pointer",
-                              padding: "6px",
-                              borderRadius: "8px",
+                              padding: "4px",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              outline: "none",
                             }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.1)")}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                             title="Archive"
                           >
-                            <Trash2 style={{ width: "15px", height: "15px" }} />
+                            <Trash2 style={{ width: "16px", height: "16px" }} />
                           </button>
                         </div>
                       </td>

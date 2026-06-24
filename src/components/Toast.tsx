@@ -14,7 +14,7 @@ export interface ToastMessage {
 }
 
 interface ToastContextType {
-  showToast: (type: ToastType, title: string, description?: string) => void;
+  showToast: (type: ToastType, title: string, description?: any) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -22,9 +22,29 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const showToast = (type: ToastType, title: string, description?: string) => {
+  const showToast = (type: ToastType, title: string, description?: any) => {
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, type, title, description }]);
+    
+    let cleanTitle = typeof title === "string" ? title : JSON.stringify(title);
+    let cleanDescription = description;
+
+    if (description && typeof description !== "string") {
+      if (Array.isArray(description)) {
+        cleanDescription = description
+          .map((err: any) => {
+            if (err && typeof err === "object") {
+              const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : null;
+              return field ? `${field}: ${err.msg || "Invalid value"}` : (err.msg || JSON.stringify(err));
+            }
+            return String(err);
+          })
+          .join(", ");
+      } else {
+        cleanDescription = description.message || description.msg || JSON.stringify(description);
+      }
+    }
+
+    setToasts((prev) => [...prev, { id, type, title: cleanTitle, description: cleanDescription }]);
   };
 
   const removeToast = (id: string) => {

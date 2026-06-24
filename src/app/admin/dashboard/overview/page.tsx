@@ -13,6 +13,8 @@ interface Session {
   human_takeover?: boolean;
   agent_name?: string;
   user_name?: string;
+  visitor_name?: string;
+  client_name?: string;
   last_active?: string;
 }
 
@@ -53,14 +55,27 @@ export default function DashboardOverviewPage() {
         }
       };
 
+      const getLocalTakeoverAgents = () => {
+        if (typeof window === "undefined") return {};
+        try {
+          const stored = localStorage.getItem("saas_takeover_agents");
+          return stored ? JSON.parse(stored) : {};
+        } catch {
+          return {};
+        }
+      };
+
       const localStates = getLocalTakeoverStates();
+      const localAgents = getLocalTakeoverAgents();
       const mapped = sessionsList.map((s: Session) => {
         const sId = s.id || s.session_id || "";
         const localTakeover = localStates[sId];
         return {
           ...s,
           human_takeover: typeof localTakeover === "boolean" ? localTakeover : !!s.human_takeover,
-          agent_name: s.agent_name || (localTakeover ? localStorage.getItem("saas_agent_name") || "Human Support" : "")
+          agent_name: localTakeover
+            ? (localAgents[sId] || s.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
+            : (s.agent_name || "")
         };
       });
 

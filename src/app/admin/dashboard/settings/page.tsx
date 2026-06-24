@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Palette, Eye, EyeOff, Copy, Save, Mail, Bot, Globe, Key, ShieldCheck } from "lucide-react";
+import { Settings, Palette, Eye, EyeOff, Copy, Save, Mail, Bot, Globe, Key, ShieldCheck, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useAdminDashboard } from "../layout";
 import { Card, Input, Select, Textarea, Button } from "@/components/ui";
@@ -20,6 +20,12 @@ export default function BotSettingsPage() {
     widgetPosition: "right", widgetIconUrl: "", apiKey: "",
     apiKeyType: "ours", customGeminiKey: "",
   });
+  const [errors, setErrors] = useState<{
+    companyName?: string;
+    botName?: string;
+    supportEmail?: string;
+    customGeminiKey?: string;
+  }>({});
 
   useEffect(() => {
     if (tenantInfo) {
@@ -39,11 +45,42 @@ export default function BotSettingsPage() {
   }, [tenantInfo]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (errors[name as keyof typeof errors]) {
+      setErrors({ ...errors, [name]: "" });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const tempErrors: typeof errors = {};
+
+    if (!formData.companyName.trim()) {
+      tempErrors.companyName = "Company name is required.";
+    }
+    if (!formData.botName.trim()) {
+      tempErrors.botName = "Bot assistant name is required.";
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.supportEmail.trim()) {
+      tempErrors.supportEmail = "Support email is required.";
+    } else if (!emailRegex.test(formData.supportEmail.trim())) {
+      tempErrors.supportEmail = "Please enter a valid email address.";
+    }
+
+    if (formData.apiKeyType === "client" && !formData.customGeminiKey.trim()) {
+      tempErrors.customGeminiKey = "Your Custom Gemini API Key is required.";
+    }
+
+    if (Object.keys(tempErrors).length > 0) {
+      setErrors(tempErrors);
+      showToast("error", "Validation Failed", "Please resolve all marked errors.");
+      return;
+    }
+
+    setErrors({});
     setIsSaving(true);
     try {
       await adminService.saveSettings({
@@ -103,14 +140,14 @@ export default function BotSettingsPage() {
         </span>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         {/* Card 1: AI Agent Config */}
         <div className="card" style={{ padding: "32px" }}>
           {sectionHeader(<Bot style={{ width: "20px", height: "20px" }} />, "AI Agent Configuration", "Set core identity metadata and communication templates.")}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "20px" }}>
-            <Input label="Company Name" name="companyName" value={formData.companyName} onChange={handleChange} placeholder="e.g. Acme Inc" icon={<Globe style={{ width: "14px", height: "14px" }} />} />
-            <Input label="Bot Assistant Name" name="botName" value={formData.botName} onChange={handleChange} placeholder="e.g. Assistly Bot" icon={<Bot style={{ width: "14px", height: "14px" }} />} />
-            <Input label="Support Email" name="supportEmail" value={formData.supportEmail} onChange={handleChange} placeholder="e.g. support@acme.com" icon={<Mail style={{ width: "14px", height: "14px" }} />} />
+            <Input label="Company Name" name="companyName" value={formData.companyName} onChange={handleChange} placeholder="e.g. Acme Inc" icon={<Globe style={{ width: "14px", height: "14px" }} />} error={errors.companyName} />
+            <Input label="Bot Assistant Name" name="botName" value={formData.botName} onChange={handleChange} placeholder="e.g. Assistly Bot" icon={<Bot style={{ width: "14px", height: "14px" }} />} error={errors.botName} />
+            <Input label="Support Email" name="supportEmail" value={formData.supportEmail} onChange={handleChange} placeholder="e.g. support@acme.com" icon={<Mail style={{ width: "14px", height: "14px" }} />} error={errors.supportEmail} />
           </div>
           <Textarea label="System Instructions / Personality Prompt" name="customRules" value={formData.customRules} onChange={handleChange} placeholder="Define custom rules. E.g: Keep responses polite and brief." rows={5} />
 
@@ -153,18 +190,34 @@ export default function BotSettingsPage() {
                     value={formData.customGeminiKey}
                     onChange={handleChange}
                     placeholder="AIzaSy..."
-                    required
-                    style={{ width: "100%", padding: "11px 44px 11px 14px", background: "var(--muted-bg)", border: "1px solid var(--card-border)", borderRadius: "10px", fontSize: "14px", color: "var(--fg)", outline: "none", boxSizing: "border-box" }}
+                    style={{
+                      width: "100%",
+                      padding: "11px 44px 11px 14px",
+                      background: "var(--muted-bg)",
+                      border: errors.customGeminiKey ? "1.5px solid #ef4444" : "1px solid var(--card-border)",
+                      borderRadius: "10px",
+                      fontSize: "14px",
+                      color: "var(--fg)",
+                      outline: "none",
+                      boxSizing: "border-box"
+                    }}
                   />
                   <button type="button" onClick={() => setShowCustomGeminiKey(!showCustomGeminiKey)}
                     style={{ position: "absolute", right: "14px", color: "var(--muted-fg)", background: "none", border: "none", cursor: "pointer", display: "flex", padding: 0 }}>
                     {showCustomGeminiKey ? <EyeOff style={{ width: "16px", height: "16px" }} /> : <Eye style={{ width: "16px", height: "16px" }} />}
                   </button>
                 </div>
-                <span style={{ fontSize: "11px", color: "#10b981", display: "flex", alignItems: "center", gap: "6px", fontWeight: 600 }}>
-                  <ShieldCheck style={{ width: "14px", height: "14px" }} />
-                  This key will be securely stored and used exclusively for your workspace.
-                </span>
+                {errors.customGeminiKey ? (
+                  <span style={{ fontSize: "12px", fontWeight: 500, color: "#ef4444", marginTop: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <AlertCircle style={{ width: "13px", height: "13px" }} />
+                    {errors.customGeminiKey}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: "11px", color: "#10b981", display: "flex", alignItems: "center", gap: "6px", fontWeight: 600 }}>
+                    <ShieldCheck style={{ width: "14px", height: "14px" }} />
+                    This key will be securely stored and used exclusively for your workspace.
+                  </span>
+                )}
               </div>
             )}
           </div>

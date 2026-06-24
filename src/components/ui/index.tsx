@@ -58,7 +58,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className = "", label, error, icon, type = "text", ...props }, ref) => {
+  ({ className = "", label, error, icon, type = "text", style, ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
@@ -100,6 +100,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               outline: "none",
               transition: "border-color 0.2s, box-shadow 0.2s",
               boxSizing: "border-box",
+              ...style,
             }}
             onFocus={e => {
               if (!error) {
@@ -137,7 +138,7 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className = "", label, error, children, ...props }, ref) => {
+  ({ className = "", label, error, children, style, ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
@@ -169,6 +170,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               appearance: "none",
               WebkitAppearance: "none",
               cursor: "pointer",
+              ...style,
             }}
             className={className}
             {...props}
@@ -200,7 +202,7 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 }
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className = "", label, error, rows = 4, ...props }, ref) => {
+  ({ className = "", label, error, rows = 4, style, ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
@@ -231,6 +233,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             resize: "vertical",
             lineHeight: 1.6,
             boxSizing: "border-box",
+            ...style,
           }}
           onFocus={e => {
             e.currentTarget.style.borderColor = "var(--accent)";

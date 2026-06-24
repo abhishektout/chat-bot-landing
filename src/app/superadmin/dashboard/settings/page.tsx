@@ -13,19 +13,20 @@ export default function GlobalSettingsPage() {
 
   const [formData, setFormData] = useState({
     gemini_api_key: "",
-    smtp_server: "",
-    smtp_email: "",
-    smtp_password: "",
+    smtp_server: "smtp.gmail.com:465",
+    smtp_email: "sandbox.tout@gmail.com",
+    smtp_password: "ronydgumvqjwwwou",
   });
 
   const fetchSettings = async () => {
     try {
       const data = await superAdminService.getSettings();
+      const settings = data.settings || data || {};
       setFormData({
-        gemini_api_key: data.gemini_api_key || "",
-        smtp_server: data.smtp_server || "",
-        smtp_email: data.smtp_email || "",
-        smtp_password: data.smtp_password || "",
+        gemini_api_key: settings.master_gemini_key || settings.gemini_api_key || "",
+        smtp_server: settings.smtp_server || "",
+        smtp_email: settings.smtp_email || "",
+        smtp_password: settings.smtp_password || "",
       });
     } catch (e) {
       console.error(e);
