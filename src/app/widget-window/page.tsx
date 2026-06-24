@@ -434,7 +434,7 @@ function ChatWidgetContent() {
       className={`
         ${isInline ? "w-full h-full" : ""}
         ${!isInline && isMaximized ? "fixed bottom-4 right-4 w-[50vw] h-[85vh] rounded-2xl max-w-[700px]" : ""}
-        ${!isInline && !isMaximized ? "fixed bottom-20 right-6 w-[380px] h-[600px] max-h-[85vh] rounded-2xl" : ""}
+        ${!isInline && !isMaximized ? "fixed bottom-20 right-6 w-[380px] h-[500px] max-h-[85vh] rounded-2xl" : ""}
       `}
     >
       {/* Header */}
@@ -490,10 +490,16 @@ function ChatWidgetContent() {
       <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-4 bg-slate-50">
         {messages.map((msg, idx) => {
           const isSystem = msg.sender === "ai" && 
-            (msg.text.includes("A human agent has joined") || msg.text.includes("The AI has resumed"));
+            (msg.text.includes("A human agent has joined") || 
+             msg.text.includes("The AI has resumed") || 
+             msg.text.includes("taken over the chat") || 
+             msg.text.includes("took over the conversation") || 
+             msg.text.includes("resumed control"));
 
           if (isSystem) {
-            const isHuman = msg.text.includes("joined");
+            const isHuman = msg.text.includes("joined") || 
+              msg.text.includes("taken over") || 
+              msg.text.includes("took over");
             return (
               <div key={idx} className="flex justify-center my-2 w-full">
                 <span 

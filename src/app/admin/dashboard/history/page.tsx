@@ -195,8 +195,6 @@ export default function ChatLogsPage() {
         const text = msg.message || msg.content || msg.text || "";
         return text.trim() !== "";
       });
-      
-      setChats(validChats);
 
       // Deduce human takeover state and owner from the chat message history
       let deducedTakeover = false;
@@ -309,29 +307,56 @@ export default function ChatLogsPage() {
   }, [selectedSession]);
 
   useEffect(() => {
-    if (!chatContainerRef.current) return;
-    const currentSessionId = selectedSession ? (selectedSession.id || selectedSession.session_id || null) : null;
+    const container = chatContainerRef.current;
+    if (!container) return;
 
+    const currentSessionId = selectedSession ? (selectedSession.id || selectedSession.session_id || null) : null;
     if (!currentSessionId) return;
 
     const isNewSession = currentSessionId !== hasScrolledForSessionRef.current;
 
+    const scrollToBottom = () => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    };
+
     if (isNewSession && chats.length > 0) {
       hasScrolledForSessionRef.current = currentSessionId;
       prevChatsLengthRef.current = chats.length;
-      setTimeout(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-      }, 100);
+      
+      // Perform initial scroll with multiple stages to let DOM lay out completely
+      scrollToBottom();
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+      setTimeout(scrollToBottom, 300);
     } else if (!isNewSession && chats.length > prevChatsLengthRef.current) {
-      prevChatsLengthRef.current = chats.length;
-      // When a new message actually arrives, always scroll to the bottom to show it
-      setTimeout(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      const isOutgoing = (() => {
+        if (chats.length === 0) return false;
+        const lastMsg = chats[chats.length - 1];
+        const keys = Object.keys(lastMsg);
+        for (let k of keys) {
+          const lk = k.toLowerCase();
+          if (["role", "sender", "type", "sender_type"].includes(lk)) {
+            const val = String((lastMsg as any)[k]).toLowerCase();
+            if (["agent", "support", "admin", "ai", "bot", "assistant", "copilot"].includes(val)) {
+              return true;
+            }
+          }
         }
-      }, 100);
+        return false;
+      })();
+
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 250;
+
+      // Force scroll to bottom if it is an outgoing message or if user is near bottom
+      if (isOutgoing || isNearBottom) {
+        scrollToBottom();
+        setTimeout(scrollToBottom, 50);
+        setTimeout(scrollToBottom, 150);
+        setTimeout(scrollToBottom, 300);
+      }
+      prevChatsLengthRef.current = chats.length;
     }
   }, [chats, selectedSession]);
 
@@ -396,6 +421,12 @@ export default function ChatLogsPage() {
       await adminService.sendChatMessage(sId, replyText.trim());
       setReplyText("");
       fetchChats(sId);
+      // Fast scroll to bottom on reply submission to prepare UI
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 50);
     } catch {
       showToast("error", "Error", "Error sending message.");
     } finally {
@@ -587,10 +618,10 @@ export default function ChatLogsPage() {
                     if (!text.trim()) return null;
 
                     const plainText = text.replace(/<[^>]+>/g, "").trim();
-                    const isSystem = /joined the chat|resumed control|joined the conversation|took over the conversation|left the conversation/i.test(plainText);
+                    const isSystem = /joined the chat|resumed control|joined the conversation|took over the conversation|left the conversation|has taken over/i.test(plainText);
 
                     if (isSystem) {
-                      const isHuman = plainText.includes("joined");
+                      const isHuman = /joined|took over|taken over/i.test(plainText);
                       return (
                         <div key={`sys-${idx}`} style={{ alignSelf: "center", marginTop: "12px", marginBottom: "12px", maxWidth: "90%" }}>
                           <div style={{

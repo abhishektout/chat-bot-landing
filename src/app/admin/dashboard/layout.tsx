@@ -357,11 +357,11 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         };
 
         socket.onerror = (err) => {
-          console.error("WebSocket error:", err);
+          console.warn("WebSocket connection encountered an error. Polling fallback is active.");
           socket?.close();
         };
       } catch (e) {
-        console.error("WebSocket connection failed", e);
+        console.warn("WebSocket connection setup failed:", e);
       }
     };
 
