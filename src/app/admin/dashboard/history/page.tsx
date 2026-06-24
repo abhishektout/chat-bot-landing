@@ -484,7 +484,7 @@ export default function ChatLogsPage() {
                     onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.borderColor = "var(--card-border)"; }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingLeft: "3px" }}>
                         {isActiveRecently && (
                           <span className="relative flex h-2 w-2 flex-shrink-0" title="Active recently">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -494,7 +494,7 @@ export default function ChatLogsPage() {
                         <span style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "var(--accent)" : "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {session.human_takeover
                             ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
-                            : (session.user_name || `Session: ${sId.substring(0, 10)}`)}
+                            : (session.user_name === "Web Visitor" ? "Assistly AI" : (session.user_name || `Session: ${sId.substring(0, 10)}`))}
                         </span>
                       </div>
                       {session.human_takeover ? (
@@ -571,7 +571,10 @@ export default function ChatLogsPage() {
               }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
-                    Auditing: {selectedSession.visitor_name || (selectedSession as any).client_name || selectedSession.user_name || "Web Visitor"} ({selectedSession.id || selectedSession.session_id})
+                    Auditing: {(() => {
+                      const name = selectedSession.visitor_name || (selectedSession as any).client_name || selectedSession.user_name || "Web Visitor";
+                      return name === "Web Visitor" ? "Assistly AI" : name;
+                    })()} ({selectedSession.id || selectedSession.session_id})
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <Badge variant={selectedSession.human_takeover ? "warning" : "success"} style={{ fontSize: "9px" , padding: "4px"} as React.CSSProperties}>

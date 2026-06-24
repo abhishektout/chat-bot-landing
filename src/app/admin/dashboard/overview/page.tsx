@@ -374,7 +374,7 @@ export default function DashboardOverviewPage() {
                             <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg)" }}>
                               {session.human_takeover
                                 ? (session.agent_name || localStorage.getItem("saas_agent_name") || "Human Support")
-                                : (session.user_name || "Anonymous Session")}
+                                : (session.user_name === "Web Visitor" ? "Assistly AI" : (session.user_name || "Anonymous Session"))}
                             </span>
                           </div>
                           <span style={{ fontSize: "10px", color: "var(--muted-fg)", fontFamily: "monospace" }}>

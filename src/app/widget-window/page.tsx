@@ -262,7 +262,7 @@ function ChatWidgetContent() {
     const formData = new FormData();
     formData.append("question", userText);
     formData.append("session_id", sessionId.current);
-    formData.append("user_name", "Web Visitor");
+    formData.append("user_name", "Assistly AI");
 
     if (isHumanTakeover) {
       try {

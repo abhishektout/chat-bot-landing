@@ -80,7 +80,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     {
       id: "1",
       title: "Human Takeover Requested",
-      description: "Web Visitor in session sess_1601vp17t needs support.",
+      description: "Assistly AI in session sess_1601vp17t needs support.",
       time: "2 mins ago",
       read: false,
       type: "takeover",
@@ -382,7 +382,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 const newNotif = {
                   id: `takeover_${sId}`,
                   title: "Human Takeover Active",
-                  description: `Web Visitor in session ${sId} has requested assistance.`,
+                  description: `Assistly AI in session ${sId} has requested assistance.`,
                   time: "Just now",
                   read: false,
                   type: "takeover" as const,
